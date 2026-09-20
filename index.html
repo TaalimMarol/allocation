@@ -4,6 +4,8 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Allocation Dashboard · Jamea Saifiyah</title>
+<script src="config.js"></script>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 <style>
 /* ── TOKENS ─────────────────────────────────────── */
 :root {
@@ -223,6 +225,28 @@ tbody tr.daera-row td:first-child{border-left:3px solid var(--green-bdr);padding
 }
 #toast.on{opacity:1;transform:translateY(0)}
 #toast.err{background:var(--danger)}
+
+@media(max-width:680px){
+  body{font-size:12px}
+  #auth-screen{padding:16px}
+  .auth-card{width:min(100%,380px);padding:32px 22px}
+  #nav{height:auto;min-height:58px;padding:9px 12px;gap:8px;flex-wrap:wrap}
+  .nav-brand{width:100%;font-size:13px}
+  .nav-tabs{order:3;flex-basis:100%;overflow-x:auto;padding-bottom:2px}
+  .nav-tab{padding:7px 12px;white-space:nowrap}
+  .nav-right{margin-left:auto;position:absolute;right:10px;top:10px}
+  .nav-email{display:none}
+  #main{padding:12px 10px}
+  .pills{overflow-x:auto;flex-wrap:nowrap;padding-bottom:4px}
+  .pill{flex:0 0 auto;padding:7px 13px}
+  .tbl-wrap{max-height:none}
+  table{min-width:640px}
+  .t-list-panel{position:static;max-height:240px}
+  .t-list-scroll{max-height:190px}
+  .t-detail-hdr{padding:12px}
+  .sel{min-width:160px;padding:7px 6px}
+  #toast{left:10px;right:10px;bottom:10px;max-width:none;text-align:center}
+}
 </style>
 </head>
 <body>
@@ -238,7 +262,7 @@ tbody tr.daera-row td:first-child{border-left:3px solid var(--green-bdr);padding
 
     <div class="auth-error" id="auth-error"></div>
 
-    <button class="google-btn" onclick="location.href='/api/auth/login'">
+    <button class="google-btn" id="google-sign-in" onclick="startSignIn()">
       <!-- Google G logo -->
       <svg viewBox="0 0 48 48">
         <path fill="#FFC107" d="M43.6 20.1H42V20H24v8h11.3C33.6 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.1 7.9 3l5.7-5.7C34.2 6.5 29.4 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.6-.4-3.9z"/>
@@ -271,7 +295,7 @@ tbody tr.daera-row td:first-child{border-left:3px solid var(--green-bdr);padding
   </div>
   <div class="nav-right">
     <span class="nav-email" id="nav-email"></span>
-    <a class="nav-out" href="/api/auth/logout">Sign out</a>
+    <button class="nav-out" onclick="signOut()">Sign out</button>
   </div>
 </nav>
 
@@ -319,33 +343,102 @@ let photos         = {};   // keyed by ITS
 let activeClass    = null;
 let activeKey      = null;
 let pendingSync    = 0;
+let googleToken    = sessionStorage.getItem("allocation_google_token") || "";
+let googleEmail    = sessionStorage.getItem("allocation_google_email") || "";
+
+function backendUrl() {
+  const url = window.APP_CONFIG && window.APP_CONFIG.backendUrl;
+  if (!url || url.indexOf("PASTE_") === 0) {
+    throw new Error("Set backendUrl in config.js before signing in.");
+  }
+  return url.replace(/\/$/, "");
+}
+
+async function apiFetch(action, options) {
+  const opts = options || {};
+  const headers = Object.assign({}, opts.headers || {});
+  let url = backendUrl() + "?action=" + encodeURIComponent(action) +
+    "&token=" + encodeURIComponent(googleToken);
+  if (opts.method === "POST") {
+    headers["Content-Type"] = "text/plain;charset=utf-8";
+    opts.body = JSON.stringify(Object.assign({}, JSON.parse(opts.body || "{}"), {
+      action: action, token: googleToken
+    }));
+    url = backendUrl();
+  }
+  return fetch(url, Object.assign({}, opts, { headers }));
+}
+
+function startSignIn() {
+  const clientId = window.APP_CONFIG && window.APP_CONFIG.googleClientId;
+  if (!clientId || clientId.indexOf("PASTE_") === 0) {
+    showAuthError("Set googleClientId in config.js before signing in.");
+    return;
+  }
+  if (!window.google || !google.accounts) {
+    showAuthError("Google sign-in is still loading. Please try again.");
+    return;
+  }
+  google.accounts.id.initialize({
+    client_id: clientId,
+    callback: handleGoogleCredential
+  });
+  google.accounts.id.prompt();
+}
+
+async function handleGoogleCredential(response) {
+  googleToken = response.credential;
+  try {
+    const r = await apiFetch("me");
+    const user = await r.json();
+    if (!r.ok || user.error || !user.email) {
+      throw new Error(user.error || "Sign-in was rejected.");
+    }
+    googleEmail = user.email;
+    sessionStorage.setItem("allocation_google_token", googleToken);
+    sessionStorage.setItem("allocation_google_email", googleEmail);
+    document.getElementById("nav-email").textContent = googleEmail;
+    document.getElementById("auth-screen").classList.add("hidden");
+    loadData();
+  } catch (err) {
+    googleToken = "";
+    showAuthError(err.message);
+  }
+}
+
+function showAuthError(message) {
+  const el = document.getElementById("auth-error");
+  el.textContent = message;
+  el.style.display = "block";
+}
+
+function signOut() {
+  googleToken = "";
+  googleEmail = "";
+  sessionStorage.removeItem("allocation_google_token");
+  sessionStorage.removeItem("allocation_google_email");
+  location.reload();
+}
 
 // ================================================================
 //  BOOT — check session on load
 // ================================================================
 (async () => {
-  // Show any OAuth error from query string
-  const params = new URLSearchParams(location.search);
-  if (params.has("error")) {
-    const errEl = document.getElementById("auth-error");
-    const code  = params.get("error");
-    const email = params.get("email") || "";
-    errEl.textContent = code === "unauthorized"
-      ? `Access denied for ${email}. Only authorised school accounts may sign in.`
-      : `Sign-in failed (${code}). Please try again.`;
-    errEl.style.display = "block";
-    history.replaceState({}, "", "/"); // clean the URL
-  }
-
+  if (!googleToken) return;
   try {
-    const r = await fetch("/api/auth/me");
-    if (!r.ok) return; // not logged in → show auth screen
-    const { email } = await r.json();
+    const r = await apiFetch("me");
+    const user = await r.json();
+    if (!r.ok || user.error || !user.email) {
+      throw new Error(user.error || "Your sign-in has expired.");
+    }
+    const { email } = user;
+    googleEmail = email;
+    sessionStorage.setItem("allocation_google_email", email);
     document.getElementById("nav-email").textContent = email;
     document.getElementById("auth-screen").classList.add("hidden");
     loadData();
-  } catch (_) {
-    // network error — show auth screen
+  } catch (err) {
+    signOut();
   }
 })();
 
@@ -355,9 +448,10 @@ let pendingSync    = 0;
 async function loadData() {
   showLoading("Loading sheet data…");
   try {
-    const r    = await fetch("/api/data");
+    const r    = await apiFetch("data");
     if (!r.ok) throw new Error(await r.text());
     const data = await r.json();
+    if (data.error) throw new Error(data.error);
 
     allRows = data.rows || [];
     buildTeacherIndex();
@@ -375,9 +469,10 @@ async function loadData() {
 
 async function fetchPhotos() {
   try {
-    const r = await fetch("/api/photos");
+    const r = await apiFetch("photos");
     if (!r.ok) return;
     photos = await r.json();
+    if (photos.error) return;
     // Patch any already-rendered placeholders
     document.querySelectorAll("[data-photo-its]").forEach((el) => {
       const its = el.dataset.photoIts;
@@ -673,9 +768,8 @@ async function syncToSheet(rowNumber, newIts, newName) {
   if (dot) { dot.className = "sdot"; dot.classList.remove("hidden"); }
 
   try {
-    const r = await fetch("/api/sync", {
+    const r = await apiFetch("sync", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ rowNumber, newIts, newName }),
     });
     const res = await r.json();
