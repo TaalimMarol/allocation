@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Allocation Dashboard · Jamea Saifiyah</title>
+<style>
+/* ── TOKENS ─────────────────────────────────────── */
+:root {
+  --bg:         #e0f2fe;
+  --surface:    #ffffff;
+  --navy:       #1e3a8a;
+  --navy-dim:   #1d4ed8;
+  --sky:        #0ea5e9;
+  --sky-soft:   #bae6fd;
+  --badge-bg:   #dbeafe;
+  --badge-txt:  #1e40af;
+  --danger:     #ef4444;
+  --green-bg:   #f0fdf4;
+  --green-bdr:  #22c55e;
+  --text:       #0f172a;
+  --muted:      #64748b;
+  --border:     #cbd5e1;
+  --shadow:     0 1px 6px rgba(30,58,138,.10);
+  --r:          8px;
+  --rs:         4px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,-apple-system,'Segoe UI',sans-serif;font-size:13px;
+  background:var(--bg);color:var(--text);min-height:100vh;line-height:1.5}
+button{cursor:pointer;border:none;background:none;font:inherit}
+select{font:inherit}
+.hidden{display:none!important}
+
+/* ── AUTH SCREEN ─────────────────────────────────── */
+#auth-screen{
+  position:fixed;inset:0;z-index:200;background:var(--navy);
+  display:flex;align-items:center;justify-content:center;
+}
+.auth-card{
+  background:var(--surface);border-radius:14px;
+  padding:44px 40px;width:380px;text-align:center;
+  box-shadow:0 32px 80px rgba(0,0,0,.30);
+}
+.auth-logo{
+  width:60px;height:60px;border-radius:50%;background:var(--navy);
+  display:flex;align-items:center;justify-content:center;margin:0 auto 22px;
+}
+.auth-logo svg{width:30px;height:30px;fill:none;stroke:#fff;stroke-width:1.6;
+  stroke-linecap:round;stroke-linejoin:round}
+.auth-card h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:4px}
+.auth-card p{font-size:12px;color:var(--muted);margin-bottom:28px}
+.google-btn{
+  display:flex;align-items:center;justify-content:center;gap:10px;
+  width:100%;padding:11px 16px;border-radius:var(--rs);border:1.5px solid var(--border);
+  background:#fff;color:var(--text);font-size:13px;font-weight:600;
+  transition:background .14s,border-color .14s;cursor:pointer;
+}
+.google-btn:hover{background:#f8fafc;border-color:var(--sky)}
+.google-btn svg{width:18px;height:18px;flex-shrink:0}
+.auth-note{font-size:11px;color:var(--muted);margin-top:14px;line-height:1.6}
+.auth-error{
+  font-size:12px;color:var(--danger);
+  background:#fef2f2;border:1px solid #fecaca;border-radius:var(--rs);
+  padding:8px 12px;margin-bottom:16px;display:none;
+}
+
+/* ── NAV ─────────────────────────────────────────── */
+#nav{
+  position:sticky;top:0;z-index:100;height:52px;
+  background:var(--navy);display:flex;align-items:center;
+  padding:0 20px;gap:14px;box-shadow:0 2px 8px rgba(0,0,0,.18);
+}
+.nav-brand{font-size:14px;font-weight:700;color:#fff;margin-right:4px;white-space:nowrap}
+.nav-tabs{display:flex;gap:4px;flex:1}
+.nav-tab{
+  padding:6px 16px;border-radius:20px;
+  font-size:12px;font-weight:600;color:rgba(255,255,255,.6);transition:all .14s;
+}
+.nav-tab:hover{color:#fff;background:rgba(255,255,255,.1)}
+.nav-tab.active{background:#fff;color:var(--navy)}
+.nav-right{display:flex;align-items:center;gap:10px}
+.nav-email{font-size:11px;color:rgba(255,255,255,.5);white-space:nowrap;max-width:200px;overflow:hidden;text-overflow:ellipsis}
+.nav-out{font-size:11px;color:rgba(255,255,255,.5);padding:4px 8px;border-radius:var(--rs);transition:all .12s}
+.nav-out:hover{color:#fff;background:rgba(255,255,255,.1)}
+
+/* ── SPINNER ─────────────────────────────────────── */
+#loading{
+  position:fixed;inset:0;z-index:150;background:rgba(224,242,254,.88);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;
+}
+.spinner{
+  width:38px;height:38px;border:3px solid var(--border);
+  border-top-color:var(--navy);border-radius:50%;animation:spin .7s linear infinite;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+.spin-msg{font-size:13px;font-weight:500;color:var(--navy)}
+
+/* ── MAIN ────────────────────────────────────────── */
+#main{padding:16px 20px}
+.view{display:none}
+.view.active{display:block}
+
+/* ── CLASS PILLS ─────────────────────────────────── */
+.pills{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
+.pill{
+  padding:5px 16px;border-radius:20px;
+  border:1.5px solid var(--border);font-size:12px;font-weight:600;
+  color:var(--navy);background:var(--surface);transition:all .13s;
+}
+.pill:hover{border-color:var(--sky);background:var(--sky-soft)}
+.pill.active{background:var(--navy);color:#fff;border-color:var(--navy)}
+
+/* ── PANEL ───────────────────────────────────────── */
+.panel{background:var(--surface);border-radius:var(--r);box-shadow:var(--shadow);overflow:hidden}
+.panel-hdr{
+  padding:12px 16px;background:var(--navy);color:#fff;
+  display:flex;align-items:center;gap:10px;
+}
+.panel-hdr h2{font-size:13px;font-weight:700;flex:1}
+
+/* ── TABLE ───────────────────────────────────────── */
+.tbl-wrap{overflow-x:auto;max-height:calc(100vh - 175px)}
+table{width:100%;border-collapse:collapse;font-size:12px}
+thead th{
+  background:var(--navy);color:#fff;font-weight:600;
+  padding:9px 12px;text-align:left;white-space:nowrap;
+  position:sticky;top:0;z-index:2;
+}
+tbody tr{border-bottom:1px solid #f1f5f9}
+tbody tr:last-child{border-bottom:none}
+tbody tr:hover{background:#f8fafc}
+tbody td{padding:7px 12px;vertical-align:middle}
+tbody tr.daera-row{background:var(--green-bg)}
+tbody tr.daera-row td:first-child{border-left:3px solid var(--green-bdr);padding-left:9px}
+
+.badge{
+  display:inline-block;background:var(--badge-bg);color:var(--badge-txt);
+  font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px;letter-spacing:.02em;
+}
+.num{font-variant-numeric:tabular-nums;font-weight:600}
+.hist{color:var(--muted);font-size:11px}
+
+.sel{
+  width:100%;min-width:185px;padding:5px 8px;
+  border:1.5px solid var(--border);border-radius:var(--rs);
+  background:var(--surface);color:var(--text);font-size:12px;cursor:pointer;
+  transition:border-color .13s;
+}
+.sel:focus{outline:none;border-color:var(--sky)}
+
+/* sync dot */
+.sdot{
+  display:inline-block;width:7px;height:7px;border-radius:50%;
+  background:#fbbf24;margin-left:6px;transition:background .3s;vertical-align:middle;
+}
+.sdot.ok{background:#22c55e}
+.sdot.err{background:var(--danger)}
+
+/* ── TEACHER SPLIT ───────────────────────────────── */
+.split{display:grid;grid-template-columns:275px 1fr;gap:12px;align-items:start}
+@media(max-width:680px){.split{grid-template-columns:1fr}}
+
+.t-list-panel{
+  background:var(--surface);border-radius:var(--r);box-shadow:var(--shadow);
+  overflow:hidden;max-height:calc(100vh - 88px);
+  display:flex;flex-direction:column;position:sticky;top:68px;
+}
+.t-list-hdr{padding:12px 14px;background:var(--navy);color:#fff;font-size:12px;font-weight:700;flex-shrink:0}
+.t-list-scroll{overflow-y:auto;flex:1}
+
+.t-item{
+  display:flex;align-items:center;gap:10px;padding:9px 12px;
+  cursor:pointer;border-bottom:1px solid #f1f5f9;transition:background .12s;
+}
+.t-item:last-child{border-bottom:none}
+.t-item:hover{background:#f0f9ff}
+.t-item.active{background:var(--badge-bg)}
+
+.t-avatar{
+  width:34px;height:34px;border-radius:50%;object-fit:cover;
+  flex-shrink:0;border:1.5px solid var(--border);background:var(--bg);
+}
+.t-avatar-ph{
+  width:34px;height:34px;border-radius:50%;
+  background:var(--badge-bg);display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;font-size:13px;font-weight:700;color:var(--badge-txt);border:1.5px solid var(--border);
+}
+.t-info{flex:1;min-width:0}
+.t-name{font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.t-name.ov{color:var(--danger)}
+.t-total{font-size:11px;color:var(--muted)}
+.t-total.ov{color:var(--danger);font-weight:600}
+
+.t-detail{background:var(--surface);border-radius:var(--r);box-shadow:var(--shadow);overflow:hidden}
+.t-detail-hdr{padding:14px 16px;background:var(--navy);color:#fff;display:flex;align-items:center;gap:12px}
+.t-avatar-lg{
+  width:48px;height:48px;border-radius:50%;object-fit:cover;
+  border:2px solid rgba(255,255,255,.3);flex-shrink:0;background:rgba(255,255,255,.1);
+}
+.t-avatar-lg-ph{
+  width:48px;height:48px;border-radius:50%;
+  background:rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;
+  font-size:18px;font-weight:700;color:rgba(255,255,255,.8);
+  border:2px solid rgba(255,255,255,.2);flex-shrink:0;
+}
+.t-detail-info{flex:1}
+.t-detail-name{font-size:15px;font-weight:700}
+.t-detail-sub{font-size:11px;color:rgba(255,255,255,.6);margin-top:2px}
+.info-badges{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.ibadge{padding:3px 9px;border-radius:10px;font-size:11px;font-weight:600;background:rgba(255,255,255,.15);color:#fff}
+.ibadge.daera{background:var(--green-bdr)}
+.ibadge.warn{background:var(--danger)}
+
+.empty{padding:48px 24px;text-align:center;color:var(--muted);font-size:13px}
+
+/* ── TOAST ───────────────────────────────────────── */
+#toast{
+  position:fixed;bottom:20px;right:20px;z-index:300;
+  padding:10px 16px;border-radius:var(--r);
+  font-size:12px;font-weight:600;background:var(--navy);color:#fff;
+  opacity:0;pointer-events:none;transform:translateY(8px);transition:all .2s;max-width:300px;
+}
+#toast.on{opacity:1;transform:translateY(0)}
+#toast.err{background:var(--danger)}
+</style>
+</head>
+<body>
+
+<!-- ── AUTH SCREEN ─────────────────────────────── -->
+<div id="auth-screen">
+  <div class="auth-card">
+    <div class="auth-logo">
+      <svg viewBox="0 0 24 24"><path d="M12 3L2 9l10 6 10-6-10-6zM2 17l10 6 10-6M2 13l10 6 10-6"/></svg>
+    </div>
+    <h1>Allocation Dashboard</h1>
+    <p>Jamea Saifiyah · School Admin Portal</p>
+
+    <div class="auth-error" id="auth-error"></div>
+
+    <button class="google-btn" onclick="location.href='/api/auth/login'">
+      <!-- Google G logo -->
+      <svg viewBox="0 0 48 48">
+        <path fill="#FFC107" d="M43.6 20.1H42V20H24v8h11.3C33.6 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.1 7.9 3l5.7-5.7C34.2 6.5 29.4 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.6-.4-3.9z"/>
+        <path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.6 16 19 13 24 13c3.1 0 5.8 1.1 7.9 3l5.7-5.7C34.2 6.5 29.4 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/>
+        <path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.3 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8H6.2C9.6 35.7 16.3 44 24 44z"/>
+        <path fill="#1976D2" d="M43.6 20.1H42V20H24v8h11.3c-.9 2.4-2.5 4.5-4.6 5.9l6.2 5.2C40.9 36.9 44 31 44 24c0-1.3-.1-2.6-.4-3.9z"/>
+      </svg>
+      Continue with Google
+    </button>
+
+    <p class="auth-note">
+      Access is restricted to authorised<br>
+      @jameasaifiyah.edu accounts only.
+    </p>
+  </div>
+</div>
+
+<!-- ── LOADING ──────────────────────────────────── -->
+<div id="loading" class="hidden">
+  <div class="spinner"></div>
+  <div class="spin-msg" id="spin-msg">Loading sheet data…</div>
+</div>
+
+<!-- ── NAV ──────────────────────────────────────── -->
+<nav id="nav" class="hidden">
+  <span class="nav-brand">📚 Allocation</span>
+  <div class="nav-tabs">
+    <button class="nav-tab active" id="tab-class"   onclick="switchView('class')">Class Workload</button>
+    <button class="nav-tab"       id="tab-teacher" onclick="switchView('teacher')">Teacher Workload</button>
+  </div>
+  <div class="nav-right">
+    <span class="nav-email" id="nav-email"></span>
+    <a class="nav-out" href="/api/auth/logout">Sign out</a>
+  </div>
+</nav>
+
+<!-- ── MAIN ─────────────────────────────────────── -->
+<main id="main" class="hidden">
+
+  <!-- CLASS VIEW -->
+  <div class="view active" id="view-class">
+    <div class="pills" id="class-pills"></div>
+    <div class="panel">
+      <div class="panel-hdr">
+        <h2 id="class-title">Select a class</h2>
+        <span class="sdot hidden" id="sdot"></span>
+      </div>
+      <div class="tbl-wrap" id="class-tbl">
+        <div class="empty">Select a class above to view its subjects.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TEACHER VIEW -->
+  <div class="view" id="view-teacher">
+    <div class="split">
+      <div class="t-list-panel">
+        <div class="t-list-hdr">All Teachers</div>
+        <div class="t-list-scroll" id="t-list"></div>
+      </div>
+      <div class="t-detail" id="t-detail">
+        <div class="empty">Select a teacher from the list.</div>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<div id="toast"></div>
+
+<script>
+// ================================================================
+//  STATE
+// ================================================================
+let allRows        = [];
+let teachers       = {};   // keyed by teacherKey
+let photos         = {};   // keyed by ITS
+let activeClass    = null;
+let activeKey      = null;
+let pendingSync    = 0;
+
+// ================================================================
+//  BOOT — check session on load
+// ================================================================
+(async () => {
+  // Show any OAuth error from query string
+  const params = new URLSearchParams(location.search);
+  if (params.has("error")) {
+    const errEl = document.getElementById("auth-error");
+    const code  = params.get("error");
+    const email = params.get("email") || "";
+    errEl.textContent = code === "unauthorized"
+      ? `Access denied for ${email}. Only authorised school accounts may sign in.`
+      : `Sign-in failed (${code}). Please try again.`;
+    errEl.style.display = "block";
+    history.replaceState({}, "", "/"); // clean the URL
+  }
+
+  try {
+    const r = await fetch("/api/auth/me");
+    if (!r.ok) return; // not logged in → show auth screen
+    const { email } = await r.json();
+    document.getElementById("nav-email").textContent = email;
+    document.getElementById("auth-screen").classList.add("hidden");
+    loadData();
+  } catch (_) {
+    // network error — show auth screen
+  }
+})();
+
+// ================================================================
+//  DATA LOAD
+// ================================================================
+async function loadData() {
+  showLoading("Loading sheet data…");
+  try {
+    const r    = await fetch("/api/data");
+    if (!r.ok) throw new Error(await r.text());
+    const data = await r.json();
+
+    allRows = data.rows || [];
+    buildTeacherIndex();
+
+    hideLoading();
+    show("nav"); show("main");
+    renderPills();
+    renderTeacherList();
+    fetchPhotos(); // non-blocking
+  } catch (err) {
+    hideLoading();
+    toast("Failed to load data: " + err.message, true);
+  }
+}
+
+async function fetchPhotos() {
+  try {
+    const r = await fetch("/api/photos");
+    if (!r.ok) return;
+    photos = await r.json();
+    // Patch any already-rendered placeholders
+    document.querySelectorAll("[data-photo-its]").forEach((el) => {
+      const its = el.dataset.photoIts;
+      if (photos[its]) swapPhoto(el, its);
+    });
+  } catch (_) { /* silent */ }
+}
+
+// ================================================================
+//  TEACHER INDEX
+// ================================================================
+function buildTeacherIndex() {
+  teachers = {};
+  for (const row of allRows) {
+    const key = row.teacherKey;
+    if (!key) continue;
+    if (!teachers[key]) {
+      teachers[key] = { key, its: row.its, name: row.name, total: 0, rows: [] };
+    }
+    teachers[key].total += row.weekly;
+    teachers[key].rows.push(row);
+  }
+}
+
+function recalcTotals() {
+  for (const k in teachers) {
+    teachers[k].total = teachers[k].rows.reduce((s, r) => s + r.weekly, 0);
+  }
+}
+
+// ================================================================
+//  VIEW SWITCH
+// ================================================================
+function switchView(v) {
+  document.querySelectorAll(".view").forEach((el) => el.classList.remove("active"));
+  document.querySelectorAll(".nav-tab").forEach((el) => el.classList.remove("active"));
+  document.getElementById("view-" + v).classList.add("active");
+  document.getElementById("tab-" + v).classList.add("active");
+}
+
+// ================================================================
+//  CLASS WORKLOAD VIEW
+// ================================================================
+function renderPills() {
+  const classes = [...new Set(allRows.map((r) => r.class))]
+    .filter(Boolean)
+    .sort((a, b) => Number(a) - Number(b) || a.localeCompare(b));
+
+  const el = document.getElementById("class-pills");
+  el.innerHTML = "";
+  for (const cls of classes) {
+    const b = document.createElement("button");
+    b.className = "pill" + (activeClass === cls ? " active" : "");
+    b.textContent = "Class " + cls;
+    b.onclick = () => selectClass(cls);
+    el.appendChild(b);
+  }
+}
+
+function selectClass(cls) {
+  activeClass = cls;
+  document.querySelectorAll(".pill").forEach((b) =>
+    b.classList.toggle("active", b.textContent === "Class " + cls));
+  renderClassTable();
+}
+
+function renderClassTable() {
+  const rows = allRows
+    .filter((r) => r.class === activeClass)
+    .sort((a, b) => a.subject.localeCompare(b.subject) || a.bookName.localeCompare(b.bookName));
+
+  document.getElementById("class-title").textContent =
+    `Class ${activeClass} · ${rows.length} subjects`;
+  document.getElementById("sdot").classList.remove("hidden");
+
+  const wrap = document.getElementById("class-tbl");
+  if (!rows.length) {
+    wrap.innerHTML = '<div class="empty">No subjects found for this class.</div>';
+    return;
+  }
+
+  const opts = buildOpts();
+  let html = `<table><thead><tr>
+    <th>Sec</th><th>Subject</th><th>Book</th>
+    <th style="text-align:center">Wk</th>
+    <th>Assign Teacher (1449)</th>
+    <th style="text-align:center">History (1448)</th>
+  </tr></thead><tbody>`;
+
+  for (const row of rows) {
+    html += `<tr>
+      <td><span class="badge">${x(row.shorthand)}</span></td>
+      <td>${x(row.subject)}</td>
+      <td>${x(row.bookName)}</td>
+      <td class="num" style="text-align:center">${row.weekly}</td>
+      <td>
+        <select class="sel"
+          data-row="${row.rowNumber}"
+          data-weekly="${row.weekly}"
+          data-old-key="${x(row.teacherKey)}"
+          onchange="reassign(this)">
+          ${selectOpts(opts, row.teacherKey)}
+        </select>
+      </td>
+      <td class="hist" style="text-align:center">${row.periods1448 || "—"}</td>
+    </tr>`;
+  }
+  html += "</tbody></table>";
+  wrap.innerHTML = html;
+}
+
+// ================================================================
+//  TEACHER WORKLOAD VIEW
+// ================================================================
+function renderTeacherList() {
+  const sorted = Object.values(teachers).sort((a, b) => b.total - a.total);
+  const el     = document.getElementById("t-list");
+  el.innerHTML = "";
+
+  for (const t of sorted) {
+    const ov      = t.total > 30;
+    const initial = (t.name || t.its || "?")[0].toUpperCase();
+    const item    = document.createElement("div");
+    item.className = "t-item" + (activeKey === t.key ? " active" : "");
+    item.dataset.key = t.key;
+    item.onclick = () => selectTeacher(t.key);
+
+    const photoHtml = (t.its && photos[t.its])
+      ? `<img class="t-avatar" src="${photos[t.its]}" alt="${x(t.name)}" data-photo-its="${x(t.its)}">`
+      : `<div class="t-avatar-ph" data-photo-its="${x(t.its || "")}">${initial}</div>`;
+
+    item.innerHTML = `
+      ${photoHtml}
+      <div class="t-info">
+        <div class="t-name${ov ? " ov" : ""}">${x(t.name || t.its || "Unknown")}</div>
+        <div class="t-total${ov ? " ov" : ""}">${t.total} periods</div>
+      </div>`;
+    el.appendChild(item);
+  }
+}
+
+function selectTeacher(key) {
+  activeKey = key;
+  document.querySelectorAll(".t-item").forEach((el) =>
+    el.classList.toggle("active", el.dataset.key === key));
+  renderTeacherDetail(key);
+}
+
+function renderTeacherDetail(key) {
+  const t = teachers[key];
+  if (!t) return;
+
+  const panel   = document.getElementById("t-detail");
+  const ov      = t.total > 30;
+  const initial = (t.name || t.its || "?")[0].toUpperCase();
+  const opts    = buildOpts();
+
+  // Daera rows
+  let daeraTotal = 0;
+  const daeraSet = new Set();
+  for (const row of t.rows) {
+    const daera = (row.ustadDaera || "").trim().toLowerCase();
+    const subj  = (row.subject   || "").trim().toLowerCase();
+    const book  = (row.bookName  || "").trim().toLowerCase();
+    if (daera && (subj.includes(daera) || book.includes(daera) ||
+                  daera.includes(subj) || daera.includes(book))) {
+      daeraTotal += row.weekly;
+      daeraSet.add(row.rowNumber);
+    }
+  }
+
+  const photoHtml = (t.its && photos[t.its])
+    ? `<img class="t-avatar-lg" src="${photos[t.its]}" alt="${x(t.name)}" data-photo-its="${x(t.its)}">`
+    : `<div class="t-avatar-lg-ph" data-photo-its="${x(t.its || "")}">${initial}</div>`;
+
+  const sortedRows = [...t.rows].sort((a, b) =>
+    a.subject.localeCompare(b.subject) || a.bookName.localeCompare(b.bookName));
+
+  let rows = "";
+  for (const row of sortedRows) {
+    const isDaera = daeraSet.has(row.rowNumber);
+    rows += `<tr class="${isDaera ? "daera-row" : ""}">
+      <td><span class="badge">${x(row.shorthand)}</span></td>
+      <td>${x(row.subject)}</td>
+      <td>${x(row.bookName)}</td>
+      <td class="num" style="text-align:center">${row.weekly}</td>
+      <td>
+        <select class="sel"
+          data-row="${row.rowNumber}"
+          data-weekly="${row.weekly}"
+          data-old-key="${x(row.teacherKey)}"
+          onchange="reassign(this)">
+          ${selectOpts(opts, row.teacherKey)}
+        </select>
+      </td>
+    </tr>`;
+  }
+
+  panel.innerHTML = `
+    <div class="t-detail-hdr">
+      ${photoHtml}
+      <div class="t-detail-info">
+        <div class="t-detail-name">${x(t.name || t.its || "Unknown")}</div>
+        <div class="t-detail-sub">ITS: ${x(t.its || "—")}</div>
+        <div class="info-badges">
+          <span class="ibadge${ov ? " warn" : ""}">${t.total} periods${ov ? " ⚠" : ""}</span>
+          ${daeraTotal > 0 ? `<span class="ibadge daera">Daerat-Periods: ${daeraTotal}</span>` : ""}
+        </div>
+      </div>
+    </div>
+    <div class="tbl-wrap">
+      <table><thead><tr>
+        <th>Sec</th><th>Subject</th><th>Book</th>
+        <th style="text-align:center">Wk</th><th>Reassign To</th>
+      </tr></thead><tbody>${rows}</tbody></table>
+    </div>`;
+}
+
+// ================================================================
+//  DROPDOWNS
+// ================================================================
+function buildOpts() {
+  return Object.values(teachers)
+    .sort((a, b) => (a.name || "").localeCompare(b.name || ""))
+    .map((t) => ({ key: t.key, its: t.its, name: t.name || t.its || "Unknown", total: t.total }));
+}
+
+function selectOpts(opts, selectedKey) {
+  return opts.map((t) =>
+    `<option value="${x(t.key)}" data-name="${x(t.name)}" data-its="${x(t.its)}"${t.key === selectedKey ? " selected" : ""}>
+      ${x(t.name)} (${t.total})
+    </option>`
+  ).join("");
+}
+
+// ================================================================
+//  REASSIGN — instant math + background sync
+// ================================================================
+function reassign(sel) {
+  const rowNum  = Number(sel.dataset.row);
+  const weekly  = Number(sel.dataset.weekly);
+  const oldKey  = sel.dataset.oldKey;
+  const newKey  = sel.value;
+  const opt     = sel.options[sel.selectedIndex];
+  const newName = opt.dataset.name;
+  const newIts  = opt.dataset.its;
+
+  if (newKey === oldKey) return;
+
+  const row = allRows.find((r) => r.rowNumber === rowNum);
+  if (!row) return;
+
+  // Move row in teacher index
+  if (teachers[oldKey]) {
+    teachers[oldKey].rows = teachers[oldKey].rows.filter((r) => r.rowNumber !== rowNum);
+  }
+  row.its        = newIts;
+  row.name       = newName;
+  row.teacherKey = newKey;
+
+  if (!teachers[newKey]) {
+    teachers[newKey] = { key: newKey, its: newIts, name: newName, total: 0, rows: [] };
+  }
+  teachers[newKey].rows.push(row);
+
+  recalcTotals();
+  sel.dataset.oldKey = newKey;
+
+  // Refresh entire UI with updated totals
+  refreshDropdowns();
+  renderTeacherList();
+  if (activeKey) renderTeacherDetail(activeKey);
+
+  // Background write to sheet
+  syncToSheet(rowNum, newIts, newName);
+}
+
+function refreshDropdowns() {
+  const opts = buildOpts();
+  document.querySelectorAll(".sel").forEach((sel) => {
+    const cur = sel.value;
+    sel.innerHTML = selectOpts(opts, cur);
+    sel.dataset.oldKey = cur;
+  });
+}
+
+// ================================================================
+//  SYNC
+// ================================================================
+async function syncToSheet(rowNumber, newIts, newName) {
+  pendingSync++;
+  const dot = document.getElementById("sdot");
+  if (dot) { dot.className = "sdot"; dot.classList.remove("hidden"); }
+
+  try {
+    const r = await fetch("/api/sync", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ rowNumber, newIts, newName }),
+    });
+    const res = await r.json();
+    pendingSync = Math.max(0, pendingSync - 1);
+    if (pendingSync === 0 && dot) {
+      dot.className = "sdot ok";
+      setTimeout(() => dot.classList.add("hidden"), 2500);
+    }
+    if (!res.success && res.error) toast("Sync warning: " + res.error, true);
+  } catch (err) {
+    pendingSync = Math.max(0, pendingSync - 1);
+    if (dot) dot.className = "sdot err";
+    toast("Sync failed: " + err.message, true);
+  }
+}
+
+// ================================================================
+//  PHOTO SWAP
+// ================================================================
+function swapPhoto(el, its) {
+  if (!photos[its]) return;
+  const img = document.createElement("img");
+  img.src   = photos[its];
+  img.alt   = teachers[its]?.name || its;
+  img.className = el.classList.contains("t-avatar-lg-ph") ? "t-avatar-lg" : "t-avatar";
+  el.replaceWith(img);
+}
+
+// ================================================================
+//  UI HELPERS
+// ================================================================
+function show(id) { document.getElementById(id).classList.remove("hidden"); }
+function showLoading(msg) {
+  document.getElementById("loading").classList.remove("hidden");
+  document.getElementById("spin-msg").textContent = msg || "Loading…";
+}
+function hideLoading() { document.getElementById("loading").classList.add("hidden"); }
+
+let _toast = null;
+function toast(msg, isErr) {
+  const el = document.getElementById("toast");
+  el.textContent = msg;
+  el.className = "on" + (isErr ? " err" : "");
+  clearTimeout(_toast);
+  _toast = setTimeout(() => { el.className = ""; }, 3500);
+}
+
+function x(str) {
+  return String(str ?? "")
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+</script>
+</body>
+</html>
