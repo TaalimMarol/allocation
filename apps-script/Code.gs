@@ -99,7 +99,9 @@ function getAllData_() {
       bookName: String(getCol_(index, row, ["BookName", "bookname"])).trim(),
       weekly: Number(getCol_(index, row, ["Weekly", "weekly"])) || 0,
       its: its, teacherKey: its || "NAME:" + name, name: name,
-      periods1448: Number(getCol_(index, row, ["1448Tafweed"])) || 0,
+      periods1448: Number(getCol_(index, row, [
+        "1448Tafweed", "1448 Tafweed", "1448_Tafweed", "Tafweed1448"
+      ])) || 0,
       totalPeriod1449: Number(getCol_(index, row, ["Total_period_1449"])) || 0,
       teacherGender: String(getCol_(index, row, ["TeacherGender", "teacherGender"])).trim(),
       musaid: String(getCol_(index, row, ["Musaid", "musaid"])).trim(),
