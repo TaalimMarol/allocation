@@ -103,7 +103,10 @@ function getAllData_() {
       totalPeriod1449: Number(getCol_(index, row, ["Total_period_1449"])) || 0,
       teacherGender: String(getCol_(index, row, ["TeacherGender", "teacherGender"])).trim(),
       musaid: String(getCol_(index, row, ["Musaid", "musaid"])).trim(),
-      ustadDaera: String(getCol_(index, row, ["Ustad_Daera", "USTAD_DAERA", "ustad_daera", "ustadDaera"])).trim()
+      ustadDaera: String(getCol_(index, row, [
+        "Ustad_Daera", "USTAD_DAERA", "ustad_daera", "ustadDaera",
+        "Ustad Daera", "Daera", "Daerat", "Daerat_Name", "Daerat Name"
+      ])).trim()
     });
   }
   return { rows: rows, headers: headers };
@@ -129,7 +132,7 @@ function getTeacherPhotos_() {
   const files = DriveApp.getFolderById(CONFIG.photoFolderId).getFiles();
   while (files.hasNext()) {
     const file = files.next();
-    const match = file.getName().match(/^(\d+)\.(jpg|jpeg|png|webp)$/i);
+    const match = file.getName().trim().match(/^(\d+)(?:\.(jpg|jpeg|png|webp))?$/i);
     if (!match) continue;
     result[match[1]] = "data:" + file.getMimeType() + ";base64," +
       Utilities.base64Encode(file.getBlob().getBytes());

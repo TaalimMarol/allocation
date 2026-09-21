@@ -134,6 +134,7 @@ tbody tr:last-child{border-bottom:none}
 tbody tr:hover{background:#f8fafc}
 tbody td{padding:7px 12px;vertical-align:middle}
 tbody tr.daera-row{background:var(--green-bg)}
+tbody tr.daera-row td{background:var(--green-bg)}
 tbody tr.daera-row td:first-child{border-left:3px solid var(--green-bdr);padding-left:9px}
 
 .badge{
@@ -600,8 +601,9 @@ function renderTeacherList() {
     item.dataset.key = t.key;
     item.onclick = () => selectTeacher(t.key);
 
-    const photoHtml = (t.its && photos[t.its])
-      ? `<img class="t-avatar" src="${photos[t.its]}" alt="${x(t.name)}" data-photo-its="${x(t.its)}">`
+    const photo = getPhoto(t.its);
+    const photoHtml = (t.its && photo)
+      ? `<img class="t-avatar" src="${photo}" alt="${x(t.name)}" data-photo-its="${x(t.its)}">`
       : `<div class="t-avatar-ph" data-photo-its="${x(t.its || "")}">${initial}</div>`;
 
     item.innerHTML = `
@@ -634,18 +636,38 @@ function renderTeacherDetail(key) {
   let daeraTotal = 0;
   const daeraSet = new Set();
   for (const row of t.rows) {
-    const daera = (row.ustadDaera || "").trim().toLowerCase();
-    const subj  = (row.subject   || "").trim().toLowerCase();
-    const book  = (row.bookName  || "").trim().toLowerCase();
-    if (daera && (subj.includes(daera) || book.includes(daera) ||
-                  daera.includes(subj) || daera.includes(book))) {
+    const daera = normaliseMatchText(row.ustadDaera);
+    const subj  = normaliseMatchText(row.subject);
+    const book  = normaliseMatchText(row.bookName);
+    if (daera && isDaeraMatch(daera, subj, book)) {
       daeraTotal += row.weekly;
       daeraSet.add(row.rowNumber);
     }
+
+    function normaliseMatchText(value) {
+      return String(value || "")
+        .toLowerCase()
+        .replace(/[\u2018\u2019\u201b\u02bb]/g, "'")
+        .replace(/[^\p{L}\p{N}]+/gu, " ")
+        .trim()
+        .replace(/\s+/g, " ");
+    }
+
+    function isDaeraMatch(daera, subject, book) {
+      if (!daera) return false;
+      const values = [subject, book].filter(Boolean);
+      return values.some((value) =>
+        value === daera ||
+        value.includes(daera) ||
+        daera.includes(value) ||
+        value.split(" ").filter(Boolean).some((part) => part.length > 2 && daera.includes(part))
+      );
+    }
   }
 
-  const photoHtml = (t.its && photos[t.its])
-    ? `<img class="t-avatar-lg" src="${photos[t.its]}" alt="${x(t.name)}" data-photo-its="${x(t.its)}">`
+  const photo = getPhoto(t.its);
+  const photoHtml = (t.its && photo)
+    ? `<img class="t-avatar-lg" src="${photo}" alt="${x(t.name)}" data-photo-its="${x(t.its)}">`
     : `<div class="t-avatar-lg-ph" data-photo-its="${x(t.its || "")}">${initial}</div>`;
 
   const sortedRows = [...t.rows].sort((a, b) =>
@@ -790,12 +812,22 @@ async function syncToSheet(rowNumber, newIts, newName) {
 //  PHOTO SWAP
 // ================================================================
 function swapPhoto(el, its) {
-  if (!photos[its]) return;
+  const photo = getPhoto(its);
+  if (!photo) return;
   const img = document.createElement("img");
-  img.src   = photos[its];
+  img.src   = photo;
   img.alt   = teachers[its]?.name || its;
   img.className = el.classList.contains("t-avatar-lg-ph") ? "t-avatar-lg" : "t-avatar";
   el.replaceWith(img);
+}
+
+function getPhoto(its) {
+  const requested = String(its || "").trim();
+  if (!requested) return "";
+  const photoKey = Object.keys(photos).find((key) =>
+    String(key).trim() === requested ||
+    String(key).replace(/^0+/, "") === requested.replace(/^0+/, ""));
+  return photoKey ? photos[photoKey] : "";
 }
 
 // ================================================================
