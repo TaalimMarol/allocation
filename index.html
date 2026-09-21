@@ -238,20 +238,17 @@ tbody tr.daera-row td:first-child{border-left:4px solid #15803d;padding-left:8px
 }
 .daera-chart-title{font-size:14px;font-weight:700;color:var(--navy)}
 .daera-chart-total{font-size:11px;color:var(--muted);white-space:nowrap}
-.daera-bars{display:flex;flex-direction:column;gap:10px}
-.daera-bar-row{display:grid;grid-template-columns:minmax(90px,34%) 1fr 38px;align-items:center;gap:8px}
-.daera-bar-label{font-size:11px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.daera-bar-track{height:18px;background:#e2e8f0;border-radius:999px;overflow:hidden}
-.daera-bar-fill{
-  height:100%;min-width:3px;border-radius:999px;
-  background:linear-gradient(90deg,var(--sky),var(--navy-dim));
-  transition:width .25s ease;
-}
-.daera-bar-value{text-align:right;font-size:11px;font-weight:700;font-variant-numeric:tabular-nums}
-.daera-bar-meta{grid-column:2 / 4;margin-top:-6px;font-size:10px;color:var(--muted)}
+.daera-summary{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+.daera-summary-badge{padding:4px 9px;border-radius:10px;background:var(--badge-bg);color:var(--badge-txt);font-size:11px;font-weight:700}
+.daera-summary-badge.green{background:var(--green-bg);color:#166534;border:1px solid #86efac}
+.daera-teachers{display:flex;flex-direction:column;gap:7px}
+.daera-teacher-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 10px;border-radius:var(--rs);background:#f8fafc;border:1px solid #e2e8f0}
+.daera-teacher-name{min-width:0;font-size:12px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.daera-teacher-periods{font-size:11px;color:var(--navy);font-weight:700;white-space:nowrap}
+.daera-teacher-daera{font-size:10px;color:#166534;background:var(--green-bg);border:1px solid #86efac;border-radius:9px;padding:2px 7px;white-space:nowrap}
 @media(max-width:680px){
   .daera-charts{grid-template-columns:1fr;padding:10px}
-  .daera-bar-row{grid-template-columns:minmax(80px,34%) 1fr 34px}
+  .daera-teacher-row{align-items:flex-start;flex-direction:column;gap:4px}
 }
 
 /* ── ANALYTICS ──────────────────────────────────── */
@@ -860,61 +857,50 @@ function renderTeacherDetail(key) {
 //  DISTRIBUTION VIEWS
 // ================================================================
 function renderDaeraDistribution() {
-  const daeraNames = {};
-  allRows.forEach((row) => {
-    const name = String(row.ustadDaera || "").trim();
-    if (name) daeraNames[name.toLocaleLowerCase()] = name;
-  });
-  const daeras = Object.keys(daeraNames).map((key) => daeraNames[key])
-    .sort((a, b) => a.localeCompare(b));
   const wrap = document.getElementById("daera-tbl");
-  if (!daeras.length) {
-    wrap.innerHTML = '<div class="empty">No Daerat allocations found.</div>';
-    return;
-  }
   const subjects = {};
   allRows.forEach((row) => {
     const subject = String(row.subject || "").trim();
-    const daera = String(row.ustadDaera || "").trim();
-    const canonical = daera ? daeraNames[daera.toLocaleLowerCase()] : "";
-    if (!subject || !canonical) return;
-    if (!subjects[subject]) subjects[subject] = { total: 0, daeras: {} };
-    if (!subjects[subject].daeras[canonical]) {
-      subjects[subject].daeras[canonical] = { periods: 0, teachers: new Set() };
+    if (!subject) return;
+    const teacher = String(row.name || row.its || "Unassigned").trim();
+    const periods = Number(row.weekly) || 0;
+    const daeraPeriods = String(row.ustadDaera || "").trim() ? periods : 0;
+    if (!subjects[subject]) subjects[subject] = { total: 0, daeraTotal: 0, teachers: {} };
+    subjects[subject].total += periods;
+    subjects[subject].daeraTotal += daeraPeriods;
+    if (!subjects[subject].teachers[teacher]) {
+      subjects[subject].teachers[teacher] = { periods: 0, daeraPeriods: 0 };
     }
-    const entry = subjects[subject].daeras[canonical];
-    entry.periods += Number(row.weekly) || 0;
-    if (row.teacherKey) entry.teachers.add(row.teacherKey);
-    subjects[subject].total += Number(row.weekly) || 0;
+    subjects[subject].teachers[teacher].periods += periods;
+    subjects[subject].teachers[teacher].daeraPeriods += daeraPeriods;
   });
   const sorted = Object.keys(subjects)
     .map((subject) => ({ subject, ...subjects[subject] }))
-    .filter((entry) => entry.total > 0)
     .sort((a, b) => b.total - a.total || a.subject.localeCompare(b.subject));
   if (!sorted.length) {
-    wrap.innerHTML = '<div class="empty">No weekly Daerat allocations found.</div>';
+    wrap.innerHTML = '<div class="empty">No Daerat allocations found.</div>';
     return;
   }
   let html = '<div class="daera-charts">';
   sorted.forEach((chart) => {
-    const bars = Object.keys(chart.daeras)
-      .map((daera) => ({ daera, ...chart.daeras[daera] }))
-      .sort((a, b) => b.periods - a.periods || a.daera.localeCompare(b.daera));
-    const max = Math.max(...bars.map((bar) => bar.periods), 1);
+    const teachers = Object.keys(chart.teachers)
+      .map((teacher) => ({ teacher, ...chart.teachers[teacher] }))
+      .sort((a, b) => b.periods - a.periods || a.teacher.localeCompare(b.teacher));
     html += `<section class="daera-chart">
       <div class="daera-chart-hdr">
         <h3 class="daera-chart-title">${x(chart.subject)}</h3>
-        <span class="daera-chart-total">${chart.total} periods</span>
+        <span class="daera-chart-total">${teachers.length} teacher${teachers.length === 1 ? "" : "s"}</span>
       </div>
-      <div class="daera-bars">`;
-    bars.forEach((bar) => {
-      const width = Math.max((bar.periods / max) * 100, 2);
-      const teacherCount = bar.teachers.size;
-      html += `<div class="daera-bar-row">
-        <div class="daera-bar-label" title="${x(bar.daera)}">${x(bar.daera)}</div>
-        <div class="daera-bar-track"><div class="daera-bar-fill" style="width:${width}%"></div></div>
-        <div class="daera-bar-value">${bar.periods}</div>
-        <div class="daera-bar-meta">${teacherCount} teacher${teacherCount === 1 ? "" : "s"}</div>
+      <div class="daera-summary">
+        <span class="daera-summary-badge">Assigned: ${chart.total} periods</span>
+        <span class="daera-summary-badge green">Daera: ${chart.daeraTotal} periods</span>
+      </div>
+      <div class="daera-teachers">`;
+    teachers.forEach((entry) => {
+      html += `<div class="daera-teacher-row">
+        <span class="daera-teacher-name">${x(entry.teacher)}</span>
+        <span class="daera-teacher-periods">(${entry.periods} periods)</span>
+        ${entry.daeraPeriods > 0 ? `<span class="daera-teacher-daera">Daera: ${entry.daeraPeriods}</span>` : ""}
       </div>`;
     });
     html += "</div></section>";
