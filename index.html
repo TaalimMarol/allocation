@@ -6,7 +6,6 @@
 <link rel="icon" href="data:," />
 <title>Allocation Dashboard · Jamea Saifiyah</title>
 <script src="config.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <style>
 /* ── TOKENS ─────────────────────────────────────── */
@@ -259,15 +258,24 @@ tbody tr.daera-row td:first-child{border-left:4px solid #15803d;padding-left:8px
 .metric-card{padding:12px 14px;border:1px solid var(--border);border-radius:var(--r);background:var(--surface)}
 .metric-label{font-size:11px;color:var(--muted);font-weight:600}
 .metric-value{margin-top:3px;font-size:22px;line-height:1.1;color:var(--navy);font-weight:750;font-variant-numeric:tabular-nums}
-.analytics-chart-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:0 14px 14px}
-.analytics-chart-card{min-height:350px;padding:14px;border:1px solid var(--border);border-radius:var(--r);background:var(--surface)}
-.analytics-chart-card h3{margin-bottom:10px;font-size:13px;color:var(--navy)}
-.analytics-chart-wrap{height:285px;position:relative}
 .analytics-table-wrap{padding:0 14px 14px;overflow:auto}
 .multi-badge{display:inline-block;margin-left:6px;padding:2px 7px;border-radius:10px;background:#fef3c7;color:#92400e;font-size:10px;font-weight:700;white-space:nowrap}
+.hierarchy{border:1px solid var(--border);border-radius:var(--r);overflow:hidden;background:var(--surface)}
+.hierarchy-root{padding:11px 14px;background:var(--navy);color:#fff;font-size:14px;font-weight:700}
+.hierarchy-branch{border-top:1px solid var(--border)}
+.hierarchy-branch-title{display:flex;justify-content:space-between;gap:10px;padding:9px 14px;background:#dbeafe;color:var(--navy);font-size:13px;font-weight:700}
+.hierarchy-branch-title.green{background:#dcfce7;color:#166534}
+.hierarchy-periods{font-size:11px;font-weight:700;white-space:nowrap}
+.hierarchy-subject{border-top:1px solid #e2e8f0}
+.hierarchy-subject-title{display:flex;justify-content:space-between;gap:10px;padding:8px 14px 8px 30px;background:#f8fafc;color:var(--text);font-size:12px;font-weight:700}
+.hierarchy-teacher{display:flex;justify-content:space-between;gap:10px;padding:7px 14px 7px 50px;border-top:1px solid #f1f5f9;font-size:12px}
+.hierarchy-teacher.multi{background:#fffbeb;color:#92400e;font-weight:700}
+.hierarchy-teacher-name{min-width:0;overflow:hidden;text-overflow:ellipsis}
+.hierarchy-teacher-periods{font-weight:700;white-space:nowrap}
+.hierarchy-empty{padding:28px;text-align:center;color:var(--muted)}
 @media(max-width:760px){
   .metric-grid{grid-template-columns:repeat(2,1fr)}
-  .analytics-chart-grid{grid-template-columns:1fr}
+  .hierarchy-teacher{padding-left:30px}
 }
 
 /* ── TOAST ───────────────────────────────────────── */
@@ -350,9 +358,9 @@ tbody tr.daera-row td:first-child{border-left:4px solid #15803d;padding-left:8px
   <div class="nav-tabs">
     <button class="nav-tab active" id="tab-class"   onclick="switchView('class')">Class Workload</button>
     <button class="nav-tab"       id="tab-teacher" onclick="switchView('teacher')">Teacher Workload</button>
-    <button class="nav-tab"       id="tab-daera" onclick="switchView('daera')">Daerat Distribution</button>
+    <button class="nav-tab"       id="tab-daera" onclick="switchView('daera')">DAWAIR Distribution</button>
     <button class="nav-tab"       id="tab-subject" onclick="switchView('subject')">Subject Distribution</button>
-    <button class="nav-tab"       id="tab-analytics" onclick="switchView('analytics')">Analytics</button>
+    <button class="nav-tab"       id="tab-analytics" onclick="switchView('analytics')">Uloom Kauniyah/ Insaniyah</button>
   </div>
   <div class="nav-right">
     <span class="nav-email" id="nav-email"></span>
@@ -394,7 +402,7 @@ tbody tr.daera-row td:first-child{border-left:4px solid #15803d;padding-left:8px
   <!-- DAERA DISTRIBUTION VIEW -->
   <div class="view" id="view-daera">
     <div class="panel">
-      <div class="panel-hdr"><h2>Daerat distribution · subject-wise weekly allocations</h2></div>
+      <div class="panel-hdr"><h2>DAWAIR distribution · subject-wise teacher periods</h2></div>
       <div id="daera-tbl">
         <div class="empty">No Daerat allocations found.</div>
       </div>
@@ -424,7 +432,7 @@ tbody tr.daera-row td:first-child{border-left:4px solid #15803d;padding-left:8px
   <!-- SUBJECT & TEACHER ANALYTICS VIEW -->
   <div class="view" id="view-analytics">
     <div class="panel">
-      <div class="panel-hdr"><h2>Subject &amp; Teacher Analytics</h2></div>
+      <div class="panel-hdr"><h2>Uloom Kauniyah/ Insaniyah</h2></div>
       <div class="analytics-controls">
         <select id="analytics-book-select" class="filter-select" aria-label="Filter by book"></select>
         <input id="analytics-search" class="analytics-search" type="search"
@@ -436,10 +444,6 @@ tbody tr.daera-row td:first-child{border-left:4px solid #15803d;padding-left:8px
         <div class="metric-card"><div class="metric-label">Total Teachers</div><div class="metric-value" id="metric-teachers">0</div></div>
         <div class="metric-card"><div class="metric-label">Active Subject Groups</div><div class="metric-value" id="metric-groups">0</div></div>
         <div class="metric-card"><div class="metric-label">Multi-Group Teachers</div><div class="metric-value" id="metric-multi">0</div></div>
-      </div>
-      <div class="analytics-chart-grid">
-        <section class="analytics-chart-card"><h3>Subject Group Distribution</h3><div class="analytics-chart-wrap"><canvas id="subject-group-chart"></canvas></div></section>
-        <section class="analytics-chart-card"><h3>Teacher Workload Distribution</h3><div class="analytics-chart-wrap"><canvas id="teacher-workload-chart"></canvas></div></section>
       </div>
       <div class="analytics-table-wrap" id="analytics-table">
         <div class="empty">No matching allocations found.</div>
@@ -464,8 +468,6 @@ let activeSubject  = "";
 let activeSubjectClass = "";
 let activeSubjectBook = "all";
 let historyHeader = "1448 Tafweed";
-let analyticsSubjectChart = null;
-let analyticsTeacherChart = null;
 let pendingSync    = 0;
 let googleToken    = sessionStorage.getItem("allocation_google_token") || "";
 let googleEmail    = sessionStorage.getItem("allocation_google_email") || "";
@@ -858,52 +860,50 @@ function renderTeacherDetail(key) {
 // ================================================================
 function renderDaeraDistribution() {
   const wrap = document.getElementById("daera-tbl");
-  const subjects = {};
+  const daewair = {};
   allRows.forEach((row) => {
+    const daera = String(row.ustadDaera || "").trim();
     const subject = String(row.subject || "").trim();
-    if (!subject) return;
+    if (!daera || !subject) return;
     const teacher = String(row.name || row.its || "Unassigned").trim();
     const periods = Number(row.weekly) || 0;
-    const daeraPeriods = String(row.ustadDaera || "").trim() ? periods : 0;
-    if (!subjects[subject]) subjects[subject] = { total: 0, daeraTotal: 0, teachers: {} };
-    subjects[subject].total += periods;
-    subjects[subject].daeraTotal += daeraPeriods;
-    if (!subjects[subject].teachers[teacher]) {
-      subjects[subject].teachers[teacher] = { periods: 0, daeraPeriods: 0 };
+    if (!daewair[daera]) daewair[daera] = { total: 0, subjects: {} };
+    if (!daewair[daera].subjects[subject]) {
+      daewair[daera].subjects[subject] = { total: 0, teachers: {} };
     }
-    subjects[subject].teachers[teacher].periods += periods;
-    subjects[subject].teachers[teacher].daeraPeriods += daeraPeriods;
+    const branch = daewair[daera].subjects[subject];
+    if (!branch.teachers[teacher]) branch.teachers[teacher] = 0;
+    branch.teachers[teacher] += periods;
+    branch.total += periods;
+    daewair[daera].total += periods;
   });
-  const sorted = Object.keys(subjects)
-    .map((subject) => ({ subject, ...subjects[subject] }))
-    .sort((a, b) => b.total - a.total || a.subject.localeCompare(b.subject));
-  if (!sorted.length) {
+  const roots = Object.keys(daewair)
+    .map((daera) => ({ daera, ...daewair[daera] }))
+    .sort((a, b) => a.daera.localeCompare(b.daera));
+  if (!roots.length) {
     wrap.innerHTML = '<div class="empty">No Daerat allocations found.</div>';
     return;
   }
-  let html = '<div class="daera-charts">';
-  sorted.forEach((chart) => {
-    const teachers = Object.keys(chart.teachers)
-      .map((teacher) => ({ teacher, ...chart.teachers[teacher] }))
-      .sort((a, b) => b.periods - a.periods || a.teacher.localeCompare(b.teacher));
-    html += `<section class="daera-chart">
-      <div class="daera-chart-hdr">
-        <h3 class="daera-chart-title">${x(chart.subject)}</h3>
-        <span class="daera-chart-total">${teachers.length} teacher${teachers.length === 1 ? "" : "s"}</span>
-      </div>
-      <div class="daera-summary">
-        <span class="daera-summary-badge">Assigned: ${chart.total} periods</span>
-        <span class="daera-summary-badge green">Daera: ${chart.daeraTotal} periods</span>
-      </div>
-      <div class="daera-teachers">`;
-    teachers.forEach((entry) => {
-      html += `<div class="daera-teacher-row">
-        <span class="daera-teacher-name">${x(entry.teacher)}</span>
-        <span class="daera-teacher-periods">(${entry.periods} periods)</span>
-        ${entry.daeraPeriods > 0 ? `<span class="daera-teacher-daera">Daera: ${entry.daeraPeriods}</span>` : ""}
-      </div>`;
+  let html = '<div class="hierarchy"><div class="hierarchy-root">DAWAIR</div>';
+  roots.forEach((root) => {
+    html += `<section class="hierarchy-branch">
+      <div class="hierarchy-branch-title green"><span>${x(root.daera)}</span>
+        <span class="hierarchy-periods">${root.total} periods</span></div>`;
+    Object.keys(root.subjects).sort().forEach((subject) => {
+      const branch = root.subjects[subject];
+      html += `<div class="hierarchy-subject">
+        <div class="hierarchy-subject-title"><span>${x(subject)}</span>
+          <span class="hierarchy-periods">${branch.total} periods</span></div>`;
+      Object.keys(branch.teachers).sort((a, b) => branch.teachers[b] - branch.teachers[a] || a.localeCompare(b))
+        .forEach((teacher) => {
+          html += `<div class="hierarchy-teacher">
+            <span class="hierarchy-teacher-name">${x(teacher)}</span>
+            <span class="hierarchy-teacher-periods">(${branch.teachers[teacher]} periods)</span>
+          </div>`;
+        });
+      html += "</div>";
     });
-    html += "</div></section>";
+    html += "</section>";
   });
   wrap.innerHTML = html + "</div>";
 }
@@ -985,14 +985,12 @@ const ANALYTICS_GROUPS = {
   "Mathematics": ["Maths"],
   "Specialized Studies": ["Architecture", "Dawat Litigation", "HCIW", "Religions of the World"]
 };
-const ANALYTICS_COLORS = ["#2563eb", "#0f766e", "#d97706", "#7c3aed", "#db2777", "#64748b"];
-
 function analyticsSubjectGroup(row) {
   const book = String(row.bookName || "").trim().toLowerCase();
   for (const group in ANALYTICS_GROUPS) {
     if (ANALYTICS_GROUPS[group].some((name) => name.toLowerCase() === book)) return group;
   }
-  return String(row.subject || "").trim() || "Other";
+  return "";
 }
 
 function populateAnalyticsFilters() {
@@ -1010,23 +1008,25 @@ function populateAnalyticsFilters() {
 function renderAnalytics() {
   const select = document.getElementById("analytics-book-select");
   const searchEl = document.getElementById("analytics-search");
-  if (!select || !searchEl || typeof Chart === "undefined") return;
+  const table = document.getElementById("analytics-table");
+  if (!select || !searchEl || !table) return;
   const selectedBook = select.value || "all";
   const query = searchEl.value.trim().toLowerCase();
   const rows = allRows.filter((row) => {
     const matchesBook = selectedBook === "all" || row.bookName === selectedBook;
     const haystack = [row.name, row.its, row.subject, row.bookName].join(" ").toLowerCase();
-    return matchesBook && (!query || haystack.includes(query));
+    return matchesBook && analyticsSubjectGroup(row) &&
+      (!query || haystack.includes(query));
   });
-  const groupTotals = {};
-  const teacherTotals = {};
+  const groups = {};
   const teacherGroups = {};
   rows.forEach((row) => {
     const periods = Number(row.weekly) || 0;
     const group = analyticsSubjectGroup(row);
     const teacher = row.name || row.its || "Unassigned";
-    groupTotals[group] = (groupTotals[group] || 0) + periods;
-    teacherTotals[teacher] = (teacherTotals[teacher] || 0) + periods;
+    if (!groups[group]) groups[group] = { total: 0, teachers: {} };
+    groups[group].total += periods;
+    groups[group].teachers[teacher] = (groups[group].teachers[teacher] || 0) + periods;
     if (!teacherGroups[teacher]) teacherGroups[teacher] = new Set();
     teacherGroups[teacher].add(group);
   });
@@ -1034,92 +1034,32 @@ function renderAnalytics() {
     .filter((teacher) => teacherGroups[teacher].size > 1));
   const totalPeriods = rows.reduce((sum, row) => sum + (Number(row.weekly) || 0), 0);
   document.getElementById("metric-periods").textContent = totalPeriods;
-  document.getElementById("metric-teachers").textContent = Object.keys(teacherTotals).length;
-  document.getElementById("metric-groups").textContent = Object.keys(groupTotals).length;
+  document.getElementById("metric-teachers").textContent = Object.keys(teacherGroups).length;
+  document.getElementById("metric-groups").textContent = Object.keys(groups).length;
   document.getElementById("metric-multi").textContent = multiTeachers.size;
-
-  if (analyticsSubjectChart) analyticsSubjectChart.destroy();
-  if (analyticsTeacherChart) analyticsTeacherChart.destroy();
-  const subjectCanvas = document.getElementById("subject-group-chart");
-  const teacherCanvas = document.getElementById("teacher-workload-chart");
-  teacherCanvas.parentElement.style.height = "285px";
-  const groups = Object.keys(groupTotals).sort((a, b) => groupTotals[b] - groupTotals[a]);
-  const teachersByLoad = Object.keys(teacherTotals)
-    .sort((a, b) => teacherTotals[b] - teacherTotals[a]);
-  analyticsSubjectChart = new Chart(subjectCanvas, {
-    type: "doughnut",
-    data: {
-      labels: groups,
-      datasets: [{ data: groups.map((group) => groupTotals[group]),
-        backgroundColor: groups.map((_, i) => ANALYTICS_COLORS[i % ANALYTICS_COLORS.length]),
-        borderWidth: 2, borderColor: "#fff" }]
-    },
-    options: {
-      responsive: true, maintainAspectRatio: false, cutout: "64%",
-      plugins: {
-        legend: { position: "bottom", labels: { boxWidth: 12, padding: 12 } },
-        tooltip: { callbacks: { label: (context) => {
-          const value = context.parsed || 0;
-          const percent = totalPeriods ? ((value / totalPeriods) * 100).toFixed(1) : "0.0";
-          return `${context.label}: ${value} periods (${percent}%)`;
-        } } }
-      }
-    },
-    plugins: [{
-      id: "analyticsCenterText",
-      afterDraw(chart) {
-        const area = chart.chartArea;
-        if (!area) return;
-        const ctx = chart.ctx;
-        ctx.save();
-        ctx.font = "700 22px system-ui";
-        ctx.fillStyle = "#1e3a8a";
-        ctx.textAlign = "center";
-        ctx.textBaseline = "middle";
-        ctx.fillText(totalPeriods, (area.left + area.right) / 2, (area.top + area.bottom) / 2 - 7);
-        ctx.font = "11px system-ui";
-        ctx.fillStyle = "#64748b";
-        ctx.fillText("periods", (area.left + area.right) / 2, (area.top + area.bottom) / 2 + 13);
-        ctx.restore();
-      }
-    }]
-  });
-  analyticsTeacherChart = new Chart(teacherCanvas, {
-    type: "bar",
-    data: { labels: teachersByLoad, datasets: [{ label: "Periods",
-      data: teachersByLoad.map((teacher) => teacherTotals[teacher]),
-      backgroundColor: teachersByLoad.map((teacher) =>
-        multiTeachers.has(teacher) ? "#f59e0b" : "#2563eb"),
-      borderRadius: 4, barThickness: 16 }] },
-    options: {
-      indexAxis: "y", responsive: true, maintainAspectRatio: false,
-      scales: { x: { beginAtZero: true, ticks: { precision: 0 } },
-        y: { ticks: { autoSkip: false, font: { size: 10 } } } },
-      plugins: {
-        legend: { display: false },
-        tooltip: { callbacks: { label: (context) =>
-          `${context.parsed.x} periods${multiTeachers.has(context.label) ? " · Multi-Group Teacher" : ""}` } }
-      }
-    }
-  });
-  teacherCanvas.parentElement.style.height = Math.max(285, teachersByLoad.length * 28 + 50) + "px";
-  const table = document.getElementById("analytics-table");
   if (!rows.length) {
     table.innerHTML = '<div class="empty">No matching allocations found.</div>';
     return;
   }
-  const sortedRows = [...rows].sort((a, b) =>
-    (a.name || a.its || "").localeCompare(b.name || b.its || "") ||
-    a.subject.localeCompare(b.subject));
-  table.innerHTML = `<table><thead><tr><th>Teacher</th><th>ITS</th><th>Class</th>
-    <th>Section</th><th>Subject</th><th>Book</th><th style="text-align:center">Periods</th></tr></thead><tbody>` +
-    sortedRows.map((row) => {
-      const teacher = row.name || row.its || "Unassigned";
-      const badge = multiTeachers.has(teacher) ? '<span class="multi-badge">Multi-Group Teacher</span>' : "";
-      return `<tr><td>${x(teacher)}${badge}</td><td>${x(row.its || "—")}</td>
-        <td>${x(row.class)}</td><td>${x(row.section)}</td><td>${x(row.subject || "—")}</td>
-        <td>${x(row.bookName || "—")}</td><td class="num" style="text-align:center">${Number(row.weekly) || 0}</td></tr>`;
-    }).join("") + "</tbody></table>";
+  let html = '<div class="hierarchy"><div class="hierarchy-root">Uloom Kauniyah/ Insaniyah</div>';
+  Object.keys(ANALYTICS_GROUPS).forEach((group) => {
+    if (!groups[group]) return;
+    html += `<section class="hierarchy-branch">
+      <div class="hierarchy-branch-title"><span>${x(group)}</span>
+        <span class="hierarchy-periods">${groups[group].total} periods</span></div>`;
+    Object.keys(groups[group].teachers)
+      .sort((a, b) => groups[group].teachers[b] - groups[group].teachers[a] || a.localeCompare(b))
+      .forEach((teacher) => {
+        const multi = multiTeachers.has(teacher) ? " multi" : "";
+        const badge = multi ? '<span class="multi-badge">Multiple groups</span>' : "";
+        html += `<div class="hierarchy-teacher${multi}">
+          <span class="hierarchy-teacher-name">${x(teacher)}${badge}</span>
+          <span class="hierarchy-teacher-periods">(${groups[group].teachers[teacher]} periods)</span>
+        </div>`;
+      });
+    html += "</section>";
+  });
+  table.innerHTML = html + "</div>";
 }
 
 // ================================================================
