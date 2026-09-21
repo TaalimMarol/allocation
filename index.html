@@ -133,9 +133,9 @@ tbody tr{border-bottom:1px solid #f1f5f9}
 tbody tr:last-child{border-bottom:none}
 tbody tr:hover{background:#f8fafc}
 tbody td{padding:7px 12px;vertical-align:middle}
-tbody tr.daera-row{background:var(--green-bg)}
-tbody tr.daera-row td{background:var(--green-bg)}
-tbody tr.daera-row td:first-child{border-left:3px solid var(--green-bdr);padding-left:9px}
+tbody tr.daera-row{background:#bbf7d0}
+tbody tr.daera-row td{background:#bbf7d0}
+tbody tr.daera-row td:first-child{border-left:4px solid #15803d;padding-left:8px}
 
 .badge{
   display:inline-block;background:var(--badge-bg);color:var(--badge-txt);
@@ -822,7 +822,7 @@ function swapPhoto(el, its) {
 }
 
 function getPhoto(its) {
-  const requested = String(its || "").trim();
+  const requested = String(its || "").replace(/\D/g, "");
   if (!requested) return "";
   const photoKey = Object.keys(photos).find((key) =>
     String(key).trim() === requested ||

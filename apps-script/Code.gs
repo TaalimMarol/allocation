@@ -129,15 +129,22 @@ function syncRow_(rowNumber, newIts, newName) {
 function getTeacherPhotos_() {
   if (!CONFIG.photoFolderId || CONFIG.photoFolderId.indexOf("PASTE_") === 0) return {};
   const result = {};
-  const files = DriveApp.getFolderById(CONFIG.photoFolderId).getFiles();
+  collectTeacherPhotos_(DriveApp.getFolderById(CONFIG.photoFolderId), result);
+  return result;
+}
+
+function collectTeacherPhotos_(folder, result) {
+  const files = folder.getFiles();
   while (files.hasNext()) {
     const file = files.next();
-    const match = file.getName().trim().match(/^(\d+)(?:\.(jpg|jpeg|png|webp))?$/i);
+    if (String(file.getMimeType()).toLowerCase().indexOf("image/") !== 0) continue;
+    const match = file.getName().trim().match(/(?:^|[^0-9])(\d{8})(?:[^0-9]|$)/);
     if (!match) continue;
     result[match[1]] = "data:" + file.getMimeType() + ";base64," +
       Utilities.base64Encode(file.getBlob().getBytes());
   }
-  return result;
+  const folders = folder.getFolders();
+  while (folders.hasNext()) collectTeacherPhotos_(folders.next(), result);
 }
 
 function getSheet_() {
