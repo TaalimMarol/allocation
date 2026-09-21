@@ -858,13 +858,35 @@ function renderTeacherDetail(key) {
 // ================================================================
 //  DISTRIBUTION VIEWS
 // ================================================================
+function normaliseDaeraSubject(value) {
+  return String(value || "")
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}]+/gu, " ")
+    .trim()
+    .replace(/\s+/g, " ");
+}
+
+function isDaeraSubjectMatch(daera, subject) {
+  const left = normaliseDaeraSubject(daera);
+  const right = normaliseDaeraSubject(subject);
+  if (!left || !right) return false;
+  if (left === right || left.includes(right) || right.includes(left)) return true;
+  const leftWords = left.split(" ").filter((word) => word.length > 2);
+  const rightWords = right.split(" ").filter((word) => word.length > 2);
+  return leftWords.some((leftWord) => rightWords.some((rightWord) =>
+    leftWord === rightWord ||
+    leftWord.startsWith(rightWord) ||
+    rightWord.startsWith(leftWord)
+  ));
+}
+
 function renderDaeraDistribution() {
   const wrap = document.getElementById("daera-tbl");
   const daewair = {};
   allRows.forEach((row) => {
     const daera = String(row.ustadDaera || "").trim();
     const subject = String(row.subject || "").trim();
-    if (!daera || !subject) return;
+    if (!isDaeraSubjectMatch(daera, subject)) return;
     const teacher = String(row.name || row.its || "Unassigned").trim();
     const periods = Number(row.weekly) || 0;
     if (!daewair[daera]) daewair[daera] = { total: 0, subjects: {} };
@@ -884,7 +906,7 @@ function renderDaeraDistribution() {
     wrap.innerHTML = '<div class="empty">No Daerat allocations found.</div>';
     return;
   }
-  let html = '<div class="hierarchy"><div class="hierarchy-root">DAWAIR</div>';
+  let html = '<div class="hierarchy"><div class="hierarchy-root">DAWAIR <span class="hierarchy-periods">(Ustad Daera)</span></div>';
   roots.forEach((root) => {
     html += `<section class="hierarchy-branch">
       <div class="hierarchy-branch-title green"><span>${x(root.daera)}</span>
