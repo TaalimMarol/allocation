@@ -222,6 +222,37 @@ tbody tr.daera-row td:first-child{border-left:4px solid #15803d;padding-left:8px
 .filter-select{min-width:170px;padding:6px 8px;border:1.5px solid var(--border);border-radius:var(--rs);background:#fff;color:var(--text)}
 .filter-select:focus{outline:none;border-color:var(--sky)}
 
+/* ── DAERA CHARTS ───────────────────────────────── */
+.daera-charts{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));
+  gap:14px;padding:14px;background:#f8fafc;
+}
+.daera-chart{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--r);padding:14px 16px;box-shadow:var(--shadow);
+}
+.daera-chart-hdr{
+  display:flex;align-items:baseline;justify-content:space-between;
+  gap:10px;margin-bottom:14px;
+}
+.daera-chart-title{font-size:14px;font-weight:700;color:var(--navy)}
+.daera-chart-total{font-size:11px;color:var(--muted);white-space:nowrap}
+.daera-bars{display:flex;flex-direction:column;gap:10px}
+.daera-bar-row{display:grid;grid-template-columns:minmax(90px,34%) 1fr 38px;align-items:center;gap:8px}
+.daera-bar-label{font-size:11px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.daera-bar-track{height:18px;background:#e2e8f0;border-radius:999px;overflow:hidden}
+.daera-bar-fill{
+  height:100%;min-width:3px;border-radius:999px;
+  background:linear-gradient(90deg,var(--sky),var(--navy-dim));
+  transition:width .25s ease;
+}
+.daera-bar-value{text-align:right;font-size:11px;font-weight:700;font-variant-numeric:tabular-nums}
+.daera-bar-meta{grid-column:2 / 4;margin-top:-6px;font-size:10px;color:var(--muted)}
+@media(max-width:680px){
+  .daera-charts{grid-template-columns:1fr;padding:10px}
+  .daera-bar-row{grid-template-columns:minmax(80px,34%) 1fr 34px}
+}
+
 /* ── TOAST ───────────────────────────────────────── */
 #toast{
   position:fixed;bottom:20px;right:20px;z-index:300;
@@ -345,8 +376,8 @@ tbody tr.daera-row td:first-child{border-left:4px solid #15803d;padding-left:8px
   <!-- DAERA DISTRIBUTION VIEW -->
   <div class="view" id="view-daera">
     <div class="panel">
-      <div class="panel-hdr"><h2>Daerat distribution · weekly allocations by teacher</h2></div>
-      <div class="tbl-wrap" id="daera-tbl">
+      <div class="panel-hdr"><h2>Daerat distribution · subject-wise weekly allocations</h2></div>
+      <div id="daera-tbl">
         <div class="empty">No Daerat allocations found.</div>
       </div>
     </div>
@@ -789,35 +820,54 @@ function renderDaeraDistribution() {
     wrap.innerHTML = '<div class="empty">No Daerat allocations found.</div>';
     return;
   }
-  const totals = {};
-  Object.keys(teachers).forEach((key) => {
-    totals[key] = { teacher: teachers[key], values: {}, total: 0, hasDaera: false };
-    daeras.forEach((d) => { totals[key].values[d] = 0; });
-    teachers[key].rows.forEach((row) => {
-      const daera = String(row.ustadDaera || "").trim();
-      const canonical = daera ? daeraNames[daera.toLocaleLowerCase()] : "";
-      if (canonical) {
-        totals[key].hasDaera = true;
-        totals[key].values[canonical] += Number(row.weekly) || 0;
-        totals[key].total += Number(row.weekly) || 0;
-      }
-    });
+  const subjects = {};
+  allRows.forEach((row) => {
+    const subject = String(row.subject || "").trim();
+    const daera = String(row.ustadDaera || "").trim();
+    const canonical = daera ? daeraNames[daera.toLocaleLowerCase()] : "";
+    if (!subject || !canonical) return;
+    if (!subjects[subject]) subjects[subject] = { total: 0, daeras: {} };
+    if (!subjects[subject].daeras[canonical]) {
+      subjects[subject].daeras[canonical] = { periods: 0, teachers: new Set() };
+    }
+    const entry = subjects[subject].daeras[canonical];
+    entry.periods += Number(row.weekly) || 0;
+    if (row.teacherKey) entry.teachers.add(row.teacherKey);
+    subjects[subject].total += Number(row.weekly) || 0;
   });
-  const sorted = Object.values(totals).filter((t) => t.hasDaera)
-    .sort((a, b) => b.total - a.total || (a.teacher.name || "").localeCompare(b.teacher.name || ""));
+  const sorted = Object.keys(subjects)
+    .map((subject) => ({ subject, ...subjects[subject] }))
+    .filter((entry) => entry.total > 0)
+    .sort((a, b) => b.total - a.total || a.subject.localeCompare(b.subject));
   if (!sorted.length) {
     wrap.innerHTML = '<div class="empty">No weekly Daerat allocations found.</div>';
     return;
   }
-  let html = "<table><thead><tr><th>Teacher</th>";
-  daeras.forEach((d) => { html += `<th style="text-align:center">${x(d)}</th>`; });
-  html += '<th style="text-align:center">Total</th></tr></thead><tbody>';
-  sorted.forEach((entry) => {
-    html += `<tr><td>${x(entry.teacher.name || entry.teacher.its || "Unknown")}</td>`;
-    daeras.forEach((d) => { html += `<td class="num" style="text-align:center">${entry.values[d]}</td>`; });
-    html += `<td class="num" style="text-align:center">${entry.total}</td></tr>`;
+  let html = '<div class="daera-charts">';
+  sorted.forEach((chart) => {
+    const bars = Object.keys(chart.daeras)
+      .map((daera) => ({ daera, ...chart.daeras[daera] }))
+      .sort((a, b) => b.periods - a.periods || a.daera.localeCompare(b.daera));
+    const max = Math.max(...bars.map((bar) => bar.periods), 1);
+    html += `<section class="daera-chart">
+      <div class="daera-chart-hdr">
+        <h3 class="daera-chart-title">${x(chart.subject)}</h3>
+        <span class="daera-chart-total">${chart.total} periods</span>
+      </div>
+      <div class="daera-bars">`;
+    bars.forEach((bar) => {
+      const width = Math.max((bar.periods / max) * 100, 2);
+      const teacherCount = bar.teachers.size;
+      html += `<div class="daera-bar-row">
+        <div class="daera-bar-label" title="${x(bar.daera)}">${x(bar.daera)}</div>
+        <div class="daera-bar-track"><div class="daera-bar-fill" style="width:${width}%"></div></div>
+        <div class="daera-bar-value">${bar.periods}</div>
+        <div class="daera-bar-meta">${teacherCount} teacher${teacherCount === 1 ? "" : "s"}</div>
+      </div>`;
+    });
+    html += "</div></section>";
   });
-  wrap.innerHTML = html + "</tbody></table>";
+  wrap.innerHTML = html + "</div>";
 }
 
 function populateSubjectFilters() {
