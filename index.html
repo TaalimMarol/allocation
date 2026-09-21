@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<link rel="icon" href="data:," />
 <title>Allocation Dashboard · Jamea Saifiyah</title>
 <script src="config.js"></script>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
@@ -335,37 +336,39 @@ tbody tr.daera-row td:first-child{border-left:4px solid #15803d;padding-left:8px
         <div class="t-list-scroll" id="t-list"></div>
       </div>
 
-      <!-- DAERA DISTRIBUTION VIEW -->
-      <div class="view" id="view-daera">
-        <div class="panel">
-          <div class="panel-hdr"><h2>Daerat distribution · weekly allocations by teacher</h2></div>
-          <div class="tbl-wrap" id="daera-tbl">
-            <div class="empty">No Daerat allocations found.</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- SUBJECT DISTRIBUTION VIEW -->
-      <div class="view" id="view-subject">
-        <div class="panel">
-          <div class="panel-hdr">
-            <h2>Subject distribution</h2>
-            <span class="sdot hidden" id="subject-sdot"></span>
-          </div>
-          <div class="distribution-controls">
-            <label>Subject <select id="subject-select" class="filter-select" onchange="renderSubjectDistribution()"></select></label>
-            <label>Class <select id="subject-class-select" class="filter-select" onchange="renderSubjectDistribution()"></select></label>
-            <label>Allocation <select id="allocation-select" class="filter-select" onchange="renderSubjectDistribution()">
-              <option value="weekly">1449 Weekly</option>
-              <option value="history">1448 Tafweed</option>
-            </select></label>
-          </div>
-          <div class="tbl-wrap" id="subject-tbl"><div class="empty">Select a subject to view its allocations.</div></div>
-        </div>
-      </div>
       <div class="t-detail" id="t-detail">
         <div class="empty">Select a teacher from the list.</div>
       </div>
+    </div>
+  </div>
+
+  <!-- DAERA DISTRIBUTION VIEW -->
+  <div class="view" id="view-daera">
+    <div class="panel">
+      <div class="panel-hdr"><h2>Daerat distribution · weekly allocations by teacher</h2></div>
+      <div class="tbl-wrap" id="daera-tbl">
+        <div class="empty">No Daerat allocations found.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SUBJECT DISTRIBUTION VIEW -->
+  <div class="view" id="view-subject">
+    <div class="panel">
+      <div class="panel-hdr">
+        <h2>Subject distribution</h2>
+        <span class="sdot hidden" id="subject-sdot"></span>
+      </div>
+      <div class="distribution-controls">
+        <label>Subject <select id="subject-select" class="filter-select" onchange="refreshSubjectFilters()"></select></label>
+        <label>Class <select id="subject-class-select" class="filter-select" onchange="refreshSubjectFilters()"></select></label>
+        <label>Book <select id="subject-book-select" class="filter-select" onchange="renderSubjectDistribution()"></select></label>
+        <label>Allocation <select id="allocation-select" class="filter-select" onchange="renderSubjectDistribution()">
+          <option value="weekly">1449 Weekly</option>
+          <option value="history">1448 Tafweed</option>
+        </select></label>
+      </div>
+      <div class="tbl-wrap" id="subject-tbl"><div class="empty">Select a subject to view its allocations.</div></div>
     </div>
   </div>
 
@@ -384,6 +387,8 @@ let activeClass    = null;
 let activeKey      = null;
 let activeSubject  = "";
 let activeSubjectClass = "";
+let activeSubjectBook = "all";
+let historyHeader = "1448 Tafweed";
 let pendingSync    = 0;
 let googleToken    = sessionStorage.getItem("allocation_google_token") || "";
 let googleEmail    = sessionStorage.getItem("allocation_google_email") || "";
@@ -408,7 +413,13 @@ async function apiFetch(action, options) {
     }));
     url = backendUrl();
   }
-  return fetch(url, Object.assign({}, opts, { headers }));
+  const response = await fetch(url, Object.assign({}, opts, { headers }));
+  if (response.status === 404) {
+    throw new Error(
+      "Apps Script deployment returned 404. Redeploy Code.gs as a Web app and update config.js with its current /exec URL."
+    );
+  }
+  return response;
 }
 
 function startSignIn() {
@@ -496,6 +507,7 @@ async function loadData() {
     if (data.error) throw new Error(data.error);
 
     allRows = data.rows || [];
+    historyHeader = data.historyHeader || "1448 Tafweed";
     buildTeacherIndex();
 
     hideLoading();
@@ -504,6 +516,7 @@ async function loadData() {
     renderTeacherList();
     renderDaeraDistribution();
     populateSubjectFilters();
+    renderSubjectDistribution();
     fetchPhotos(); // non-blocking
   } catch (err) {
     hideLoading();
@@ -605,7 +618,7 @@ function renderClassTable() {
     <th>Sec</th><th>Subject</th><th>Book</th>
     <th style="text-align:center">Wk</th>
     <th>Assign Teacher (1449)</th>
-    <th style="text-align:center">History (1448)</th>
+    <th style="text-align:center">${x(historyHeader)}</th>
   </tr></thead><tbody>`;
 
   for (const row of rows) {
@@ -755,7 +768,7 @@ function renderTeacherDetail(key) {
       <table><thead><tr>
         <th>Sec</th><th>Subject</th><th>Book</th>
         <th style="text-align:center">Wk</th><th>Reassign To</th>
-        <th style="text-align:center">History (1448)</th>
+        <th style="text-align:center">${x(historyHeader)}</th>
       </tr></thead><tbody>${rows}</tbody></table>
     </div>`;
 }
@@ -764,7 +777,12 @@ function renderTeacherDetail(key) {
 //  DISTRIBUTION VIEWS
 // ================================================================
 function renderDaeraDistribution() {
-  const daeras = [...new Set(allRows.map((r) => String(r.ustadDaera || "").trim()).filter(Boolean))]
+  const daeraNames = {};
+  allRows.forEach((row) => {
+    const name = String(row.ustadDaera || "").trim();
+    if (name) daeraNames[name.toLocaleLowerCase()] = name;
+  });
+  const daeras = Object.keys(daeraNames).map((key) => daeraNames[key])
     .sort((a, b) => a.localeCompare(b));
   const wrap = document.getElementById("daera-tbl");
   if (!daeras.length) {
@@ -773,17 +791,19 @@ function renderDaeraDistribution() {
   }
   const totals = {};
   Object.keys(teachers).forEach((key) => {
-    totals[key] = { teacher: teachers[key], values: {}, total: 0 };
+    totals[key] = { teacher: teachers[key], values: {}, total: 0, hasDaera: false };
     daeras.forEach((d) => { totals[key].values[d] = 0; });
     teachers[key].rows.forEach((row) => {
       const daera = String(row.ustadDaera || "").trim();
-      if (daera && totals[key].values[daera] !== undefined) {
-        totals[key].values[daera] += Number(row.weekly) || 0;
+      const canonical = daera ? daeraNames[daera.toLocaleLowerCase()] : "";
+      if (canonical) {
+        totals[key].hasDaera = true;
+        totals[key].values[canonical] += Number(row.weekly) || 0;
         totals[key].total += Number(row.weekly) || 0;
       }
     });
   });
-  const sorted = Object.values(totals).filter((t) => t.total > 0)
+  const sorted = Object.values(totals).filter((t) => t.hasDaera)
     .sort((a, b) => b.total - a.total || (a.teacher.name || "").localeCompare(b.teacher.name || ""));
   if (!sorted.length) {
     wrap.innerHTML = '<div class="empty">No weekly Daerat allocations found.</div>';
@@ -794,7 +814,7 @@ function renderDaeraDistribution() {
   html += '<th style="text-align:center">Total</th></tr></thead><tbody>';
   sorted.forEach((entry) => {
     html += `<tr><td>${x(entry.teacher.name || entry.teacher.its || "Unknown")}</td>`;
-    daeras.forEach((d) => { html += `<td class="num" style="text-align:center">${entry.values[d] || "—"}</td>`; });
+    daeras.forEach((d) => { html += `<td class="num" style="text-align:center">${entry.values[d]}</td>`; });
     html += `<td class="num" style="text-align:center">${entry.total}</td></tr>`;
   });
   wrap.innerHTML = html + "</tbody></table>";
@@ -803,26 +823,47 @@ function renderDaeraDistribution() {
 function populateSubjectFilters() {
   const subjectEl = document.getElementById("subject-select");
   const classEl = document.getElementById("subject-class-select");
-  if (!subjectEl || !classEl) return;
+  const bookEl = document.getElementById("subject-book-select");
+  if (!subjectEl || !classEl || !bookEl) return;
   const subjects = [...new Set(allRows.map((r) => r.subject).filter(Boolean))].sort((a, b) => a.localeCompare(b));
   const classes = [...new Set(allRows.map((r) => r.class).filter(Boolean))]
     .sort((a, b) => Number(a) - Number(b) || a.localeCompare(b));
   if (!activeSubject || subjects.indexOf(activeSubject) === -1) activeSubject = subjects[0] || "";
   if (!activeSubjectClass || classes.indexOf(activeSubjectClass) === -1) activeSubjectClass = "all";
+  const books = [...new Set(allRows.filter((r) =>
+    r.subject === activeSubject &&
+    (activeSubjectClass === "all" || r.class === activeSubjectClass)
+  ).map((r) => r.bookName).filter(Boolean))].sort((a, b) => a.localeCompare(b));
+  if (!books.includes(activeSubjectBook)) activeSubjectBook = "all";
   subjectEl.innerHTML = subjects.map((s) => `<option value="${x(s)}"${s === activeSubject ? " selected" : ""}>${x(s)}</option>`).join("");
   classEl.innerHTML = '<option value="all">All classes</option>' +
     classes.map((c) => `<option value="${x(c)}"${c === activeSubjectClass ? " selected" : ""}>Class ${x(c)}</option>`).join("");
+  bookEl.innerHTML = '<option value="all">All books</option>' +
+    books.map((b) => `<option value="${x(b)}"${b === activeSubjectBook ? " selected" : ""}>${x(b)}</option>`).join("");
 }
 
-function renderSubjectDistribution() {
+function refreshSubjectFilters() {
   const subjectEl = document.getElementById("subject-select");
   const classEl = document.getElementById("subject-class-select");
   if (!subjectEl || !classEl) return;
   activeSubject = subjectEl.value;
   activeSubjectClass = classEl.value;
+  populateSubjectFilters();
+  renderSubjectDistribution();
+}
+
+function renderSubjectDistribution() {
+  const subjectEl = document.getElementById("subject-select");
+  const classEl = document.getElementById("subject-class-select");
+  const bookEl = document.getElementById("subject-book-select");
+  if (!subjectEl || !classEl || !bookEl) return;
+  activeSubject = subjectEl.value;
+  activeSubjectClass = classEl.value;
+  activeSubjectBook = bookEl.value;
   const mode = document.getElementById("allocation-select").value;
   const rows = allRows.filter((r) => r.subject === activeSubject &&
-    (activeSubjectClass === "all" || r.class === activeSubjectClass))
+    (activeSubjectClass === "all" || r.class === activeSubjectClass) &&
+    (activeSubjectBook === "all" || r.bookName === activeSubjectBook))
     .sort((a, b) => Number(a.class) - Number(b.class) || a.shorthand.localeCompare(b.shorthand));
   const wrap = document.getElementById("subject-tbl");
   if (!rows.length) {
@@ -830,13 +871,15 @@ function renderSubjectDistribution() {
     return;
   }
   const opts = buildOpts();
-  let html = `<table><thead><tr><th>Class / Sec</th><th>Book</th><th>Teacher</th>
-    <th style="text-align:center">${mode === "history" ? "1448 Tafweed" : "1449 Weekly"}</th>
+  let html = `<table><thead><tr><th>Teacher</th><th>Class</th><th>Book</th>
+    <th style="text-align:center">${mode === "history" ? x(historyHeader) : "1449 Weekly"}</th>
     <th>Reassign To</th></tr></thead><tbody>`;
   rows.forEach((row) => {
-    html += `<tr><td><span class="badge">${x(row.class + " · " + row.shorthand)}</span></td>
-      <td>${x(row.bookName)}</td><td>${x(row.name || row.its || "Unassigned")}</td>
-      <td class="num" style="text-align:center">${row[mode === "history" ? "periods1448" : "weekly"] || "—"}</td>
+    const periods = row[mode === "history" ? "periods1448" : "weekly"];
+    html += `<tr><td>${x(row.name || row.its || "Unassigned")}</td>
+      <td><span class="badge">${x(row.class + " · " + row.shorthand)}</span></td>
+      <td>${x(row.bookName)}</td>
+      <td class="num" style="text-align:center">${periods || "—"}</td>
       <td><select class="sel" data-row="${row.rowNumber}" data-weekly="${row.weekly}"
         data-old-key="${x(row.teacherKey)}" onchange="reassign(this)">${selectOpts(opts, row.teacherKey)}</select></td></tr>`;
   });

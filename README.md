@@ -28,6 +28,11 @@ the OAuth client ID and Apps Script URL, which are public identifiers.
    - Who has access: **Anyone**
 6. Copy the deployed `/exec` URL into `config.js` as `backendUrl`.
 
+After changing `Code.gs`, create a new deployment version (or update the
+existing Web app deployment) before testing. A stale deployment can redirect
+requests to a `script.googleusercontent.com` URL that returns 404 even when
+the `/exec` URL is still reachable.
+
 The spreadsheet and photo folder must be accessible to the Google account that
 owns the Apps Script project. The allow-list in `Code.gs` controls dashboard
 access.
@@ -73,6 +78,17 @@ The dashboard uses a responsive navigation bar, horizontally scrollable
 workload tables, compact class selectors, and a stacked teacher view on small
 screens. Use Chrome DevTools device emulation to test narrow widths and touch
 interactions.
+
+## Distribution dashboards
+
+- **Daerat Distribution** groups the `Ustad_Daera` values from the configured
+  `1449Working` tab into columns and lists every teacher with a Daera assignment,
+  using the 1449 weekly period values in each cell.
+- **Subject Distribution** can be filtered by subject, class, and optionally
+  book name. It lists teacher, class/section, book, and either 1449 weekly or
+  the detected `1448Tafweed` history value.
+- The sheet-tab lookup is case-insensitive, so `1449Working` and
+  `1449working` both resolve to the configured tab.
 
 ## Security notes
 

@@ -81,6 +81,9 @@ function getAllData_() {
 
   const headers = values[0].map(function (h) { return String(h || "").trim(); });
   const index = buildColIdx_(headers);
+  const historyHeader = findHeader_(headers, [
+    "1448Tafweed", "1448 Tafweed", "1448_Tafweed", "Tafweed1448"
+  ]) || "1448 Tafweed";
   const rows = [];
   for (let r = 1; r < values.length; r++) {
     const row = values[r];
@@ -102,6 +105,9 @@ function getAllData_() {
       periods1448: Number(getCol_(index, row, [
         "1448Tafweed", "1448 Tafweed", "1448_Tafweed", "Tafweed1448"
       ])) || 0,
+      history1448: Number(getCol_(index, row, [
+        "1448Tafweed", "1448 Tafweed", "1448_Tafweed", "Tafweed1448"
+      ])) || 0,
       totalPeriod1449: Number(getCol_(index, row, ["Total_period_1449"])) || 0,
       teacherGender: String(getCol_(index, row, ["TeacherGender", "teacherGender"])).trim(),
       musaid: String(getCol_(index, row, ["Musaid", "musaid"])).trim(),
@@ -111,7 +117,7 @@ function getAllData_() {
       ])).trim()
     });
   }
-  return { rows: rows, headers: headers };
+  return { rows: rows, headers: headers, historyHeader: historyHeader };
 }
 
 function syncRow_(rowNumber, newIts, newName) {
@@ -151,7 +157,15 @@ function collectTeacherPhotos_(folder, result) {
 
 function getSheet_() {
   const spreadsheet = SpreadsheetApp.openById(CONFIG.spreadsheetId);
-  return CONFIG.sheetName ? spreadsheet.getSheetByName(CONFIG.sheetName) : spreadsheet.getSheets()[0];
+  if (!CONFIG.sheetName) return spreadsheet.getSheets()[0];
+  const exact = spreadsheet.getSheetByName(CONFIG.sheetName);
+  if (exact) return exact;
+  const wanted = CONFIG.sheetName.toLowerCase();
+  const match = spreadsheet.getSheets().find(function (sheet) {
+    return sheet.getName().toLowerCase() === wanted;
+  });
+  if (!match) throw new Error("Sheet tab not found: " + CONFIG.sheetName);
+  return match;
 }
 
 function buildColIdx_(headers) {
@@ -168,6 +182,16 @@ function getCol_(index, row, names) {
   for (let i = 0; i < names.length; i++) {
     const position = index[names[i]] !== undefined ? index[names[i]] : index[names[i].toLowerCase()];
     if (position !== undefined && row[position] !== "") return row[position];
+  }
+  return "";
+}
+
+function findHeader_(headers, names) {
+  for (let i = 0; i < names.length; i++) {
+    const wanted = names[i].toLowerCase();
+    for (let j = 0; j < headers.length; j++) {
+      if (String(headers[j]).toLowerCase() === wanted) return headers[j];
+    }
   }
   return "";
 }
