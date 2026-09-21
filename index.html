@@ -261,6 +261,11 @@ tbody tr.daera-row td:first-child{border-left:4px solid #15803d;padding-left:8px
 .analytics-table-wrap{padding:0 14px 14px;overflow:auto}
 .multi-badge{display:inline-block;margin-left:6px;padding:2px 7px;border-radius:10px;background:#fef3c7;color:#92400e;font-size:10px;font-weight:700;white-space:nowrap}
 .hierarchy{border:1px solid var(--border);border-radius:var(--r);overflow:hidden;background:var(--surface)}
+.hierarchy-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;padding:12px;background:#f8fafc;border:0}
+.hierarchy-grid>.hierarchy-root{grid-column:1 / -1}
+.daera-hierarchy-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+.hierarchy-grid .hierarchy-branch{border:1px solid var(--border);border-radius:var(--r);overflow:hidden;background:var(--surface)}
+.hierarchy-books{padding:7px 14px 7px 30px;background:#fff;color:var(--muted);font-size:11px;font-style:italic;border-top:1px solid #e2e8f0}
 .hierarchy-root{padding:11px 14px;background:var(--navy);color:#fff;font-size:14px;font-weight:700}
 .hierarchy-branch{border-top:1px solid var(--border)}
 .hierarchy-branch-title{display:flex;justify-content:space-between;gap:10px;padding:9px 14px;background:#dbeafe;color:var(--navy);font-size:13px;font-weight:700}
@@ -275,6 +280,7 @@ tbody tr.daera-row td:first-child{border-left:4px solid #15803d;padding-left:8px
 .hierarchy-empty{padding:28px;text-align:center;color:var(--muted)}
 @media(max-width:760px){
   .metric-grid{grid-template-columns:repeat(2,1fr)}
+  .hierarchy-grid,.daera-hierarchy-grid{grid-template-columns:1fr}
   .hierarchy-teacher{padding-left:30px}
 }
 
@@ -356,11 +362,11 @@ tbody tr.daera-row td:first-child{border-left:4px solid #15803d;padding-left:8px
 <nav id="nav" class="hidden">
   <span class="nav-brand">📚 Allocation</span>
   <div class="nav-tabs">
-    <button class="nav-tab active" id="tab-class"   onclick="switchView('class')">Class Workload</button>
-    <button class="nav-tab"       id="tab-teacher" onclick="switchView('teacher')">Teacher Workload</button>
-    <button class="nav-tab"       id="tab-daera" onclick="switchView('daera')">DAWAIR Distribution</button>
+    <button class="nav-tab active" id="tab-teacher" onclick="switchView('teacher')">Teacher Workload</button>
     <button class="nav-tab"       id="tab-subject" onclick="switchView('subject')">Subject Distribution</button>
     <button class="nav-tab"       id="tab-analytics" onclick="switchView('analytics')">Uloom Kauniyah/ Insaniyah</button>
+    <button class="nav-tab"       id="tab-class" onclick="switchView('class')">Class Allocation</button>
+    <button class="nav-tab"       id="tab-daera" onclick="switchView('daera')">DAWAIR Distribution</button>
   </div>
   <div class="nav-right">
     <span class="nav-email" id="nav-email"></span>
@@ -372,7 +378,7 @@ tbody tr.daera-row td:first-child{border-left:4px solid #15803d;padding-left:8px
 <main id="main" class="hidden">
 
   <!-- CLASS VIEW -->
-  <div class="view active" id="view-class">
+  <div class="view" id="view-class">
     <div class="pills" id="class-pills"></div>
     <div class="panel">
       <div class="panel-hdr">
@@ -386,7 +392,7 @@ tbody tr.daera-row td:first-child{border-left:4px solid #15803d;padding-left:8px
   </div>
 
   <!-- TEACHER VIEW -->
-  <div class="view" id="view-teacher">
+  <div class="view active" id="view-teacher">
     <div class="split">
       <div class="t-list-panel">
         <div class="t-list-hdr">All Teachers</div>
@@ -901,12 +907,13 @@ function renderDaeraDistribution() {
   });
   const roots = Object.keys(daewair)
     .map((daera) => ({ daera, ...daewair[daera] }))
-    .sort((a, b) => a.daera.localeCompare(b.daera));
+    .sort((a, b) => daeraSortOrder(a.daera) - daeraSortOrder(b.daera) ||
+      a.daera.localeCompare(b.daera));
   if (!roots.length) {
     wrap.innerHTML = '<div class="empty">No Daerat allocations found.</div>';
     return;
   }
-  let html = '<div class="hierarchy"><div class="hierarchy-root">DAWAIR <span class="hierarchy-periods">(Ustad Daera)</span></div>';
+  let html = '<div class="hierarchy hierarchy-grid daera-hierarchy-grid"><div class="hierarchy-root">DAWAIR <span class="hierarchy-periods">(Ustad Daera)</span></div>';
   roots.forEach((root) => {
     html += `<section class="hierarchy-branch">
       <div class="hierarchy-branch-title green"><span>${x(root.daera)}</span>
@@ -928,6 +935,17 @@ function renderDaeraDistribution() {
     html += "</section>";
   });
   wrap.innerHTML = html + "</div>";
+}
+
+function daeraSortOrder(value) {
+  const name = normaliseDaeraSubject(value);
+  if (name.includes("fiqh")) return 1;
+  if (name.includes("akhbaar") || name.includes("akhbar")) return 2;
+  if (name === "adab" || name.startsWith("adab ")) return 3;
+  if (name.includes("hikmat")) return 4;
+  if (name.includes("quran kareem") || name.includes("quran")) return 5;
+  if (name.includes("buyoo") || name.includes("buyu")) return 6;
+  return 100;
 }
 
 function populateSubjectFilters() {
@@ -1063,22 +1081,38 @@ function renderAnalytics() {
     table.innerHTML = '<div class="empty">No matching allocations found.</div>';
     return;
   }
-  let html = '<div class="hierarchy"><div class="hierarchy-root">Uloom Kauniyah/ Insaniyah</div>';
+  let html = '<div class="hierarchy hierarchy-grid"><div class="hierarchy-root">Uloom Kauniyah/ Insaniyah</div>';
   Object.keys(ANALYTICS_GROUPS).forEach((group) => {
     if (!groups[group]) return;
     html += `<section class="hierarchy-branch">
-      <div class="hierarchy-branch-title"><span>${x(group)}</span>
-        <span class="hierarchy-periods">${groups[group].total} periods</span></div>`;
-    Object.keys(groups[group].teachers)
-      .sort((a, b) => groups[group].teachers[b] - groups[group].teachers[a] || a.localeCompare(b))
-      .forEach((teacher) => {
-        const multi = multiTeachers.has(teacher) ? " multi" : "";
-        const badge = multi ? '<span class="multi-badge">Multiple groups</span>' : "";
-        html += `<div class="hierarchy-teacher${multi}">
-          <span class="hierarchy-teacher-name">${x(teacher)}${badge}</span>
-          <span class="hierarchy-teacher-periods">(${groups[group].teachers[teacher]} periods)</span>
-        </div>`;
-      });
+      <div class="hierarchy-branch-title"><span>${x(group)}</span></div>`;
+    const groupSubjects = {};
+    rows.forEach((row) => {
+      if (analyticsSubjectGroup(row) !== group) return;
+      const subject = String(row.subject || "").trim() || "Unspecified subject";
+      const teacher = row.name || row.its || "Unassigned";
+      if (!groupSubjects[subject]) groupSubjects[subject] = { books: new Set(), teachers: {} };
+      if (row.bookName) groupSubjects[subject].books.add(row.bookName);
+      groupSubjects[subject].teachers[teacher] =
+        (groupSubjects[subject].teachers[teacher] || 0) + (Number(row.weekly) || 0);
+    });
+    Object.keys(groupSubjects).sort().forEach((subject) => {
+      const subjectData = groupSubjects[subject];
+      html += `<div class="hierarchy-subject">
+        <div class="hierarchy-subject-title"><span>${x(subject)}</span></div>
+        <div class="hierarchy-books">${x([...subjectData.books].sort().join(", "))}</div>`;
+      Object.keys(subjectData.teachers)
+        .sort((a, b) => subjectData.teachers[b] - subjectData.teachers[a] || a.localeCompare(b))
+        .forEach((teacher) => {
+          const multi = multiTeachers.has(teacher) ? " multi" : "";
+          const badge = multi ? '<span class="multi-badge">Multiple groups</span>' : "";
+          html += `<div class="hierarchy-teacher${multi}">
+            <span class="hierarchy-teacher-name">${x(teacher)}${badge}</span>
+            <span class="hierarchy-teacher-periods">(${subjectData.teachers[teacher]} periods)</span>
+          </div>`;
+        });
+      html += "</div>";
+    });
     html += "</section>";
   });
   table.innerHTML = html + "</div>";
