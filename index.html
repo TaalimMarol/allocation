@@ -953,6 +953,8 @@ function renderTeacherList() {
       </div>`;
     el.appendChild(item);
   }
+
+  if (!activeKey && sorted.length) selectTeacher(sorted[0].key);
 }
 
 function selectTeacher(key) {
