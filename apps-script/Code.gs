@@ -96,18 +96,20 @@ function getAllData_() {
     const its = String(getCol_(index, row, ["ITS", "its"])).trim();
     const name = String(getCol_(index, row, ["Name", "name"])).trim();
     if (!its && !name) continue;
+    const historyAssignment = String(getCol_(index, row, [
+      "1448Tafweed", "1448 Tafweed", "1448_Tafweed", "Tafweed1448"
+    ])).trim();
+    const bookName = String(getCol_(index, row, ["BookName", "bookname"])).trim();
     rows.push({
       rowNumber: r + 1, class: cls, section: section, gender: gender,
       shorthand: cls + section + gender, subject: subject,
-      bookName: String(getCol_(index, row, ["BookName", "bookname"])).trim(),
+      bookName: bookName,
       weekly: Number(getCol_(index, row, ["Weekly", "weekly"])) || 0,
       its: its, teacherKey: its || "NAME:" + name, name: name,
-      periods1448: Number(getCol_(index, row, [
-        "1448Tafweed", "1448 Tafweed", "1448_Tafweed", "Tafweed1448"
-      ])) || 0,
-      history1448: Number(getCol_(index, row, [
-        "1448Tafweed", "1448 Tafweed", "1448_Tafweed", "Tafweed1448"
-      ])) || 0,
+      periods1448: historyAssignment,
+      history1448: historyAssignment,
+      isRepeatAssignment: matchesTeacherHistory_(name, its, historyAssignment),
+      essayEligible: isEssayEligible_(bookName, cls),
       totalPeriod1449: Number(getCol_(index, row, ["Total_period_1449"])) || 0,
       teacherGender: String(getCol_(index, row, ["TeacherGender", "teacherGender"])).trim(),
       musaid: String(getCol_(index, row, ["Musaid", "musaid"])).trim(),
@@ -118,6 +120,35 @@ function getAllData_() {
     });
   }
   return { rows: rows, headers: headers, historyHeader: historyHeader };
+}
+
+function normaliseTeacherMatch_(value) {
+  return String(value || "").toLowerCase()
+    .replace(/[\u2018\u2019\u201b\u02bb]/g, "'")
+    .replace(/[^\p{L}\p{N}]+/gu, "")
+    .trim();
+}
+
+function matchesTeacherHistory_(name, its, historyAssignment) {
+  const history = normaliseTeacherMatch_(historyAssignment);
+  if (!history) return false;
+  return [name, its].some(function (value) {
+    const candidate = normaliseTeacherMatch_(value);
+    return candidate && (candidate === history ||
+      candidate.indexOf(history) !== -1 || history.indexOf(candidate) !== -1);
+  });
+}
+
+function isEssayEligible_(bookName, classValue) {
+  const book = normaliseTeacherMatch_(bookName);
+  const classNumber = Number(classValue);
+  if (classNumber >= 1 && classNumber <= 4) {
+    return book === "essay" || book === "english";
+  }
+  if (classNumber >= 5 && classNumber <= 7) {
+    return book === "almasul" || book === "literature";
+  }
+  return false;
 }
 
 function syncRow_(rowNumber, newIts, newName) {
