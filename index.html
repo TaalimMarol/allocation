@@ -197,7 +197,7 @@ tbody tr.daera-row td:first-child{border-left:4px solid #15803d;padding-left:8px
 .t-total.ov{color:var(--danger);font-weight:600}
 
 .t-detail{background:var(--surface);border-radius:var(--r);box-shadow:var(--shadow);overflow:hidden}
-.t-detail-hdr{padding:14px 16px;background:var(--navy);color:#fff;display:grid;grid-template-columns:minmax(220px,.8fr) minmax(0,1.8fr);gap:16px;align-items:stretch}
+.t-detail-hdr{padding:14px 16px;background:var(--navy);color:#fff;display:grid;grid-template-columns:minmax(260px,.8fr) minmax(0,1.8fr);gap:16px;align-items:stretch}
 .t-avatar-lg{
   width:88px;height:88px;border-radius:50%;object-fit:cover;
   border:2px solid rgba(255,255,255,.3);flex-shrink:0;background:rgba(255,255,255,.1);
@@ -210,24 +210,28 @@ tbody tr.daera-row td:first-child{border-left:4px solid #15803d;padding-left:8px
 }
 .t-detail-info{flex:1}
 .t-detail-identity{display:flex;align-items:center;gap:12px;min-width:0}
+.t-detail-identity-column{min-width:0;padding-right:16px;border-right:1px solid rgba(255,255,255,.35)}
 .t-detail-name{font-size:15px;font-weight:700}
 .t-detail-sub{font-size:11px;color:rgba(255,255,255,.6);margin-top:2px}
 .info-badges{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
 .ibadge{padding:3px 9px;border-radius:10px;font-size:11px;font-weight:600;background:rgba(255,255,255,.15);color:#fff}
 .ibadge.daera{background:var(--green-bdr)}
 .ibadge.warn{background:var(--danger)}
-.workload-card{padding:12px;border:1px solid rgba(255,255,255,.25);border-radius:var(--r);background:var(--surface);color:var(--text)}
-.workload-subjects{font-size:12px;color:var(--navy);font-weight:600;margin-bottom:10px}
-.workload-subjects-label{color:var(--muted);font-weight:500}
-.workload-daera{font-size:11px;color:var(--muted);margin-bottom:10px}
-.workload-daera strong{color:var(--navy)}
+.workload-card{padding:12px 0;background:transparent;color:#fff}
+.workload-subjects{font-size:12px;color:#fff;font-weight:600;margin-top:12px}
+.workload-subjects-label{color:rgba(255,255,255,.65);font-weight:500}
+.workload-daera{font-size:11px;color:rgba(255,255,255,.75);margin-top:6px}
+.workload-daera strong{color:#fff}
 .workload-metrics{display:grid;grid-template-columns:repeat(4,minmax(105px,1fr));gap:8px}
-.workload-metric{padding:9px 10px;background:var(--surface);border:1px solid var(--border);border-radius:var(--rs)}
-.workload-metric-label{font-size:10px;color:var(--muted);font-weight:700;line-height:1.3}
-.workload-metric-value{margin-top:4px;font-size:12px;color:var(--navy);font-weight:700;font-variant-numeric:tabular-nums}
-.workload-metric-value span{display:block;font-size:10px;color:var(--muted);font-weight:500}
-.workload-metric-value.overloaded{color:var(--danger)}
-@media(max-width:980px){.t-detail-hdr{grid-template-columns:1fr}.workload-metrics{grid-template-columns:repeat(4,minmax(105px,1fr))}}
+.workload-metric{padding:9px 10px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.25);border-radius:var(--rs)}
+.workload-metric-label{font-size:10px;color:rgba(255,255,255,.7);font-weight:700;line-height:1.3}
+.workload-metric-value{margin-top:4px;font-size:12px;color:#fff;font-weight:700;font-variant-numeric:tabular-nums}
+.workload-metric-value.overloaded{color:#fecaca}
+@media(max-width:980px){
+  .t-detail-hdr{grid-template-columns:1fr}
+  .t-detail-identity-column{padding-right:0;padding-bottom:12px;border-right:0;border-bottom:1px solid rgba(255,255,255,.35)}
+  .workload-metrics{grid-template-columns:repeat(4,minmax(105px,1fr))}
+}
 @media(max-width:680px){.workload-metrics{grid-template-columns:repeat(2,minmax(130px,1fr))}}
 
 .empty{padding:48px 24px;text-align:center;color:var(--muted);font-size:13px}
@@ -1045,18 +1049,18 @@ function renderTeacherDetail(key) {
 
   panel.innerHTML = `
     <div class="t-detail-hdr">
-      <div class="t-detail-identity">
-        ${photoHtml}
-        <div class="t-detail-info">
-          <div class="t-detail-name">${x(t.name || t.its || "Unknown")}</div>
-          <div class="t-detail-sub">ITS: ${x(t.its || "—")}</div>
-          <div class="info-badges">
-            <span class="ibadge${ov ? " warn" : ""}">${t.total} periods${ov ? " ⚠" : ""}</span>
-            ${daeraTotal > 0 ? `<span class="ibadge daera">Daerat-Periods: ${daeraTotal}</span>` : ""}
+      <div class="t-detail-identity-column">
+        <div class="t-detail-identity">
+          ${photoHtml}
+          <div class="t-detail-info">
+            <div class="t-detail-name">${x(t.name || t.its || "Unknown")}</div>
+            <div class="t-detail-sub">ITS: ${x(t.its || "—")}</div>
+            <div class="info-badges">
+              <span class="ibadge${ov ? " warn" : ""}">${t.total} periods${ov ? " ⚠" : ""}</span>
+              ${daeraTotal > 0 ? `<span class="ibadge daera">Daerat-Periods: ${daeraTotal}</span>` : ""}
+            </div>
           </div>
         </div>
-      </div>
-      <div class="workload-card">
         <div class="workload-subjects">
           <span class="workload-subjects-label">Subjects assigned:</span>
           ${x(subjects.join(", ") || "—")}
@@ -1064,6 +1068,8 @@ function renderTeacherDetail(key) {
         <div class="workload-daera">
           <strong>Daerat:</strong> ${x([...daeraNames].sort().join(", ") || "—")}
         </div>
+      </div>
+      <div class="workload-card">
         <div class="workload-metrics">
           ${workloadMetricHtml("Periods", t.total, "periods")}
           ${workloadMetricHtml("Daerat periods", daeraTotal, "periods")}
