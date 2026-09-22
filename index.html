@@ -222,6 +222,22 @@ tbody tr.daera-row td:first-child{border-left:4px solid #15803d;padding-left:8px
 .filter-select{min-width:170px;padding:6px 8px;border:1.5px solid var(--border);border-radius:var(--rs);background:#fff;color:var(--text)}
 .filter-select:focus{outline:none;border-color:var(--sky)}
 
+/* ── AL-MASŪL GRID ─────────────────────────────── */
+.masul-grid-wrap{padding:14px;overflow:auto}
+.masul-grid{table-layout:fixed;min-width:760px}
+.masul-grid thead th{text-align:center}
+.masul-grid tbody td{height:72px;padding:7px;vertical-align:top;border:1px solid #e2e8f0;background:#f8fafc}
+.masul-grid tbody td.masul-slot{background:#fff}
+.masul-slot-number{display:block;margin-bottom:4px;color:var(--muted);font-size:10px;font-weight:700}
+.masul-slot-teacher{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;font-weight:700;color:var(--navy)}
+.masul-slot-meta{display:block;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--muted);font-size:10px}
+.masul-grid .sel{width:100%;min-width:0;margin-top:5px;font-size:11px}
+.masul-empty{padding:28px;text-align:center;color:var(--muted)}
+@media(max-width:760px){
+  .masul-grid-wrap{padding:10px}
+  .masul-grid{min-width:620px}
+}
+
 /* ── DAERA CHARTS ───────────────────────────────── */
 .daera-charts{
   display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));
@@ -366,6 +382,7 @@ tbody tr.daera-row td:first-child{border-left:4px solid #15803d;padding-left:8px
     <button class="nav-tab"       id="tab-subject" onclick="switchView('subject')">Subject Distribution</button>
     <button class="nav-tab"       id="tab-analytics" onclick="switchView('analytics')">Uloom Kauniyah/ Insaniyah</button>
     <button class="nav-tab"       id="tab-class" onclick="switchView('class')">Class Allocation</button>
+    <button class="nav-tab"       id="tab-masul" onclick="switchView('masul')">Al-Masʾūl</button>
     <button class="nav-tab"       id="tab-daera" onclick="switchView('daera')">DAWAIR Distribution</button>
   </div>
   <div class="nav-right">
@@ -387,6 +404,19 @@ tbody tr.daera-row td:first-child{border-left:4px solid #15803d;padding-left:8px
       </div>
       <div class="tbl-wrap" id="class-tbl">
         <div class="empty">Select a class above to view its subjects.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- AL-MASŪL VIEW -->
+  <div class="view" id="view-masul">
+    <div class="panel">
+      <div class="panel-hdr">
+        <h2>Al-Masʾūl · 55 periods</h2>
+        <span class="sdot hidden" id="masul-sdot"></span>
+      </div>
+      <div class="masul-grid-wrap" id="masul-grid">
+        <div class="masul-empty">No Al-Masʾūl allocations found.</div>
       </div>
     </div>
   </div>
@@ -600,6 +630,7 @@ async function loadData() {
     renderPills();
     renderTeacherList();
     renderDaeraDistribution();
+    renderMasulGrid();
     populateSubjectFilters();
     renderSubjectDistribution();
     populateAnalyticsFilters();
@@ -656,6 +687,7 @@ function switchView(v) {
   document.getElementById("view-" + v).classList.add("active");
   document.getElementById("tab-" + v).classList.add("active");
   if (v === "daera") renderDaeraDistribution();
+  if (v === "masul") renderMasulGrid();
   if (v === "subject") renderSubjectDistribution();
   if (v === "analytics") renderAnalytics();
 }
@@ -729,6 +761,74 @@ function renderClassTable() {
   }
   html += "</tbody></table>";
   wrap.innerHTML = html;
+}
+
+// ================================================================
+//  AL-MASŪL PERIOD GRID
+// ================================================================
+function normaliseMasulText(value) {
+  return String(value || "")
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "");
+}
+
+function isMasulRow(row) {
+  return [row.subject, row.bookName].some((value) => {
+    const text = normaliseMasulText(value);
+    return text === "almasul" || text === "masul" || text.includes("almasul");
+  });
+}
+
+function renderMasulGrid() {
+  const wrap = document.getElementById("masul-grid");
+  if (!wrap) return;
+
+  const allocations = allRows
+    .filter(isMasulRow)
+    .sort((a, b) =>
+      String(a.class).localeCompare(String(b.class), undefined, { numeric: true }) ||
+      String(a.section).localeCompare(String(b.section)) ||
+      String(a.name).localeCompare(String(b.name)));
+  const slots = [];
+  allocations.forEach((row) => {
+    const count = Math.max(0, Number(row.weekly) || 0);
+    for (let i = 0; i < count && slots.length < 55; i++) slots.push(row);
+  });
+
+  if (!allocations.length || !slots.length) {
+    wrap.innerHTML = '<div class="masul-empty">No Al-Masʾūl allocations found.</div>';
+    return;
+  }
+
+  const opts = buildOpts();
+  let html = '<table class="masul-grid"><thead><tr>';
+  for (let col = 1; col <= 5; col++) html += `<th>Period ${col}</th>`;
+  html += "</tr></thead><tbody>";
+  for (let rowIndex = 0; rowIndex < 11; rowIndex++) {
+    html += "<tr>";
+    for (let col = 0; col < 5; col++) {
+      const slotIndex = rowIndex * 5 + col;
+      const row = slots[slotIndex];
+      if (!row) {
+        html += '<td aria-label="Unassigned period">—</td>';
+        continue;
+      }
+      html += `<td class="masul-slot">
+        <span class="masul-slot-number">Period ${slotIndex + 1}</span>
+        <span class="masul-slot-teacher">${x(row.name || row.its || "Unassigned")}</span>
+        <span class="masul-slot-meta">Class ${x(row.class)}${x(row.section ? " · " + row.section : "")}</span>
+        <select class="sel" aria-label="Reassign Al-Masʾūl period ${slotIndex + 1}"
+          data-row="${row.rowNumber}" data-weekly="${row.weekly}"
+          data-old-key="${x(row.teacherKey)}" onchange="reassign(this)">
+          ${selectOpts(opts, row.teacherKey)}
+        </select>
+      </td>`;
+    }
+    html += "</tr>";
+  }
+  wrap.innerHTML = html + "</tbody></table>";
 }
 
 // ================================================================
@@ -1173,6 +1273,7 @@ function reassign(sel) {
   renderTeacherList();
   if (activeKey) renderTeacherDetail(activeKey);
   renderDaeraDistribution();
+  renderMasulGrid();
   if (document.getElementById("view-subject").classList.contains("active")) renderSubjectDistribution();
 
   // Background write to sheet
