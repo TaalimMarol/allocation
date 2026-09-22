@@ -237,9 +237,20 @@ tbody tr.daera-row td:first-child{border-left:4px solid #15803d;padding-left:8px
 .masul-slot-meta{display:none}
 .masul-grid .sel{width:100%;min-width:0;margin-top:5px;font-size:11px}
 .masul-empty{padding:28px;text-align:center;color:var(--muted)}
+.masul-group{margin-bottom:14px;border:1px solid var(--border);border-radius:var(--r);overflow:hidden;background:var(--surface)}
+.masul-group:last-child{margin-bottom:0}
+.masul-group-title{padding:9px 12px;color:#fff;font-size:13px;font-weight:800}
+.masul-group:nth-child(1) .masul-group-title{background:linear-gradient(90deg,#dbeafe,#93c5fd)}
+.masul-group:nth-child(2) .masul-group-title{background:linear-gradient(90deg,#93c5fd,#60a5fa)}
+.masul-group:nth-child(3) .masul-group-title{background:linear-gradient(90deg,#60a5fa,#2563eb)}
+.masul-group:nth-child(4) .masul-group-title{background:linear-gradient(90deg,#2563eb,#1e3a8a)}
+.masul-group .masul-grid{min-width:0}
+.masul-group-last .masul-grid{min-width:720px}
+.masul-group-last .masul-grid thead th:first-child{width:110px}
 @media(max-width:760px){
   .masul-grid-wrap{padding:10px}
   .masul-grid{min-width:760px}
+  .masul-group-last .masul-grid{min-width:620px}
 }
 
 /* ── DAERA CHARTS ───────────────────────────────── */
@@ -657,6 +668,7 @@ async function fetchPhotos() {
       const its = el.dataset.photoIts;
       if (photos[its]) swapPhoto(el, its);
     });
+    renderMasulGrid();
   } catch (_) { /* silent */ }
 }
 
@@ -806,6 +818,25 @@ function masulPhotoHtml(row) {
   return `<span class="masul-teacher-photo-ph" aria-hidden="true">${x(initial)}</span>`;
 }
 
+function masulCellHtml(rows, classNumber, column, opts) {
+  if (!rows.length) {
+    return '<td aria-label="Unassigned Al-Masʾūl class and gender period">—</td>';
+  }
+  let html = '<td class="masul-slot">';
+  rows.forEach((row) => {
+    html += `<div class="masul-teacher">
+      ${masulPhotoHtml(row)}
+      <span class="masul-slot-teacher" title="${x(row.name || row.its || "Unassigned")}">${x(row.name || row.its || "Unassigned")}</span>
+    </div>
+    <select class="sel" aria-label="Reassign Al-Masʾūl class ${classNumber} ${column}"
+      data-row="${row.rowNumber}" data-weekly="${row.weekly}"
+      data-old-key="${x(row.teacherKey)}" onchange="reassign(this)">
+      ${selectOpts(opts, row.teacherKey)}
+    </select>`;
+  });
+  return html + "</td>";
+}
+
 function renderMasulGrid() {
   const wrap = document.getElementById("masul-grid");
   if (!wrap) return;
@@ -818,7 +849,7 @@ function renderMasulGrid() {
   }
 
   const opts = buildOpts();
-  const columns = ["AM", "BM", "CM", "AF", "BF", "CF", "DARSF"];
+  const columns = ["AM", "BM", "AF", "BF", "CF"];
   const byClass = {};
   allocations.forEach((row) => {
     const classNumber = String(row.class || "").trim();
@@ -829,34 +860,50 @@ function renderMasulGrid() {
     byClass[classNumber][column].push(row);
   });
 
-  let html = '<table class="masul-grid"><thead><tr><th>Class</th>';
-  columns.forEach((column) => { html += `<th>${column}</th>`; });
-  html += "</tr></thead><tbody>";
-  for (let classNumber = 1; classNumber <= 11; classNumber++) {
-    html += `<tr><th scope="row">${classNumber}</th>`;
-    columns.forEach((column) => {
-      const rows = byClass[String(classNumber)]?.[column] || [];
-      if (!rows.length) {
-        html += '<td aria-label="Unassigned Al-Masʾūl class and gender period">—</td>';
-        return;
-      }
-      html += '<td class="masul-slot">';
-      rows.forEach((row) => {
-        html += `<div class="masul-teacher">
-          ${masulPhotoHtml(row)}
-          <span class="masul-slot-teacher" title="${x(row.name || row.its || "Unassigned")}">${x(row.name || row.its || "Unassigned")}</span>
-        </div>
-        <select class="sel" aria-label="Reassign Al-Masʾūl class ${classNumber} ${column}"
-          data-row="${row.rowNumber}" data-weekly="${row.weekly}"
-          data-old-key="${x(row.teacherKey)}" onchange="reassign(this)">
-          ${selectOpts(opts, row.teacherKey)}
-        </select>`;
+  const groups = [
+    { classes: [1, 2], name: "Cultural Generale a" },
+    { classes: [3, 4], name: "Cultural Generale b" },
+    { classes: [5, 6, 7], name: "Collegiate one" }
+  ];
+  let html = "";
+  groups.forEach((group) => {
+    const classes = group.classes;
+    html += `<section class="masul-group">
+      <div class="masul-group-title">${x(group.name)}</div>
+      <table class="masul-grid"><thead><tr><th>Class</th>`;
+    columns.forEach((column) => { html += `<th>${column}</th>`; });
+    html += "</tr></thead><tbody>";
+    classes.forEach((classNumber) => {
+      html += `<tr><th scope="row">${classNumber}</th>`;
+      columns.forEach((column) => {
+        html += masulCellHtml(byClass[String(classNumber)]?.[column] || [], classNumber, column, opts);
       });
-      html += "</td>";
+      html += "</tr>";
     });
-    html += "</tr>";
-  }
-  wrap.innerHTML = html + "</tbody></table>";
+    html += "</tbody></table></section>";
+    if (group.name === "Cultural Generale a") {
+      html += `<section class="masul-group masul-group-dars">
+        <div class="masul-group-title">DARSE BURHANI</div>
+        <table class="masul-grid"><thead><tr><th>Section</th>`;
+      [1, 2, 3, 4].forEach((classNumber) => { html += `<th>Class ${classNumber}</th>`; });
+      html += "</tr></thead><tbody><tr><th scope=\"row\">DARSF</th>";
+      [1, 2, 3, 4].forEach((classNumber) => {
+        html += masulCellHtml(byClass[String(classNumber)]?.DARSF || [], classNumber, "DARSF", opts);
+      });
+      html += "</tr></tbody></table></section>";
+    }
+  });
+
+  html += `<section class="masul-group masul-group-last">
+    <div class="masul-group-title">Collegiate two</div>
+    <table class="masul-grid"><thead><tr><th>Class</th>`;
+  [8, 9, 10, 11].forEach((classNumber) => { html += `<th>Class ${classNumber}</th>`; });
+  html += "</tr></thead><tbody><tr><th scope=\"row\">AM</th>";
+  [8, 9, 10, 11].forEach((classNumber) => {
+    html += masulCellHtml(byClass[String(classNumber)]?.AM || [], classNumber, "AM", opts);
+  });
+  html += "</tr></tbody></table></section>";
+  wrap.innerHTML = html;
 }
 
 // ================================================================
