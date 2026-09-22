@@ -228,14 +228,15 @@ tbody tr.daera-row td:first-child{border-left:4px solid #15803d;padding-left:8px
 .masul-grid thead th{text-align:center}
 .masul-grid thead th:first-child,.masul-grid tbody th{width:42px;padding-left:4px;padding-right:4px}
 .masul-grid tbody th{background:var(--navy);color:#fff;text-align:center;border:1px solid #bfdbfe}
-.masul-grid tbody td{height:92px;padding:6px;vertical-align:top;border:1px solid #e2e8f0;background:#f8fafc;overflow:hidden}
+.masul-grid tbody td{height:auto;padding:6px;vertical-align:top;border:1px solid #e2e8f0;background:#f8fafc;overflow:hidden}
 .masul-grid tbody td.masul-slot{background:#fff}
-.masul-teacher{display:flex;align-items:center;gap:6px;min-width:0;margin-bottom:5px}
-.masul-teacher-photo,.masul-teacher-photo-ph{width:28px;height:28px;flex:0 0 28px;border-radius:50%;object-fit:cover}
+.masul-assignment{display:grid;grid-template-columns:76px minmax(0,1fr);column-gap:7px;align-items:center}
+.masul-teacher{display:contents}
+.masul-teacher-photo,.masul-teacher-photo-ph{grid-column:1;grid-row:1 / span 2;width:76px;height:76px;border-radius:50%;object-fit:cover}
 .masul-teacher-photo-ph{display:flex;align-items:center;justify-content:center;background:var(--badge-bg);color:var(--badge-txt);font-size:11px;font-weight:700}
-.masul-slot-teacher{min-width:0;flex-grow:1;overflow:visible;white-space:normal;overflow-wrap:anywhere;font-size:11px;font-weight:800;color:var(--navy);cursor:help}
+.masul-slot-teacher{grid-column:2;grid-row:1;min-width:0;overflow:visible;white-space:normal;overflow-wrap:anywhere;font-size:11px;font-weight:800;color:var(--navy);cursor:help}
 .masul-slot-meta{display:none}
-.masul-grid .sel{width:100%;min-width:0;margin-top:5px;font-size:11px}
+.masul-grid .sel{grid-column:2;grid-row:2;width:82%;min-width:0;margin-top:5px;font-size:11px}
 .masul-empty{padding:28px;text-align:center;color:var(--muted)}
 .masul-group{margin-bottom:14px;border:1px solid var(--border);border-radius:var(--r);overflow:hidden;background:var(--surface)}
 .masul-group:last-child{margin-bottom:0}
@@ -824,7 +825,7 @@ function masulCellHtml(rows, classNumber, column, opts) {
   }
   let html = '<td class="masul-slot">';
   rows.forEach((row) => {
-    html += `<div class="masul-teacher">
+    html += `<div class="masul-assignment"><div class="masul-teacher">
       ${masulPhotoHtml(row)}
       <span class="masul-slot-teacher" title="${x(row.name || row.its || "Unassigned")}">${x(row.name || row.its || "Unassigned")}</span>
     </div>
@@ -832,7 +833,7 @@ function masulCellHtml(rows, classNumber, column, opts) {
       data-row="${row.rowNumber}" data-weekly="${row.weekly}"
       data-old-key="${x(row.teacherKey)}" onchange="reassign(this)">
       ${selectOpts(opts, row.teacherKey)}
-    </select>`;
+    </select></div>`;
   });
   return html + "</td>";
 }
@@ -868,14 +869,18 @@ function renderMasulGrid() {
   let html = "";
   groups.forEach((group) => {
     const classes = group.classes;
+    const groupColumns = group.name === "Cultural Generale a" ||
+      group.name === "Collegiate one"
+      ? columns.filter((column) => column !== "CF")
+      : columns;
     html += `<section class="masul-group">
       <div class="masul-group-title">${x(group.name)}</div>
       <table class="masul-grid"><thead><tr><th>Class</th>`;
-    columns.forEach((column) => { html += `<th>${column}</th>`; });
+    groupColumns.forEach((column) => { html += `<th>${column}</th>`; });
     html += "</tr></thead><tbody>";
     classes.forEach((classNumber) => {
       html += `<tr><th scope="row">${classNumber}</th>`;
-      columns.forEach((column) => {
+      groupColumns.forEach((column) => {
         html += masulCellHtml(byClass[String(classNumber)]?.[column] || [], classNumber, column, opts);
       });
       html += "</tr>";
@@ -1407,9 +1412,12 @@ function swapPhoto(el, its) {
 function getPhoto(its) {
   const requested = String(its || "").replace(/\D/g, "");
   if (!requested) return "";
-  const photoKey = Object.keys(photos).find((key) =>
-    String(key).trim() === requested ||
-    String(key).replace(/^0+/, "") === requested.replace(/^0+/, ""));
+  const requestedWithoutZeros = requested.replace(/^0+/, "");
+  const photoKey = Object.keys(photos).find((key) => {
+    const keyDigits = String(key).replace(/\D/g, "");
+    return keyDigits === requested ||
+      keyDigits.replace(/^0+/, "") === requestedWithoutZeros;
+  });
   return photoKey ? photos[photoKey] : "";
 }
 
