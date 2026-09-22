@@ -224,18 +224,22 @@ tbody tr.daera-row td:first-child{border-left:4px solid #15803d;padding-left:8px
 
 /* ── AL-MASŪL GRID ─────────────────────────────── */
 .masul-grid-wrap{padding:14px;overflow:auto}
-.masul-grid{table-layout:fixed;min-width:760px}
+.masul-grid{table-layout:fixed;min-width:860px}
 .masul-grid thead th{text-align:center}
-.masul-grid tbody td{height:72px;padding:7px;vertical-align:top;border:1px solid #e2e8f0;background:#f8fafc}
+.masul-grid thead th:first-child,.masul-grid tbody th{width:42px;padding-left:4px;padding-right:4px}
+.masul-grid tbody th{background:var(--navy);color:#fff;text-align:center;border:1px solid #bfdbfe}
+.masul-grid tbody td{height:92px;padding:6px;vertical-align:top;border:1px solid #e2e8f0;background:#f8fafc;overflow:hidden}
 .masul-grid tbody td.masul-slot{background:#fff}
-.masul-slot-number{display:block;margin-bottom:4px;color:var(--muted);font-size:10px;font-weight:700}
-.masul-slot-teacher{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;font-weight:700;color:var(--navy)}
-.masul-slot-meta{display:block;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--muted);font-size:10px}
+.masul-teacher{display:flex;align-items:center;gap:6px;min-width:0;margin-bottom:5px}
+.masul-teacher-photo,.masul-teacher-photo-ph{width:28px;height:28px;flex:0 0 28px;border-radius:50%;object-fit:cover}
+.masul-teacher-photo-ph{display:flex;align-items:center;justify-content:center;background:var(--badge-bg);color:var(--badge-txt);font-size:11px;font-weight:700}
+.masul-slot-teacher{min-width:0;flex-grow:1;overflow:visible;white-space:normal;overflow-wrap:anywhere;font-size:11px;font-weight:800;color:var(--navy);cursor:help}
+.masul-slot-meta{display:none}
 .masul-grid .sel{width:100%;min-width:0;margin-top:5px;font-size:11px}
 .masul-empty{padding:28px;text-align:center;color:var(--muted)}
 @media(max-width:760px){
   .masul-grid-wrap{padding:10px}
-  .masul-grid{min-width:620px}
+  .masul-grid{min-width:760px}
 }
 
 /* ── DAERA CHARTS ───────────────────────────────── */
@@ -412,7 +416,7 @@ tbody tr.daera-row td:first-child{border-left:4px solid #15803d;padding-left:8px
   <div class="view" id="view-masul">
     <div class="panel">
       <div class="panel-hdr">
-        <h2>Al-Masʾūl · 55 periods</h2>
+        <h2>Al-Masʾūl · class and gender allocation</h2>
         <span class="sdot hidden" id="masul-sdot"></span>
       </div>
       <div class="masul-grid-wrap" id="masul-grid">
@@ -781,51 +785,75 @@ function isMasulRow(row) {
   });
 }
 
+function masulColumnForRow(row) {
+  const section = normaliseMasulText(row.section);
+  const gender = normaliseMasulText(row.gender);
+  const isFemale = gender === "f" || gender === "female";
+  const classNumber = Number(row.class);
+  if (section === "c") return isFemale ? "CF" : "CM";
+  if (section === "a") return isFemale ? "AF" : "AM";
+  if (section === "b") return isFemale ? "BF" : "BM";
+  if (classNumber <= 4 && (section === "dars" || section === "darsf") && isFemale) return "DARSF";
+  return "";
+}
+
+function masulPhotoHtml(row) {
+  const photo = getPhoto(row.its);
+  if (photo) {
+    return `<img class="masul-teacher-photo" src="${x(photo)}" alt="${x(row.name || row.its || "Teacher")}">`;
+  }
+  const initial = (row.name || row.its || "?")[0].toUpperCase();
+  return `<span class="masul-teacher-photo-ph" aria-hidden="true">${x(initial)}</span>`;
+}
+
 function renderMasulGrid() {
   const wrap = document.getElementById("masul-grid");
   if (!wrap) return;
 
-  const allocations = allRows
-    .filter(isMasulRow)
-    .sort((a, b) =>
-      String(a.class).localeCompare(String(b.class), undefined, { numeric: true }) ||
-      String(a.section).localeCompare(String(b.section)) ||
-      String(a.name).localeCompare(String(b.name)));
-  const slots = [];
-  allocations.forEach((row) => {
-    const count = Math.max(0, Number(row.weekly) || 0);
-    for (let i = 0; i < count && slots.length < 55; i++) slots.push(row);
-  });
+  const allocations = allRows.filter((row) => isMasulRow(row) && masulColumnForRow(row));
 
-  if (!allocations.length || !slots.length) {
+  if (!allocations.length) {
     wrap.innerHTML = '<div class="masul-empty">No Al-Masʾūl allocations found.</div>';
     return;
   }
 
   const opts = buildOpts();
-  let html = '<table class="masul-grid"><thead><tr>';
-  for (let col = 1; col <= 5; col++) html += `<th>Period ${col}</th>`;
+  const columns = ["AM", "BM", "CM", "AF", "BF", "CF", "DARSF"];
+  const byClass = {};
+  allocations.forEach((row) => {
+    const classNumber = String(row.class || "").trim();
+    if (!/^(?:[1-9]|10|11)$/.test(classNumber)) return;
+    const column = masulColumnForRow(row);
+    if (!byClass[classNumber]) byClass[classNumber] = {};
+    if (!byClass[classNumber][column]) byClass[classNumber][column] = [];
+    byClass[classNumber][column].push(row);
+  });
+
+  let html = '<table class="masul-grid"><thead><tr><th>Class</th>';
+  columns.forEach((column) => { html += `<th>${column}</th>`; });
   html += "</tr></thead><tbody>";
-  for (let rowIndex = 0; rowIndex < 11; rowIndex++) {
-    html += "<tr>";
-    for (let col = 0; col < 5; col++) {
-      const slotIndex = rowIndex * 5 + col;
-      const row = slots[slotIndex];
-      if (!row) {
-        html += '<td aria-label="Unassigned period">—</td>';
-        continue;
+  for (let classNumber = 1; classNumber <= 11; classNumber++) {
+    html += `<tr><th scope="row">${classNumber}</th>`;
+    columns.forEach((column) => {
+      const rows = byClass[String(classNumber)]?.[column] || [];
+      if (!rows.length) {
+        html += '<td aria-label="Unassigned Al-Masʾūl class and gender period">—</td>';
+        return;
       }
-      html += `<td class="masul-slot">
-        <span class="masul-slot-number">Period ${slotIndex + 1}</span>
-        <span class="masul-slot-teacher">${x(row.name || row.its || "Unassigned")}</span>
-        <span class="masul-slot-meta">Class ${x(row.class)}${x(row.section ? " · " + row.section : "")}</span>
-        <select class="sel" aria-label="Reassign Al-Masʾūl period ${slotIndex + 1}"
+      html += '<td class="masul-slot">';
+      rows.forEach((row) => {
+        html += `<div class="masul-teacher">
+          ${masulPhotoHtml(row)}
+          <span class="masul-slot-teacher" title="${x(row.name || row.its || "Unassigned")}">${x(row.name || row.its || "Unassigned")}</span>
+        </div>
+        <select class="sel" aria-label="Reassign Al-Masʾūl class ${classNumber} ${column}"
           data-row="${row.rowNumber}" data-weekly="${row.weekly}"
           data-old-key="${x(row.teacherKey)}" onchange="reassign(this)">
           ${selectOpts(opts, row.teacherKey)}
-        </select>
-      </td>`;
-    }
+        </select>`;
+      });
+      html += "</td>";
+    });
     html += "</tr>";
   }
   wrap.innerHTML = html + "</tbody></table>";
