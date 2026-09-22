@@ -1080,7 +1080,7 @@ function renderTeacherDetail(key) {
           ${workloadMetricHtml("Essay correction", workload.essayHoursWeekly)}
           ${workloadMetricHtml("Available admin", workload.availableAdminHours)}
         </div>
-        <div class="workload-rule">Calculation basis: 50 hours/week · 28 teaching weeks/year</div>
+        <div class="workload-rule">Calculation basis: 40 hours/week · 28 teaching weeks/year</div>
       </div>
     </div>
     <div class="tbl-wrap">
@@ -1093,7 +1093,7 @@ function renderTeacherDetail(key) {
 }
 
 function calculateAvailableAdminCapacity(teacher) {
-  const CONTRACT_HOURS = 50;
+  const CONTRACT_HOURS = 40;
   const WEEKS = 28;
   const newPeriods = teacher.rows.reduce((sum, row) =>
     sum + (row.isRepeatAssignment ? 0 : Number(row.weekly) || 0), 0);
