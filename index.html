@@ -171,6 +171,14 @@ tbody tr.daera-row td:first-child{border-left:4px solid #15803d;padding-left:8px
   display:flex;flex-direction:column;position:sticky;top:68px;
 }
 .t-list-hdr{padding:12px 14px;background:var(--navy);color:#fff;font-size:12px;font-weight:700;flex-shrink:0}
+.t-search{
+  width:100%;box-sizing:border-box;padding:9px 12px;
+  border:0;border-bottom:1px solid var(--border);
+  background:var(--surface);color:var(--text);font:inherit;font-size:12px;
+  flex-shrink:0;
+}
+.t-search:focus{outline:none;border-bottom-color:var(--sky);box-shadow:inset 0 -1px var(--sky)}
+.t-search::placeholder{color:var(--muted)}
 .t-list-scroll{overflow-y:auto;flex:1}
 
 .t-item{
@@ -461,6 +469,9 @@ tbody tr.daera-row td:first-child{border-left:4px solid #15803d;padding-left:8px
     <div class="split">
       <div class="t-list-panel">
         <div class="t-list-hdr">All Teachers</div>
+        <input class="t-search" id="teacher-search" type="search"
+          placeholder="Search teacher names…" aria-label="Search teacher names"
+          oninput="renderTeacherList()">
         <div class="t-list-scroll" id="t-list"></div>
       </div>
 
@@ -702,9 +713,10 @@ function buildTeacherIndex() {
     if (!key) continue;
     if (!teachers[key]) {
       teachers[key] = {
-        key, its: row.its, name: row.name, total: 0, rows: []
+        key, its: row.its, name: row.name, gender: row.teacherGender || "", total: 0, rows: []
       };
     }
+    if (!teachers[key].gender && row.teacherGender) teachers[key].gender = row.teacherGender;
     teachers[key].total += row.weekly;
     teachers[key].rows.push(row);
   }
@@ -936,9 +948,20 @@ function renderMasulGrid() {
 //  TEACHER WORKLOAD VIEW
 // ================================================================
 function renderTeacherList() {
-  const sorted = Object.values(teachers).sort((a, b) => b.total - a.total);
+  const searchInput = document.getElementById("teacher-search");
+  const search = String(searchInput ? searchInput.value : "").trim().toLowerCase();
+  const sorted = Object.values(teachers)
+    .filter((teacher) => !search || String(teacher.name || "").toLowerCase().includes(search))
+    .sort((a, b) => teacherSortOrder(a) - teacherSortOrder(b) ||
+      b.total - a.total ||
+      String(a.name || a.its || "").localeCompare(String(b.name || b.its || "")));
   const el     = document.getElementById("t-list");
   el.innerHTML = "";
+
+  if (!sorted.length) {
+    el.innerHTML = '<div class="empty">No teachers found.</div>';
+    return;
+  }
 
   for (const t of sorted) {
     const ov      = t.total > 30;
@@ -963,6 +986,13 @@ function renderTeacherList() {
   }
 
   if (!activeKey && sorted.length) selectTeacher(sorted[0].key);
+}
+
+function teacherSortOrder(teacher) {
+  const gender = String(teacher.gender || "").trim().toLowerCase();
+  if (gender === "m" || gender === "male") return 0;
+  if (gender === "f" || gender === "female") return 1;
+  return 2;
 }
 
 function selectTeacher(key) {
