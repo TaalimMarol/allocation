@@ -427,6 +427,7 @@ tbody tr.daera-row td:first-child{border-left:4px solid #15803d;padding-left:8px
     <button class="nav-tab"       id="tab-class" onclick="switchView('class')">Class Allocation</button>
     <button class="nav-tab"       id="tab-masul" onclick="switchView('masul')">Al-Masʾūl</button>
     <button class="nav-tab"       id="tab-daera" onclick="switchView('daera')">DAWAIR Distribution</button>
+    <button class="nav-tab"       id="tab-curriculum" onclick="switchView('curriculum')">Curriculum Simulator</button>
   </div>
   <div class="nav-right">
     <span class="nav-email" id="nav-email"></span>
@@ -531,6 +532,16 @@ tbody tr.daera-row td:first-child{border-left:4px solid #15803d;padding-left:8px
         <div class="empty">No matching allocations found.</div>
       </div>
     </div>
+  </div>
+
+  <!-- CURRICULUM SIMULATOR VIEW -->
+  <div class="view" id="view-curriculum">
+    <iframe
+      src="curriculum-simulator.html"
+      title="Academic Curriculum Workload and Timetable Policy Simulator"
+      loading="lazy"
+      style="display:block;width:100%;height:calc(100vh - 84px);min-height:760px;border:0;border-radius:8px;background:#0e1117">
+    </iframe>
   </div>
 
 </main>

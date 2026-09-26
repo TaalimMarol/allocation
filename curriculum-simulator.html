@@ -1,0 +1,281 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Curriculum Workload Simulator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{color-scheme:dark;--bg:#0e1117;--surface:#161c27;--surface2:#1e2636;--border:#2a3548;--blue:#4c8ef7;--green:#2ecc8a;--yellow:#f7c948;--red:#e05a5a;--text:#e8edf5;--dim:#9baac2;--faint:#62728e;--mono:"IBM Plex Mono",monospace;--ui:"IBM Plex Sans",sans-serif}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:14px/1.5 var(--ui)}
+button,input,select{font:inherit}button{cursor:pointer}
+.app{min-height:100vh;display:flex;flex-direction:column}.topbar{position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:16px;min-height:52px;padding:8px 18px;background:var(--surface);border-bottom:1px solid var(--border)}
+.brand{font-size:13px;font-weight:600;white-space:nowrap}.brand span{color:var(--blue)}.spacer{flex:1}
+.toggle{display:flex;gap:2px;padding:3px;background:var(--bg);border-radius:5px}.toggle button,.tab{border:0;background:transparent;color:var(--dim)}
+.toggle button{padding:4px 10px;border-radius:4px;font:11px var(--mono)}.toggle button.active{background:var(--blue);color:white}
+.btn{padding:7px 12px;border:1px solid var(--border);border-radius:5px;background:transparent;color:var(--dim);font-size:12px}
+.btn:hover{border-color:var(--blue);color:var(--blue)}.btn.primary{background:var(--blue);border-color:var(--blue);color:white}.btn.good{background:var(--green);border-color:var(--green);color:#071a10}.btn:disabled{opacity:.45;cursor:not-allowed}
+.tabs{display:flex;gap:2px;overflow-x:auto;padding:0 14px;background:var(--surface);border-bottom:1px solid var(--border)}
+.tab{padding:11px 14px;border-bottom:2px solid transparent;font-size:13px;white-space:nowrap}.tab:hover{color:var(--text)}.tab.active{color:var(--blue);border-color:var(--blue)}
+main{flex:1;padding:18px;overflow:auto}.panel{display:none}.panel.active{display:block}.controls{display:flex;flex-wrap:wrap;align-items:flex-end;gap:12px;margin-bottom:16px}
+.field{display:flex;flex-direction:column;gap:4px}.label{font:10px var(--mono);color:var(--dim);letter-spacing:.04em;text-transform:uppercase}
+.control{min-width:110px;padding:6px 9px;border:1px solid var(--border);border-radius:5px;background:var(--surface);color:var(--text);font:12px var(--mono);outline:none}.control:focus{border-color:var(--blue)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:18px}
+.stat,.card{padding:13px 15px;border:1px solid var(--border);border-radius:6px;background:var(--surface)}
+.stat-value{font:500 21px var(--mono)}.stat-label{font-size:11px;color:var(--dim)}.blue{color:var(--blue)}.green{color:var(--green)}.yellow{color:var(--yellow)}.red{color:var(--red)}
+.heading{display:flex;align-items:center;gap:10px;margin:14px 0 10px}.heading h2{margin:0;font-size:15px}.pill{padding:2px 9px;border:1px solid var(--border);border-radius:20px;color:var(--dim);font:10px var(--mono)}
+.table-wrap{overflow:auto;border:1px solid var(--border);border-radius:6px}table{width:100%;border-collapse:collapse;font-size:12px}th{position:sticky;top:0;background:var(--surface2);color:var(--dim);text-align:left;font:10px var(--mono);white-space:nowrap}
+th,td{padding:8px 10px;border-bottom:1px solid var(--border)}tbody tr:last-child td{border-bottom:0}tbody tr:hover{background:var(--surface2)}td.num{font-family:var(--mono);white-space:nowrap}
+.edit{width:58px;padding:2px;border:0;border-bottom:1px dashed var(--border);background:none;color:var(--text);text-align:right;font:12px var(--mono)}.edit:focus{outline:0;border-color:var(--blue)}
+.badge{padding:2px 6px;border-radius:3px;background:#4c8ef71f;color:var(--blue);font:10px var(--mono)}
+.subtle{color:var(--dim);font-size:12px}.layout3{display:grid;grid-template-columns:minmax(0,1fr) 90px minmax(0,1fr);gap:12px;align-items:start}
+.card h3{margin:0 0 12px;font-size:13px}.card .field{margin-bottom:9px}.impact{padding:8px 10px;border:1px solid var(--border);border-radius:5px;background:var(--bg);font:11px/1.8 var(--mono);color:var(--dim)}
+.impact strong{float:right;color:var(--text);font-weight:400}.pool{text-align:center;padding-top:42px;color:var(--yellow);font:20px var(--mono)}.policy{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.policy-line,.audit-line{display:flex;justify-content:space-between;gap:12px;padding:6px 0;border-bottom:1px solid var(--border);font-size:12px}.policy-line:last-child,.audit-line:last-child{border:0}.policy-line span:first-child,.audit-line span:first-child{color:var(--dim)}
+.schedule{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:16px;padding:14px;border:1px solid var(--border);border-radius:6px;background:var(--surface)}
+.schedule label{display:flex;flex-direction:column;gap:4px;color:var(--dim);font:10px var(--mono)}.schedule input{padding:5px 7px;border:1px solid var(--border);border-radius:4px;background:var(--bg);color:var(--text)}
+.tt-wrap{overflow:auto}.tt{min-width:740px}.tt th,.tt td{border:1px solid var(--border);text-align:center}.slot{min-height:36px;padding:5px;background:#4c8ef71b;color:var(--blue);cursor:pointer;border-radius:3px;font-size:10px}.slot.empty{background:transparent;color:var(--faint)}.slot.break{background:#f7c94818;color:var(--yellow);cursor:default}
+.warning{display:none;margin:0 0 12px;padding:8px 10px;border:1px solid #e05a5a66;border-radius:5px;background:#e05a5a19;color:var(--red);font-size:12px}
+.modal{position:fixed;inset:0;z-index:10;display:none;align-items:center;justify-content:center;padding:16px;background:#000a}.modal.open{display:flex}.modal-box{width:min(460px,100%);padding:20px;border:1px solid var(--border);border-radius:8px;background:var(--surface)}.modal-box h2{margin:0 0 8px;font-size:16px}.modal-box p{color:var(--dim);font-size:12px}.modal-box .field{margin:12px 0}.modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:16px}
+.exports{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+@media(max-width:700px){main{padding:12px 9px}.topbar{padding:8px 10px;gap:8px}.brand{font-size:11px}.layout3,.policy{grid-template-columns:1fr}.pool{padding:0}.hide-mobile{display:none}}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="topbar">
+    <div class="brand">Curriculum <span>Workload</span> Simulator</div><div class="spacer"></div>
+    <div class="toggle" aria-label="Workload display mode"><button class="active" data-mode="periods">Periods</button><button data-mode="hours">Hours</button></div>
+    <button class="btn" id="sheets-open">Google Sheets</button>
+  </header>
+  <nav class="tabs" aria-label="Simulator sections">
+    <button class="tab active" data-tab="dashboard">Dashboard &amp; Matrix</button>
+    <button class="tab" data-tab="reallocation">Reallocation Engine</button>
+    <button class="tab" data-tab="timetable">Timetable &amp; Policy</button>
+    <button class="tab" data-tab="audit">Audit &amp; Export</button>
+  </nav>
+  <main>
+    <section class="panel active" id="dashboard">
+      <div class="controls">
+        <label class="field"><span class="label">Class Filter</span><select id="class-filter" class="control"></select></label>
+        <label class="field"><span class="label">Teaching Weeks</span><input id="weeks" class="control" type="number" value="30" min="1" max="52"></label>
+        <label class="field"><span class="label">Period Duration (min)</span><input id="duration" class="control" type="number" value="35" min="1" max="120"></label>
+        <label class="field"><span class="label">Sort By</span><select id="sort" class="control">
+          <option value="name">Book Name</option><option value="periods-desc">Periods (High to Low)</option><option value="periods-asc">Periods (Low to High)</option><option value="pages-desc">Pages (High to Low)</option><option value="pace-desc">Pace (High to Low)</option>
+        </select></label>
+        <label class="field"><span class="label">Search</span><input id="search" class="control" type="search" placeholder="Filter by name"></label>
+      </div>
+      <div class="stats" id="stats"></div>
+      <div class="heading"><h2>Curriculum Matrix</h2><span class="pill" id="row-count">0 rows</span></div>
+      <button id="zero-toggle" class="btn" style="margin-bottom:10px">Show zero-period books</button>
+      <div class="table-wrap"><table><thead id="matrix-head"></thead><tbody id="matrix-body"></tbody></table></div>
+    </section>
+    <section class="panel" id="reallocation">
+      <div class="heading"><h2>Hour &amp; Period Reallocation Engine</h2></div>
+      <p class="subtle">Move periods from a donor to a class-scoped pool, then assign them to a recipient. Pace updates as you work.</p>
+      <div class="controls"><label class="field"><span class="label">Working Class</span><select id="realloc-class" class="control"></select></label></div>
+      <div class="layout3">
+        <div class="card"><h3>① Donor (Source)</h3><label class="field"><span class="label">Select Subject</span><select id="donor" class="control"></select></label><div class="impact" id="donor-info"></div>
+          <label class="field" style="margin-top:10px"><span class="label">Periods to Transfer</span><input id="transfer" class="control" type="number" value="1" min="1"></label><div class="impact" id="donor-preview"></div>
+          <button id="transfer-btn" class="btn primary" style="width:100%;margin-top:10px">Transfer to Pool →</button></div>
+        <div class="pool"><span id="pool-value">0</span><div class="subtle">Unallocated pool<br><span id="pool-hours">0 hrs/year</span></div></div>
+        <div class="card"><h3>② Recipient (Target)</h3><label class="field"><span class="label">Select Subject</span><select id="recipient" class="control"></select></label><div class="impact" id="recipient-info"></div>
+          <button id="assign-btn" class="btn good" style="width:100%;margin-top:10px">← Assign from Pool</button><button id="reset-pool" class="btn" style="width:100%;margin-top:7px">Reset Pool</button></div>
+      </div>
+      <div class="heading"><h2>Reallocation History</h2></div><div class="table-wrap"><table><thead><tr><th>Class</th><th>Donor</th><th>Recipient</th><th>Δ Periods</th><th>Action</th></tr></thead><tbody id="history"></tbody></table></div>
+    </section>
+    <section class="panel" id="timetable">
+      <div class="heading"><h2>Schedule Configurator</h2></div>
+      <div class="schedule">
+        <label>Mon–Fri Start<input type="time" id="mf-start" value="08:50"></label><label>Mon–Fri End<input type="time" id="mf-end" value="15:45"></label>
+        <label>Tea Break Start<input type="time" id="tea-start" value="10:35"></label><label>Tea Break End<input type="time" id="tea-end" value="10:55"></label>
+        <label>Lunch Start<input type="time" id="lunch-start" value="12:40"></label><label>Lunch End<input type="time" id="lunch-end" value="14:00"></label>
+        <label>Saturday Start<input type="time" id="sat-start" value="08:15"></label><label>Saturday End<input type="time" id="sat-end" value="13:15"></label>
+      </div>
+      <div class="heading"><h2>Policy Comparison</h2></div><div class="policy" id="policies"></div>
+      <div class="heading"><h2>Weekly Visual Timetable</h2><label class="field" style="margin-left:auto"><span class="label">Map Class</span><select id="tt-class" class="control"></select></label></div>
+      <p class="subtle">Select an open slot to assign a subject; select a filled slot to clear it.</p><div class="warning" id="capacity-warning">Assigned periods exceed the available weekly slot capacity.</div>
+      <div class="tt-wrap"><table class="tt"><thead id="tt-head"></thead><tbody id="tt-body"></tbody></table></div>
+    </section>
+    <section class="panel" id="audit">
+      <div class="heading"><h2>Executive Audit</h2><label class="field" style="margin-left:auto"><span class="label">Audit Class</span><select id="audit-class" class="control"></select></label></div>
+      <div class="stats" id="audit-cards"></div>
+      <div class="heading"><h2>Baseline vs Revised Load</h2></div><div class="table-wrap"><table><thead><tr><th>Subject</th><th>Class</th><th>Baseline Periods</th><th>Revised Periods</th><th>Δ</th><th>Baseline Pages/hr</th><th>Revised Pages/hr</th></tr></thead><tbody id="audit-body"></tbody></table></div>
+      <div class="exports"><button class="btn primary" id="export-csv">Download CSV</button><button class="btn" id="print">Print Summary</button><button class="btn" id="export-json">Export JSON</button></div>
+    </section>
+  </main>
+</div>
+<div class="modal" id="sheets-modal" role="dialog" aria-modal="true" aria-labelledby="sheets-title"><div class="modal-box">
+  <h2 id="sheets-title">Load curriculum from Google Sheets</h2><p>Use a published-to-web CSV sheet with columns: Book Name, Class, Periods, Pages. Loading replaces the current simulator data.</p>
+  <label class="field"><span class="label">Sheet ID or URL</span><input id="sheet-id" class="control" style="width:100%" autocomplete="off"></label>
+  <label class="field"><span class="label">Sheet tab (optional)</span><input id="sheet-tab" class="control" style="width:100%" value="Sheet1"></label>
+  <div id="sheet-status" class="subtle" role="status"></div><div class="modal-actions"><button class="btn" id="sheets-cancel">Cancel</button><button class="btn primary" id="sheets-load">Fetch &amp; Load</button></div>
+</div></div>
+<div class="modal" id="assign-modal" role="dialog" aria-modal="true" aria-labelledby="assign-title"><div class="modal-box">
+  <h2 id="assign-title">Assign subject to timetable slot</h2><p id="assign-time" class="subtle"></p>
+  <label class="field"><span class="label">Subject</span><select id="assign-subject" class="control" style="width:100%"></select></label>
+  <div class="modal-actions"><button class="btn" id="assign-cancel">Cancel</button><button class="btn primary" id="assign-confirm">Assign</button></div>
+</div></div>
+<script>
+(() => {
+  "use strict";
+  const raw = [
+    ["Al-Ḥifz",1,11,null],["Al-Masʾūl",1,1,null],["Al-Muʾaddib",1,0,null],["Al-Tadrīb",1,2,117],["Al-Tamrīn",1,4,196],["Dirāsat ʿUlūm al-Quran",1,3,61],["English",1,4,300],["Essay",1,1,null],["Geography",1,2,101],["History-Civics",1,1,337],["Kitāb al-Ṭahārāt",1,5,224],["Kitāb Sharḥ al-Akhbār",1,3,49],["Life Skills",1,2,null],["Maths",1,2,337],["Physical Training",1,4,null],["Rawḍat Hidāyāt",1,3,259],["Science",1,4,322],["Silk Jawhar Manẓūm",1,4,391],
+    ["Al-Ḥifz",2,11,null],["Al-Masʾūl",2,1,null],["Al-Muʾaddib",2,0,null],["Al-Tadrīb",2,2,99],["Al-Tamrīn",2,4,167],["Barāmij 6",2,null,null],["Dirāsat ʿUlūm al-Quran",2,3,68],["English",2,4,292],["Essay",2,1,null],["Geography",2,2,121],["History-Civics",2,1,455],["Kitāb Mukhtaṣar al-Āthār",2,4,380],["Kitāb Sharḥ al-Akhbār",2,4,242],["Life Skills",2,2,null],["Maths",2,2,300],["Physical Training",2,4,null],["Rawḍat Hidāyāt",2,3,323],["Science",2,4,378],["Silk Jawhar Manẓūm",2,4,553],
+    ["Al-Ḥifz",3,11,null],["Al-Masʾūl",3,1,null],["Al-Muʾaddib",3,0,null],["Al-Qaṣaīd al-Muntakhaba",3,4,711],["Al-Tadrīb",3,2,105],["Al-Tamrīn",3,4,133],["Biology",3,1,142],["Chemistry",3,2,184],["Dirāsat ʿUlūm al-Quran",3,3,109],["English",3,4,293],["Essay",3,1,null],["Geography",3,1,131],["History",3,1,187],["Kitāb Mukhtaṣar al-Āthār",3,5,386],["Kitāb Sharḥ al-Akhbār",3,3,470],["Life Skills",3,2,null],["Maths",3,2,253],["Physical Training",3,4,null],["Physics",3,2,152],["Rawḍat Hidāyāt",3,3,335],
+    ["Al-Ḥifz",4,11,null],["Al-Lisān al-ʿArabī",4,2,154],["Al-Masʾūl",4,1,null],["Al-Muʾaddib",4,0,null],["Al-Qaṣaīd al-Muntakhaba",4,4,868],["Al-Tadrīb",4,2,null],["Biology",4,1,null],["Chemistry",4,2,null],["Dirāsat ʿUlūm al-Quran",4,2,116],["English",4,3,367],["Essay",4,1,null],["Geography",4,1,143],["Kitāb Dʿāʾim al-Islam wa Kitāb al-Iqtiṣār",4,5,757],["Kitāb Muntazaʿ al-Akhbār",4,3,258],["Kitāb Sharḥ al-Akhbār",4,3,440],["Life Skills",4,2,null],["Maths",4,2,256],["Physical Training",4,4,null],["Physics",4,2,null],["Risāla Alif",4,2,35],["Risāla Be",4,2,205],
+    ["Al-Ḥifz",5,11,null],["Al-Lisān al-ʿArabī",5,2,105],["Al-Masʾūl",5,1,null],["Al-Muʾaddib",5,0,null],["Al-Qaṣaīd al-Muntakhaba",5,4,1185],["Asās al-Tāʾwīl",5,1,105],["Barāmij ʿIlmiyya",5,2,null],["Business Studies",5,1,256],["Dirāsat ʿUlūm al-Quran",5,2,101],["Economics",5,2,252],["Kitāb al-Himma",5,2,194],["Kitāb Dʿāʾim al-Islam wa Kitāb al-Iqtiṣār",5,6,768],["Kitāb Muntazaʿ al-Akhbār",5,2,323],["Kitāb Sharḥ al-Akhbār",5,3,507],["Kitāb Tanbīh al-Ghāfilīn",5,2,190],["Life Skills",5,1,null],["Literature",5,3,341],["Majmuʿ al-Tarbīya",5,2,300],["Physical Training",5,4,null],["Risāla Alif",5,2,79],["Risāla Be",5,2,180],["Sociology",5,2,74],
+    ["Al-Ḥifz",6,11,null],["Al-Lisān al-ʿArabī",6,2,120],["Al-Masʾūl",6,1,null],["Al-Muntakhaba fi al-Fiqh",6,1,136],["Al-Muʾaddib",6,0,null],["Al-Qaṣaīd al-Muntakhaba",6,4,1368],["Asās al-Tāʾwīl",6,3,304],["Business Studies",6,1,223],["Dirāsat ʿUlūm al-Quran",6,2,101],["Economics",6,2,201],["Kitāb al-Manāqib wa al-Mathālib",6,2,233],["Kitāb al-Maṣābīḥ",6,2,165],["Kitāb al-Najāḥ",6,3,406],["Kitāb Iftitāḥ al-Dʿawa",6,2,246],["Kitāb Muntazaʿ al-Akhbār",6,2,358],["Life Skills",6,1,null],["Literature",6,3,452],["Majmuʿ al-Tarbīya",6,2,237],["Nahj al-Balāgha",6,1,59],["Physical Training",6,4,null],["Risāla Alif",6,2,98],["Risāla Be",6,1,211],["Sociology",6,2,126],["Taʾwīl al-Dʿāʾim",6,1,240],
+    ["Akhbār fi al-Fiqh",7,1,339],["Al-Lisān al-ʿArabī",7,2,null],["Al-Masʾūl",7,1,null],["Al-Muʾaddib",7,0,null],["Al-Qaṣaīd al-Muntakhaba",7,4,1517],["Al-Risāla al-Waḍiyya",7,2,328],["Barāmij ʿIlmiyya",7,2,null],["Business Studies",7,1,null],["Computer Science",7,2,null],["Dirāsat ʿUlūm al-Quran",7,2,109],["Economics",7,2,null],["Kitāb al-Majālis wa al-Musāyarāt",7,2,237],["Kitāb al-Manāqib wa al-Mathālib",7,2,232],["Kitāb al-Najāḥ",7,3,411],["Kitāb ʿUyūn al-Akhbār",7,4,342],["Life Skills",7,2,null],["Literature",7,3,490],["Maqraʾat al-Quran",7,1,null],["Nahj al-Balāgha",7,1,92],["Physical Training",7,4,null],["Rasāil Ikhwān al-Safāʾ",7,4,249],["Risāla Alif",7,3,212],["Risāla Be",7,2,432],["Sociology",7,2,null],["Taʾwīl al-Dʿāʾim",7,4,410],
+    ["Al-Adab al-Fāṭimī",8,4,1776],["Al-Adab al-ʿArabī wa al-Maqāmāt",8,2,847],["Al-Majālis al-Muʾayyadiyya",8,4,496],["Al-Masʾūl",8,1,null],["Al-Muntakhaba fi al-Fiqh 2nd",8,2,199],["Al-Muʾaddib",8,0,null],["Al-Takhaṣṣuṣ",8,2,null],["Barāmij ʿIlmiyya",8,2,null],["Dirāsat ʿUlūm al-Quran",8,2,466],["Emotional Intelligence and Leadership Skills",8,1,360],["HCIW",8,2,null],["Kitāb al-Majālis wa al-Musāyarāt",8,2,219],["Kitāb al-ʿAlim wa al-Ghulām",8,1,170],["Kitāb ʿUyūn al-Akhbār",8,4,529],["Literature",8,3,887],["Majālis al-Nuṣḥ wa al-Bayān",8,2,164],["Management",8,2,634],["Maqraʾat al-Quran",8,1,null],["Nahj al-Balāgha",8,1,70],["Physical Training",8,0,null],["Rasāil Ikhwān al-Safāʾ",8,4,274],["Risāla Alif",8,3,205],["Risāla Be",8,2,190],["Risāla Dhāt al-Bayān",8,2,143],["Taʾwīl al-Dʿāʾim",8,2,273],
+    ["Al-Adab al-Fāṭimī",9,4,2055],["Al-Adab al-ʿArabī wa al-Maqāmāt",9,2,960],["Al-Majālis al-Muʾayyadiyya",9,4,610],["Al-Masʾūl",9,1,null],["Al-Muʾaddib",9,0,null],["Al-Takhaṣṣuṣ",9,2,null],["Architecture",9,1,629],["Barāmij ʿIlmiyya",9,2,null],["Dawat Litigation",9,1,13],["Dirāsat ʿUlūm al-Quran",9,2,453],["Emotional Intelligence and Leadership Skills",9,1,280],["Kitāb al-Hawāshī 1st",9,2,334],["Kitāb al-Majālis wa al-Musāyarāt",9,2,220],["Kitāb Tanbīh al-Hādī wa al-Mustahdī",9,2,314],["Kitāb ʿUyūn al-Akhbār",9,5,970],["Literature",9,3,831],["Majālis al-Nuṣḥ wa al-Bayān",9,2,171],["Maqraʾat al-Quran",9,1,null],["Masāʾil Fiqhiyya",9,2,null],["Maʿaṣim al-Hudā",9,2,271],["Nahj al-Balāgha",9,1,66],["Physical Training",9,0,null],["Rasāil Ikhwān al-Safāʾ",9,4,386],["Risāla Alif",9,3,201],["Risāla Be",9,1,281],["Taʾwīl al-Dʿāʾim",9,1,177],
+    ["Al-Adab al-Fāṭimī",10,4,3109],["Al-Adab al-ʿArabī",10,2,1204],["Al-Majālis al-Muʾayyadiyya",10,4,447],["Al-Masʾūl",10,1,null],["Al-Muʾaddib",10,0,null],["Al-Takhaṣṣuṣ",10,4,null],["Barāmij ʿIlmiyya",10,2,null],["Dirāsat ʿUlūm al-Quran",10,2,581],["Emotional Intelligence and Leadership Skills",10,1,287],["Kitāb al-Hawāshī 2nd",10,3,553],["Kitāb al-Majālis al-Mustanṣiriyya",10,2,297],["Kitāb Ikhtilāf Ūṣūl al-Maḏhāhib",10,3,200],["Kitāb ʿUyūn al-Akhbār",10,4,644],["Literature",10,3,628],["Maqraʾat al-Quran",10,1,null],["Nahj al-Balāgha",10,1,84],["Physical Training",10,0,null],["Psychology",10,2,435],["Rasāil Ikhwān al-Safāʾ",10,4,318],["Religions of the World",10,1,579],["Risāla Alif",10,3,179],["Risāla Be",10,2,393],["Tāj al-ʿAqāʾid",10,2,382],["Taʾwīl al-Dʿāʾim",10,2,398],
+    ["Al-Adab al-Fāṭimī",11,4,2846],["Al-Adab al-ʿArabī",11,2,1050],["Al-Aqwāl al-Dhahabiyya",11,2,212],["Al-Majālis al-Muʾayyadiyya",11,4,564],["Al-Masʾūl",11,1,null],["Al-Muʾaddib",11,0,null],["Al-Takhaṣṣuṣ",11,4,null],["Barāmij ʿIlmiyya",11,2,null],["Dirāsat ʿUlūm al-Quran",11,3,467],["Emotional Intelligence and Leadership Skills",11,1,380],["Kitāb al-Yanbu'",11,4,232],["Kitāb Minhāj al-Farāʾiḍ",11,1,66],["Kitāb ʿUyūn al-Akhbār",11,4,752],["Linguistics",11,2,682],["Literature",11,3,648],["Nahj al-Balāgha",11,1,62],["Physical Training",11,0,null],["Political Science",11,2,459],["Rasāil Ikhwān al-Safāʾ",11,4,599],["Risāla Alif",11,3,198],["Risāla Be",11,2,400],["Taʾwīl al-Dʿāʾim",11,2,279],["Thalātha ʿAshara Risāla",11,2,146]
+  ];
+  let data = raw.map(([name, cls, periods, pages]) => ({name, cls, periods:periods||0, pages:pages||0, basePeriods:periods||0, basePages:pages||0, isOral:pages==null}));
+  let mode="periods", showZero=false, pool=0, poolDonations=[], history=[], assignments={}, pendingSlot=null;
+  const $ = (id) => document.getElementById(id);
+  const esc = (value) => String(value).replace(/[&<>"']/g, (ch) => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));
+  const weeks = () => Math.max(1, Number($("weeks").value)||30);
+  const duration = () => Math.max(1, Number($("duration").value)||35);
+  const annualHours = (periods) => periods*duration()*weeks()/60;
+  const pace = (r, periods=r.periods) => !periods ? null : !r.pages ? "oral" : r.pages/annualHours(periods);
+  const fmtPace = (r,p=pace(r)) => p===null?"—":p==="oral"?"Oral / time-bound":p.toFixed(2);
+  function fillClasses() {
+    const classes=Array.from({length:11},(_,i)=>`<option value="${i+1}">Class ${i+1}</option>`).join("");
+    $("class-filter").innerHTML='<option value="all">All Classes</option>'+classes;
+    ["realloc-class","tt-class"].forEach((id)=>{$(id).innerHTML=classes;});
+    $("audit-class").innerHTML='<option value="all">All Classes</option>'+classes;
+    $("class-filter").value="all";
+  }
+  function updateDashboard() {
+    const cls=$("class-filter").value, search=$("search").value.trim().toLocaleLowerCase();
+    const selected=data.filter((r)=>(cls==="all"||r.cls===Number(cls)));
+    const totalPeriods=selected.reduce((s,r)=>s+r.periods,0), totalPages=selected.reduce((s,r)=>s+r.pages,0);
+    const cards=[["Active Subjects",selected.filter(r=>r.periods>0).length,"blue"],[mode==="periods"?"Total Periods/Week":"Total Annual Hours",mode==="periods"?totalPeriods:annualHours(totalPeriods).toFixed(1),"green"],["Annual Hours",annualHours(totalPeriods).toFixed(1),"yellow"],["Total Pages",totalPages.toLocaleString(),""],["Teaching Weeks",weeks(),""],["Period Duration",duration()+" min",""]];
+    $("stats").innerHTML=cards.map(([label,val,color])=>`<div class="stat"><div class="stat-value ${color}">${val}</div><div class="stat-label">${label}</div></div>`).join("");
+    let rows=selected.filter(r=>(showZero||r.periods>0||r.isOral)&&r.name.toLocaleLowerCase().includes(search));
+    const sort=$("sort").value;
+    rows.sort(sort==="periods-desc"?(a,b)=>b.periods-a.periods:sort==="periods-asc"?(a,b)=>a.periods-b.periods:sort==="pages-desc"?(a,b)=>b.pages-a.pages:sort==="pace-desc"?(a,b)=>(pace(b)==="oral"?-Infinity:pace(b)??-Infinity)-(pace(a)==="oral"?-Infinity:pace(a)??-Infinity):(a,b)=>a.name.localeCompare(b.name));
+    $("row-count").textContent=`${rows.length} rows`;
+    $("matrix-head").innerHTML=`<tr><th>Book / Subject</th>${cls==="all"?"<th>Class</th>":""}<th>${mode==="periods"?"Periods/Week":"Annual Hours"}</th><th>Pages</th><th>Weekly Hours</th><th>Annual Hours</th><th>Pace (pages/hour)</th></tr>`;
+    $("matrix-body").innerHTML=rows.length?rows.map((r)=>`<tr><td>${esc(r.name)}</td>${cls==="all"?`<td><span class="badge">C${r.cls}</span></td>`:""}<td class="num"><input class="edit" aria-label="${mode==="periods"?"Periods per week":"Annual hours"} for ${esc(r.name)}" type="number" min="0" step="${mode==="periods"?"1":"0.1"}" value="${mode==="periods"?r.periods:annualHours(r.periods).toFixed(1)}" data-edit="periods" data-class="${r.cls}" data-name="${esc(r.name)}"></td><td class="num"><input class="edit" aria-label="Pages for ${esc(r.name)}" type="number" min="0" value="${r.pages}" data-edit="pages" data-class="${r.cls}" data-name="${esc(r.name)}"></td><td class="num">${(r.periods*duration()/60).toFixed(2)}</td><td class="num">${annualHours(r.periods).toFixed(1)}</td><td class="num">${esc(fmtPace(r))}</td></tr>`).join(""):`<tr><td colspan="7" style="text-align:center;color:var(--faint)">No subjects match the current filter.</td></tr>`;
+    renderAudit(); renderTimetable();
+  }
+  function subjectSelect(id,cls,preferred) {
+    const subjects=data.filter(r=>r.cls===cls&&r.periods>0).sort((a,b)=>a.name.localeCompare(b.name));
+    $(id).innerHTML=subjects.map((r,i)=>`<option value="${i}">${esc(r.name)} (${r.periods}p)</option>`).join("");
+    if(preferred!==undefined&&subjects[preferred])$(id).value=String(preferred);
+    return subjects;
+  }
+  function reallocRows() {return data.filter(r=>r.cls===Number($("realloc-class").value)&&r.periods>0).sort((a,b)=>a.name.localeCompare(b.name));}
+  function renderReallocation() {
+    const cls=Number($("realloc-class").value), rows=reallocRows();
+    ["donor","recipient"].forEach((id)=>{const previous=$(id).value;$(id).innerHTML=rows.map((r,i)=>`<option value="${i}">${esc(r.name)} (${r.periods}p)</option>`).join("");if(rows[Number(previous)])$(id).value=previous;});
+    const donor=rows[Number($("donor").value)]||null, recipient=rows[Number($("recipient").value)]||null;
+    $("donor-info").innerHTML=donor?`Current periods<strong>${donor.periods}</strong><br>Annual hours<strong>${annualHours(donor.periods).toFixed(1)}</strong><br>Pages<strong>${donor.pages}</strong><br>Pace<strong>${esc(fmtPace(donor))}</strong>`:"No active donor subjects.";
+    const amount=Math.min(Math.max(0,Number($("transfer").value)||0),donor?.periods||0);
+    $("donor-preview").innerHTML=donor?`After transfer — periods<strong>${donor.periods-amount}</strong><br>After transfer — pace<strong>${esc(fmtPace(donor,donor.periods-amount))}</strong>`:"";
+    $("recipient-info").innerHTML=recipient?`Current periods<strong>${recipient.periods}</strong><br>Annual hours<strong>${annualHours(recipient.periods).toFixed(1)}</strong><br>Pages<strong>${recipient.pages}</strong><br>Pace<strong>${esc(fmtPace(recipient))}</strong><br>After assign — periods<strong>${recipient.periods+pool}</strong><br>After assign — pace<strong>${esc(fmtPace(recipient,recipient.periods+pool))}</strong>`:"No active recipient subjects.";
+    $("pool-value").textContent=pool; $("pool-hours").textContent=`${annualHours(pool).toFixed(1)} hrs/year`;
+    $("assign-btn").disabled=pool<=0||!recipient; $("transfer-btn").disabled=!donor||amount<=0;
+    $("history").innerHTML=history.length?history.map((h,i)=>`<tr><td><span class="badge">C${h.cls}</span></td><td>${esc(h.donor)}</td><td>${esc(h.recipient)}</td><td class="num yellow">+${h.amount}</td><td><button class="btn" data-undo="${i}">Undo</button></td></tr>`).join(""):'<tr><td colspan="5" class="subtle" style="text-align:center">No reallocations yet.</td></tr>';
+  }
+  function transfer() {
+    const rows=reallocRows(), donor=rows[Number($("donor").value)], amount=Math.min(Math.max(0,Number($("transfer").value)||0),donor?.periods||0);
+    if(!donor||amount<1)return;
+    donor.periods-=amount; pool+=amount; poolDonations.push({donor,amount}); renderReallocation(); updateDashboard();
+  }
+  function assignPool() {
+    const rows=reallocRows(), recipient=rows[Number($("recipient").value)], donor=rows[Number($("donor").value)];
+    if(!recipient||!donor||pool<=0||recipient===donor)return;
+    const amount=pool; recipient.periods+=amount; pool=0;
+    history.unshift({cls:recipient.cls,donor:donor.name,recipient:recipient.name,amount,donors:poolDonations.map(({donor:source,amount:donated})=>({donor:source,amount:donated})),recipientRef:recipient});
+    poolDonations=[]; renderReallocation(); updateDashboard();
+  }
+  function undo(i) {const h=history[i];if(!h)return;h.donors.forEach(({donor,amount})=>{donor.periods+=amount});h.recipientRef.periods-=h.amount;history.splice(i,1);renderReallocation();updateDashboard();}
+  function resetPool() {poolDonations.forEach(({donor,amount})=>{donor.periods+=amount});pool=0;poolDonations=[];renderReallocation();updateDashboard();}
+  function mins(value){const [h,m]=value.split(":").map(Number);return h*60+m;}
+  function schedule() {return ["mf-start","mf-end","tea-start","tea-end","lunch-start","lunch-end","sat-start","sat-end"].map(id=>$(id).value).map(mins);}
+  function slotCounts(values,dur) {
+    const [start,end,teaStart,teaEnd,lunchStart,lunchEnd,satStart,satEnd]=values;
+    if(end<=start||satEnd<=satStart||teaEnd<=teaStart||lunchEnd<=lunchStart||
+      teaStart<start||teaEnd>end||lunchStart<start||lunchEnd>end||
+      (teaStart<lunchEnd&&lunchStart<teaEnd)||teaStart<satStart||teaEnd>satEnd)return null;
+    const weekday=Math.max(0,end-start-(teaEnd-teaStart)-(lunchEnd-lunchStart));
+    const saturday=Math.max(0,satEnd-satStart-(teaEnd-teaStart));
+    const alignedDaySlots=Math.floor((teaStart-start)/dur)+Math.floor((lunchStart-teaEnd)/dur)+Math.floor((end-lunchEnd)/dur);
+    const alignedSatSlots=Math.floor((teaStart-satStart)/dur)+Math.floor((satEnd-teaEnd)/dur);
+    const daySlots=Math.floor(weekday/dur),satSlots=Math.floor(saturday/dur);
+    return {weekday,saturday,daySlots,satSlots,weekly:daySlots*5+satSlots,alignedWeekly:alignedDaySlots*5+alignedSatSlots};
+  }
+  function renderPolicies(values) {
+    const old=slotCounts(values,35),sim=slotCounts(values,30);
+    $("policies").innerHTML=old&&sim?[
+      ["Current: 35-minute periods",old,"blue"],["Simulated: 30-minute periods",sim,"green"]
+    ].map(([title,s,c])=>`<div class="card"><h3>${title}</h3><div class="policy-line"><span>Net teaching Mon–Fri</span><b>${s.weekday} min/day</b></div><div class="policy-line"><span>Net teaching Saturday</span><b>${s.saturday} min</b></div><div class="policy-line"><span>Aggregate slots (Mon–Fri)</span><b>${s.daySlots}/day</b></div><div class="policy-line"><span>Aggregate Saturday slots</span><b>${s.satSlots}</b></div><div class="policy-line"><span>Aggregate weekly capacity</span><b class="${c}">${s.weekly} slots/week</b></div><div class="policy-line"><span>Break-aligned timetable slots</span><b>${s.alignedWeekly} slots/week</b></div><div class="policy-line"><span>Annual aggregate capacity (${weeks()} weeks)</span><b>${s.weekly*weeks()} slots/year</b></div></div>`).join(""):'<div class="card red">Check schedule times; end times must follow start times.</div>';
+  }
+  function renderTimetable() {
+    const values=schedule(), dur=duration(), counts=slotCounts(values,dur); renderPolicies(values);
+    const cls=Number($("tt-class").value||1), rows=data.filter(r=>r.cls===cls), weekly=rows.reduce((s,r)=>s+r.periods,0);
+    $("capacity-warning").style.display=counts&&weekly>counts.alignedWeekly?"block":"none";
+    if(!counts){$("tt-head").innerHTML="";$("tt-body").innerHTML="";return;}
+    const days=["Mon","Tue","Wed","Thu","Fri","Sat"], keyPrefix=`${cls}:`;
+    const periods=(start,end,breaks)=>{const out=[];let cursor=start;for(const br of breaks){while(cursor<br.start){out.push({start:cursor,end:Math.min(cursor+dur,br.start)});cursor=Math.min(cursor+dur,br.start)}out.push({break:br.label,start:br.start,end:br.end});cursor=br.end}while(cursor<end){out.push({start:cursor,end:Math.min(cursor+dur,end)});cursor=Math.min(cursor+dur,end)}return out};
+    const weekday=periods(values[0],values[1],[{start:values[2],end:values[3],label:"Tea Break"},{start:values[4],end:values[5],label:"Lunch Break"}]),sat=periods(values[6],values[7],[{start:values[2],end:values[3],label:"Tea Break"}]),max=Math.max(weekday.length,sat.length);
+    $("tt-head").innerHTML=`<tr><th>Slot</th>${days.map(d=>`<th>${d}</th>`).join("")}</tr>`;
+    const clock=(n)=>`${String(Math.floor(n/60)).padStart(2,"0")}:${String(n%60).padStart(2,"0")}`;
+    $("tt-body").innerHTML=Array.from({length:max},(_,i)=>`<tr><td>${i+1}</td>${days.map((_,d)=>{const s=d===5?sat[i]:weekday[i];if(!s)return"<td></td>";if(s.break)return`<td><div class="slot break">${clock(s.start)}–${clock(s.end)}<br>${s.break}</div></td>`;const key=`${keyPrefix}${d}:${i}`,assigned=assignments[key];return`<td><div class="slot ${assigned?"":"empty"}" data-slot="${esc(key)}" title="${assigned?"Click to clear":"Click to assign"}">${clock(s.start)}–${clock(s.end)}<br>${esc(assigned||"+ Assign")}</div></td>`}).join("")}</tr>`).join("");
+  }
+  function renderAudit() {
+    const cls=$("audit-class").value;
+    const classes=cls==="all"?Array.from({length:11},(_,i)=>i+1):[Number(cls)];
+    $("audit-cards").innerHTML=classes.map(c=>{const rows=data.filter(r=>r.cls===c),base=rows.reduce((s,r)=>s+r.basePeriods,0),revised=rows.reduce((s,r)=>s+r.periods,0);return`<div class="stat"><h3 style="margin:0 0 8px">Class ${c}</h3><div class="audit-line"><span>Active subjects</span><b>${rows.filter(r=>r.periods>0).length}</b></div><div class="audit-line"><span>Baseline periods/week</span><b>${base}</b></div><div class="audit-line"><span>Revised periods/week</span><b>${revised}</b></div><div class="audit-line"><span>Net change</span><b class="${revised>base?"green":revised<base?"red":""}">${revised>base?"+":""}${revised-base}</b></div><div class="audit-line"><span>Annual hours</span><b>${annualHours(revised).toFixed(1)}</b></div></div>`}).join("");
+    const changed=data.filter(r=>(cls==="all"||r.cls===Number(cls))&&(r.periods!==r.basePeriods||r.pages!==r.basePages));
+    $("audit-body").innerHTML=changed.length?changed.map(r=>`<tr><td>${esc(r.name)}</td><td><span class="badge">C${r.cls}</span></td><td class="num">${r.basePeriods}</td><td class="num">${r.periods}</td><td class="num">${r.periods-r.basePeriods>0?"+":""}${r.periods-r.basePeriods}</td><td class="num">${esc(fmtPace({...r,pages:r.basePages},r.basePeriods))}</td><td class="num">${esc(fmtPace(r))}</td></tr>`).join(""):'<tr><td colspan="7" class="subtle" style="text-align:center">No changes from baseline.</td></tr>';
+  }
+  function download(filename,type,content) {const link=document.createElement("a");link.href=`data:${type};charset=utf-8,${encodeURIComponent(content)}`;link.download=filename;link.click();}
+  function exportCSV() {const rows=[["Book","Class","Baseline Periods","Revised Periods","Delta Periods","Pages","Annual Hours","Pace (pages/hour)"],...data.map(r=>[r.name,r.cls,r.basePeriods,r.periods,r.periods-r.basePeriods,r.pages,annualHours(r.periods).toFixed(2),fmtPace(r)])];download("curriculum_workload_export.csv","text/csv",rows.map(row=>row.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(",")).join("\r\n"));}
+  function exportJSON() {download("curriculum_workload.json","application/json",JSON.stringify(data.map(r=>({name:r.name,class:r.cls,basePeriods:r.basePeriods,revisedPeriods:r.periods,pages:r.pages,annualHours:annualHours(r.periods),pace:pace(r)})),null,2));}
+  function parseCSV(text) {const rows=[];let row=[],field="",quoted=false;for(let i=0;i<text.length;i++){const c=text[i];if(c==='"'&&quoted&&text[i+1]==='"'){field+='"';i++}else if(c==='"')quoted=!quoted;else if(c===","&&!quoted){row.push(field.trim());field=""}else if((c==="\n"||c==="\r")&&!quoted){if(c==="\r"&&text[i+1]==="\n")i++;row.push(field.trim());if(row.some(Boolean))rows.push(row);row=[];field=""}else field+=c}row.push(field.trim());if(row.some(Boolean))rows.push(row);return rows;}
+  function importRows(rows) {
+    if(rows.length<2)throw new Error("No curriculum rows found.");
+    const headers=rows[0].map(v=>v.toLocaleLowerCase().trim()), find=(terms,fallback)=>{const index=headers.findIndex(h=>terms.some(t=>h.includes(t)));return index<0?fallback:index};
+    const nameCol=find(["book","subject","name"],0),classCol=find(["class"],1),periodCol=find(["period"],2),pageCol=find(["page"],3);
+    const next=rows.slice(1).filter(r=>r[nameCol]).map(r=>{const cls=Number(r[classCol]),p=Number(r[periodCol]),pages=r[pageCol]===""?null:Number(r[pageCol]);if(!Number.isInteger(cls)||cls<1||cls>11||!Number.isFinite(p)||p<0||(pages!==null&&(!Number.isFinite(pages)||pages<0)))throw new Error(`Invalid data for "${r[nameCol]}". Check class, periods, and pages.`);return{name:r[nameCol],cls,periods:p,pages:pages||0,basePeriods:p,basePages:pages||0,isOral:pages===null||pages===0}});
+    if(!next.length)throw new Error("No valid curriculum data rows found.");
+    data=next;pool=0;history=[];assignments={};renderReallocation();updateDashboard();
+  }
+  function loadSheet() {
+    const input=$("sheet-id").value.trim(),tab=$("sheet-tab").value.trim()||"Sheet1",status=$("sheet-status");
+    const match=input.match(/\/spreadsheets\/d\/([a-zA-Z0-9_-]+)/),id=match?match[1]:input;
+    if(!id){status.textContent="Enter a Google Sheet ID or URL.";return;}
+    if(!/^[a-zA-Z0-9_-]+$/.test(id)){status.textContent="The Sheet ID contains unsupported characters.";return;}
+    status.textContent="Loading published CSV…";
+    fetch(`https://docs.google.com/spreadsheets/d/${encodeURIComponent(id)}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(tab)}`)
+      .then(response=>{if(!response.ok)throw new Error(`Google Sheets returned HTTP ${response.status}.`);return response.text()})
+      .then(text=>{importRows(parseCSV(text));status.textContent=`Loaded ${data.length} rows successfully.`})
+      .catch(error=>{status.textContent=`Could not load sheet: ${error.message} Ensure it is published to the web as CSV.`});
+  }
+  document.querySelectorAll(".tab").forEach(button=>button.addEventListener("click",()=>{document.querySelectorAll(".tab,.panel").forEach(el=>el.classList.remove("active"));button.classList.add("active");$(button.dataset.tab).classList.add("active");if(button.dataset.tab==="reallocation")renderReallocation();if(button.dataset.tab==="audit")renderAudit();if(button.dataset.tab==="timetable")renderTimetable()}));
+  document.querySelectorAll("[data-mode]").forEach(button=>button.addEventListener("click",()=>{mode=button.dataset.mode;document.querySelectorAll("[data-mode]").forEach(el=>el.classList.toggle("active",el===button));updateDashboard()}));
+  ["class-filter","weeks","duration","sort","search"].forEach(id=>$(id).addEventListener(id==="search"?"input":"change",updateDashboard));
+  $("zero-toggle").addEventListener("click",()=>{showZero=!showZero;$("zero-toggle").textContent=showZero?"Hide zero-period books":"Show zero-period books";updateDashboard()});
+  $("matrix-body").addEventListener("change",event=>{const input=event.target.closest("[data-edit]");if(!input)return;const row=data.find(r=>r.cls===Number(input.dataset.class)&&r.name===input.dataset.name);if(!row)return;const value=Math.max(0,Number(input.value)||0);if(input.dataset.edit==="periods")row.periods=mode==="periods"?value:value/(duration()*weeks()/60);else{row.pages=value;row.isOral=false}updateDashboard()});
+  $("realloc-class").addEventListener("change",()=>{resetPool()});$("donor").addEventListener("change",renderReallocation);$("recipient").addEventListener("change",renderReallocation);$("transfer").addEventListener("input",renderReallocation);
+  $("transfer-btn").addEventListener("click",transfer);$("assign-btn").addEventListener("click",assignPool);$("reset-pool").addEventListener("click",resetPool);
+  $("history").addEventListener("click",event=>{const button=event.target.closest("[data-undo]");if(button)undo(Number(button.dataset.undo))});
+  $("tt-class").addEventListener("change",renderTimetable);$("audit-class").addEventListener("change",renderAudit);
+  ["mf-start","mf-end","tea-start","tea-end","lunch-start","lunch-end","sat-start","sat-end"].forEach(id=>$(id).addEventListener("change",renderTimetable));
+  $("tt-body").addEventListener("click",event=>{const slot=event.target.closest("[data-slot]");if(!slot)return;const key=slot.dataset.slot;if(assignments[key]){delete assignments[key];renderTimetable();return}const cls=Number($("tt-class").value),subjects=data.filter(r=>r.cls===cls&&r.periods>0);if(!subjects.length)return;pendingSlot=key;$("assign-time").textContent=`Class ${cls} · ${slot.innerText.replace(/\n/g," ")}`;$("assign-subject").innerHTML=subjects.map(r=>`<option>${esc(r.name)}</option>`).join("");$("assign-modal").classList.add("open")});
+  $("assign-cancel").addEventListener("click",()=>{$("assign-modal").classList.remove("open");pendingSlot=null});
+  $("assign-confirm").addEventListener("click",()=>{if(pendingSlot)assignments[pendingSlot]=$("assign-subject").value;$("assign-modal").classList.remove("open");pendingSlot=null;renderTimetable()});
+  $("weeks").addEventListener("change",renderTimetable);$("duration").addEventListener("change",renderTimetable);
+  $("export-csv").addEventListener("click",exportCSV);$("export-json").addEventListener("click",exportJSON);$("print").addEventListener("click",()=>window.print());
+  $("sheets-open").addEventListener("click",()=>{$("sheets-modal").classList.add("open");$("sheet-status").textContent=""});$("sheets-cancel").addEventListener("click",()=>$("sheets-modal").classList.remove("open"));$("sheets-load").addEventListener("click",loadSheet);
+  fillClasses();$("realloc-class").value="1";$("tt-class").value="1";$("audit-class").value="all";renderReallocation();updateDashboard();
+})();
+</script>
+</body>
+</html>

@@ -1,4 +1,14 @@
-# Allocation Dashboard
+# Academic Curriculum Workload & Timetable Policy Simulator
+
+The Allocation Dashboard now includes an interactive curriculum workload
+simulator alongside the existing teacher and subject allocation views. The
+simulator opens from the **Curriculum Simulator** dashboard tab and models
+Classes 1–11 using the supplied curriculum dataset.
+
+The curriculum simulator is a static HTML feature embedded within the
+authenticated dashboard. The dashboard itself still uses Google sign-in and
+the Apps Script backend described below; no additional server or package
+dependencies are required.
 
 This project is hosted as a static site on GitHub Pages. Google Apps Script
 provides the authenticated backend for Google Sheets and Drive.
@@ -16,6 +26,45 @@ GitHub Pages
 
 GitHub Pages never receives a service-account key. `config.js` contains only
 the OAuth client ID and Apps Script URL, which are public identifiers.
+
+## Curriculum simulator
+
+- **Dashboard & Matrix:** edit periods and page counts, filter by class, search
+  and sort subjects, show or hide zero-period books, and switch between weekly
+  periods and annual hours.
+- **Reallocation Engine:** transfer periods from a donor subject into a
+  class-scoped pool, assign the pool to a recipient, preview pace changes, and
+  undo completed reallocations.
+- **Timetable & Policy:** configure weekday and Saturday schedules and breaks,
+  compare 35-minute and 30-minute periods, map subjects to weekly slots, and
+  check the weekly capacity.
+- **Audit & Export:** compare baseline with revised loads and download CSV or
+  JSON reports, or print a summary.
+- **Google Sheets:** load a published-to-web CSV sheet with columns for book
+  name, class, periods, and pages.
+
+The simulator's data and interface are kept in
+[`curriculum-simulator.html`](./curriculum-simulator.html); it is embedded in
+the authenticated dashboard so its styles and controls remain isolated from
+the allocation views. Its defaults are 30 teaching weeks and 35-minute
+periods. Teaching pace is calculated as pages divided by annual teaching
+hours.
+
+### Schedule defaults and calculations
+
+| Setting | Default |
+|---|---|
+| Mon–Fri schedule | 08:50–15:45 |
+| Tea break | 10:35–10:55 |
+| Lunch break | 12:40–14:00 |
+| Saturday schedule | 08:15–13:15 |
+| Teaching weeks | 30 |
+| Period duration | 35 minutes |
+
+Weekly hours are `periods × duration / 60`; annual hours multiply weekly
+hours by teaching weeks. The policy cards show aggregate capacity based on
+total net teaching minutes, alongside the break-aligned slot count used by
+the visual timetable and its capacity warning.
 
 ## Configure the Apps Script backend
 
