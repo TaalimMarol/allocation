@@ -2,6 +2,7 @@ const CONFIG = {
   spreadsheetId: "1iAl1YgpKqPNnx7SJPAQTncOkquVUmT_RnO3HT_SpgBI",
   googleClientId: "4790857483-dfsu661skbet2drpfhlpb6hgihvndfhg.apps.googleusercontent.com",
   sheetName: "1449Working",
+  departmentSheetName: "Dept_Allocation",
   photoFolderId: "1stZ952fMp9RD1YjlV4YYv6BCSb6CSXBB",
   allowedEmails: [
     "fakhruddin.burhanpurwala@jameasaifiyah.edu",
@@ -46,8 +47,14 @@ function handleRequest_(request, method) {
     if (method === "GET" && action === "photos") {
       return json_(getTeacherPhotos_());
     }
+    if (method === "GET" && action === "departments") {
+      return json_(getDepartmentData_());
+    }
     if (method === "POST" && action === "sync") {
       return json_(syncRow_(request.rowNumber, request.newIts, request.newName));
+    }
+    if (method === "POST" && action === "department-sync") {
+      return json_(syncTeacherDepartments_(request.its, request.assignments));
     }
     return json_({ error: "Unsupported action." }, 400);
   } catch (err) {
@@ -122,6 +129,160 @@ function getAllData_() {
   return { rows: rows, headers: headers, historyHeader: historyHeader };
 }
 
+function getDepartmentData_() {
+  const sheet = getNamedSheet_(CONFIG.departmentSheetName);
+  const values = sheet.getDataRange().getDisplayValues();
+  if (values.length < 2) return { rows: [], headers: values[0] || [] };
+
+  const headers = values[0].map(function (header) { return String(header || "").trim(); });
+  const index = buildColIdx_(headers);
+  const itsCol = findColumnIndex_(index, [
+    "ITS", "Teacher ITS", "ITS Number", "ITS No", "ITS_No", "ITS ID", "ITS_ID",
+    "ITSID", "ItsID", "TeacherITS"
+  ]);
+  if (itsCol === -1) throw new Error("Dept_Allocation is missing an ITS column.");
+
+  const rows = [];
+  for (let r = 1; r < values.length; r++) {
+    const row = values[r];
+    const its = String(row[itsCol] || "").trim();
+    if (!its) continue;
+    rows.push({
+      rowNumber: r + 1,
+      its: its,
+      department: String(getCol_(index, row, [
+        "department", "department_en", "department english", "DepartmentName", "Department Name"
+      ])).trim(),
+      departmentAr: String(getCol_(index, row, [
+        "department_ar", "department ar", "arabic department", "DepartmentNameAR",
+        "Department Name AR", "DepartmentName_Ar"
+      ])).trim(),
+      designation: String(getCol_(index, row, ["designation", "designations", "Designation"])).trim(),
+      responsibility: String(getCol_(index, row, ["responsibility", "responsibilities"])).trim(),
+      deptResponsibilitiesMaster: String(getCol_(index, row, [
+        "dept_responsibilities_Master", "dept responsibilities master",
+        "dept_responsibilities_Master field details", "dept_responsibilities_master",
+        "Department Responsibilities Master", "Responsibilities Master"
+      ])).trim()
+    });
+  }
+  return { rows: rows, headers: headers };
+}
+
+function syncTeacherDepartments_(its, assignments) {
+  const teacherIts = String(its || "").trim();
+  if (!teacherIts) throw new Error("Teacher ITS is required.");
+  if (!Array.isArray(assignments)) throw new Error("Department assignments must be a list.");
+
+  const sheet = getNamedSheet_(CONFIG.departmentSheetName);
+  const lastColumn = sheet.getLastColumn();
+  if (!lastColumn) throw new Error("Dept_Allocation has no header row.");
+  const headers = sheet.getRange(1, 1, 1, lastColumn).getDisplayValues()[0];
+  const index = buildColIdx_(headers);
+  const columns = {
+    its: findColumnIndex_(index, [
+      "ITS", "Teacher ITS", "ITS Number", "ITS No", "ITS_No", "ITS ID", "ITS_ID",
+      "ITSID", "ItsID", "TeacherITS"
+    ]),
+    department: findColumnIndex_(index, [
+      "department", "department_en", "department english", "DepartmentName", "Department Name"
+    ]),
+    departmentAr: findColumnIndex_(index, [
+      "department_ar", "department ar", "arabic department", "DepartmentNameAR",
+      "Department Name AR", "DepartmentName_Ar"
+    ]),
+    designation: findColumnIndex_(index, ["designation", "designations"]),
+    responsibility: findColumnIndex_(index, ["responsibility", "responsibilities"]),
+    deptResponsibilitiesMaster: findColumnIndex_(index, [
+      "dept_responsibilities_Master", "dept responsibilities master",
+      "dept_responsibilities_Master field details", "dept_responsibilities_master",
+      "Department Responsibilities Master", "Responsibilities Master"
+    ])
+  };
+  Object.keys(columns).forEach(function (key) {
+    if (columns[key] === -1 && key !== "responsibility" && key !== "deptResponsibilitiesMaster") {
+      throw new Error("Dept_Allocation is missing the " + key + " column.");
+    }
+  });
+  if (columns.responsibility === -1 && columns.deptResponsibilitiesMaster === -1) {
+    throw new Error("Dept_Allocation is missing a responsibility column.");
+  }
+
+  const lastRow = sheet.getLastRow();
+  const data = lastRow > 1
+    ? sheet.getRange(2, 1, lastRow - 1, lastColumn).getDisplayValues()
+    : [];
+  const target = normaliseIts_(teacherIts);
+  const matchingRows = [];
+  data.forEach(function (row, offset) {
+    if (normaliseIts_(row[columns.its]) === target) matchingRows.push(offset + 2);
+  });
+
+  const cleaned = assignments.map(function (assignment) {
+    if (!assignment || typeof assignment !== "object") {
+      throw new Error("Each department assignment must be an object.");
+    }
+    return {
+      department: String(assignment.department || "").trim(),
+      departmentAr: String(assignment.departmentAr || "").trim(),
+      designation: String(assignment.designation || "").trim(),
+      responsibility: String(assignment.responsibility || "").trim(),
+      deptResponsibilitiesMaster: String(assignment.deptResponsibilitiesMaster || "").trim()
+    };
+  }).filter(function (assignment) {
+    return assignment.department || assignment.departmentAr ||
+      assignment.designation || assignment.responsibility || assignment.deptResponsibilitiesMaster;
+  });
+
+  const existingCount = matchingRows.length;
+  if (cleaned.length > existingCount) {
+    for (let i = existingCount; i < cleaned.length; i++) {
+      matchingRows.push(lastRow + 1 + i - existingCount);
+    }
+  }
+
+  for (let i = 0; i < Math.max(matchingRows.length, cleaned.length); i++) {
+    const rowNumber = matchingRows[i];
+    if (i < cleaned.length) {
+      const assignment = cleaned[i];
+      sheet.getRange(rowNumber, columns.its + 1).setValue(teacherIts);
+      sheet.getRange(rowNumber, columns.department + 1).setValue(assignment.department);
+      sheet.getRange(rowNumber, columns.departmentAr + 1).setValue(assignment.departmentAr);
+      sheet.getRange(rowNumber, columns.designation + 1).setValue(assignment.designation);
+      if (columns.responsibility !== -1) {
+        sheet.getRange(rowNumber, columns.responsibility + 1).setValue(assignment.responsibility);
+      }
+      if (columns.deptResponsibilitiesMaster !== -1) {
+        sheet.getRange(rowNumber, columns.deptResponsibilitiesMaster + 1)
+          .setValue(assignment.deptResponsibilitiesMaster);
+      }
+    } else if (matchingRows[i]) {
+      sheet.getRange(rowNumber, columns.department + 1, 1, 1).clearContent();
+      sheet.getRange(rowNumber, columns.departmentAr + 1, 1, 1).clearContent();
+      sheet.getRange(rowNumber, columns.designation + 1, 1, 1).clearContent();
+      if (columns.responsibility !== -1) {
+        sheet.getRange(rowNumber, columns.responsibility + 1, 1, 1).clearContent();
+      }
+      if (columns.deptResponsibilitiesMaster !== -1) {
+        sheet.getRange(rowNumber, columns.deptResponsibilitiesMaster + 1, 1, 1).clearContent();
+      }
+    }
+  }
+  return { success: true };
+}
+
+function normaliseIts_(value) {
+  return String(value || "").trim().toLowerCase();
+}
+
+function findColumnIndex_(index, names) {
+  for (let i = 0; i < names.length; i++) {
+    const key = names[i].toLowerCase();
+    if (index[key] !== undefined) return index[key];
+  }
+  return -1;
+}
+
 function normaliseTeacherMatch_(value) {
   return String(value || "").toLowerCase()
     .replace(/[\u2018\u2019\u201b\u02bb]/g, "'")
@@ -187,15 +348,19 @@ function collectTeacherPhotos_(folder, result) {
 }
 
 function getSheet_() {
+  return getNamedSheet_(CONFIG.sheetName);
+}
+
+function getNamedSheet_(name) {
   const spreadsheet = SpreadsheetApp.openById(CONFIG.spreadsheetId);
-  if (!CONFIG.sheetName) return spreadsheet.getSheets()[0];
-  const exact = spreadsheet.getSheetByName(CONFIG.sheetName);
+  if (!name) return spreadsheet.getSheets()[0];
+  const exact = spreadsheet.getSheetByName(name);
   if (exact) return exact;
-  const wanted = CONFIG.sheetName.toLowerCase();
+  const wanted = name.toLowerCase();
   const match = spreadsheet.getSheets().find(function (sheet) {
     return sheet.getName().toLowerCase() === wanted;
   });
-  if (!match) throw new Error("Sheet tab not found: " + CONFIG.sheetName);
+  if (!match) throw new Error("Sheet tab not found: " + name);
   return match;
 }
 

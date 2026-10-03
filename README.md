@@ -130,9 +130,18 @@ interactions.
 
 ## Distribution dashboards
 
-- **Daerat Distribution** groups the `Ustad_Daera` values from the configured
-  `1449Working` tab into columns and lists every teacher with a Daera assignment,
-  using the 1449 weekly period values in each cell.
+- **Daerat Distribution** detects every non-empty `Ustad_Daera` value from the
+  configured `1449Working` tab, groups those values into columns, and lists
+  every teacher with a Daera assignment using the 1449 weekly period values.
+  Teacher Workload uses the same field to identify Daera rows and periods.
+- **Teacher departments** are read from the `Dept_Allocation` tab and grouped
+  by ITS. The tab needs ITS/ITSID, English and Arabic department names,
+  designation, and at least one responsibility column. Common header variants
+  such as `DepartmentName`, `DepartmentNameAR`, and
+  `Dept_responsibilities_master` are supported; master responsibilities may
+  contain HTML. Department details can be edited from a teacher's workload
+  header, with English and Arabic department names available in both name
+  pickers.
 - **Subject Distribution** can be filtered by subject, class, and optionally
   book name. It lists teacher, class/section, book, and either 1449 weekly or
   the detected `1448Tafweed` history value.
