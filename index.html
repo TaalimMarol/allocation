@@ -8,6 +8,13 @@
 <script src="config.js"></script>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <style>
+@font-face{
+  font-family:"Kanz Al Lulu";
+  src:url("assets/fonts/kanz-al-lulu-regular.woff2") format("woff2");
+  font-style:normal;
+  font-weight:400;
+  font-display:swap;
+}
 /* ── TOKENS ─────────────────────────────────────── */
 :root {
   --bg:         #e0f2fe;
@@ -29,7 +36,7 @@
   --rs:         4px;
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-body{font-family:system-ui,-apple-system,'Segoe UI',sans-serif;font-size:13px;
+body{font-family:"Kanz Al Lulu","KanzalLulu",system-ui,-apple-system,'Segoe UI',sans-serif;font-size:13px;
   background:var(--bg);color:var(--text);min-height:100vh;line-height:1.5}
 button{cursor:pointer;border:none;background:none;font:inherit}
 select{font:inherit}
@@ -218,7 +225,8 @@ tbody tr.daera-row td:first-child{border-left:4px solid #15803d;padding-left:8px
 }
 .t-detail-info{flex:1}
 .t-detail-identity{display:flex;align-items:center;gap:12px;min-width:0}
-.t-detail-identity-column{min-width:0;padding-right:16px;border-right:1px solid rgba(255,255,255,.35)}
+.t-detail-identity-column{min-width:0}
+.workload-card{min-width:0}
 .t-detail-name{font-size:15px;font-weight:700}
 .t-detail-sub{font-size:11px;color:rgba(255,255,255,.6);margin-top:2px}
 .info-badges{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
@@ -228,19 +236,32 @@ tbody tr.daera-row td:first-child{border-left:4px solid #15803d;padding-left:8px
 .workload-card{padding:12px 0;background:transparent;color:#fff}
 .workload-subjects{font-size:12px;color:#fff;font-weight:600;margin-top:12px}
 .workload-subjects-label{color:rgba(255,255,255,.65);font-weight:500}
-.workload-daera{font-size:11px;color:rgba(255,255,255,.75);margin-top:6px}
-.workload-daera strong{color:#fff}
-.teacher-departments{margin-top:12px;padding:10px 12px;border:1px solid rgba(255,255,255,.24);border-radius:var(--rs);background:rgba(255,255,255,.07)}
-.teacher-department{margin-top:8px;padding-top:8px;border-top:1px solid rgba(255,255,255,.16)}
-.teacher-department:first-child{margin-top:0;padding-top:0;border-top:0}
-.teacher-department-ar{font-size:15px;font-weight:700;color:#fff}
-.teacher-department-en{font-size:12px;font-weight:600;color:rgba(255,255,255,.83)}
-.teacher-department-designation,.teacher-department-responsibility{margin-top:5px;font-size:11px;color:rgba(255,255,255,.86)}
+.workload-daera{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:10px;color:#fff}
+.workload-daera-label{font-size:14px;font-weight:800;color:#fff}
+.workload-daera-names{font-size:14px;font-weight:700;color:#fff}
+.workload-daera-names:empty{display:none}
+.daera-edit{padding:4px 8px;border:1px solid rgba(255,255,255,.42);border-radius:var(--rs);background:rgba(255,255,255,.1);color:#fff;font-size:10px;font-weight:800}
+.daera-edit:hover{background:rgba(255,255,255,.2)}
+.daera-editor{display:flex;flex:1 0 100%;flex-wrap:wrap;align-items:center;gap:7px;margin-top:8px}
+.daera-editor input{min-width:min(260px,100%);padding:6px 8px;border:1px solid rgba(255,255,255,.42);border-radius:var(--rs);background:rgba(255,255,255,.1);color:#fff;font:inherit}
+.daera-editor input::placeholder{color:rgba(255,255,255,.6)}
+.daera-editor button{padding:5px 9px;border:1px solid rgba(255,255,255,.4);border-radius:var(--rs);color:#fff;font-size:10px;font-weight:700}
+.daera-editor .daera-save{background:#166534;border-color:#4ade80}
+.teacher-departments{display:grid;gap:0;padding:0 16px 12px;background:var(--navy);color:#fff}
+.teacher-departments-heading{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:4px 0 9px;color:rgba(255,255,255,.7);font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}
+.teacher-department{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:5px 16px;align-items:start;width:100%;padding:12px 14px;border:1px solid rgba(255,255,255,.22);border-radius:var(--rs);background:rgba(255,255,255,.07)}
+.teacher-department+.teacher-department{margin-top:8px}
+.teacher-department-names{display:flex;justify-content:space-between;align-items:baseline;gap:14px;min-width:0}
+.teacher-department-ar{flex:1;min-width:0;font-size:16px;font-weight:700;color:#fff;text-align:right;direction:rtl}
+.teacher-department-en{flex:1;min-width:0;font-size:14px;font-weight:600;color:rgba(255,255,255,.88);text-align:left;direction:ltr}
+.teacher-department-designation,.teacher-department-responsibility{grid-column:1/-1;margin-top:3px;font-size:12px;color:rgba(255,255,255,.9)}
+.teacher-department-designation{font-weight:800}
+.teacher-department-responsibility{text-decoration:underline;text-underline-offset:2px}
 .department-icon{display:inline-block;width:17px;color:#fde68a;font-size:14px;vertical-align:top}
 .department-check{color:#86efac}
-.department-edit{margin-top:10px;padding:5px 9px;border:1px solid rgba(255,255,255,.42);border-radius:var(--rs);background:rgba(255,255,255,.1);color:#fff;font-size:10px;font-weight:800;letter-spacing:.04em}
+.department-edit{margin-top:0;padding:5px 9px;border:1px solid rgba(255,255,255,.42);border-radius:var(--rs);background:rgba(255,255,255,.1);color:#fff;font-size:10px;font-weight:800;letter-spacing:.04em}
 .department-edit:hover{background:rgba(255,255,255,.2)}
-.department-editor{margin-top:10px;padding:10px;border:1px solid rgba(255,255,255,.3);border-radius:var(--rs);background:rgba(8,25,65,.42)}
+.department-editor{grid-column:1/-1;margin-top:10px;padding:10px;border:1px solid rgba(255,255,255,.3);border-radius:var(--rs);background:rgba(8,25,65,.42)}
 .department-editor-entry{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid rgba(255,255,255,.18)}
 .department-editor-entry input,.department-editor-entry textarea{width:100%;min-width:0;padding:6px 7px;border:1px solid rgba(255,255,255,.34);border-radius:var(--rs);background:rgba(255,255,255,.1);color:#fff;font:inherit;font-size:11px}
 .department-editor-entry input::placeholder,.department-editor-entry textarea::placeholder{color:rgba(255,255,255,.56)}
@@ -257,11 +278,10 @@ tbody tr.daera-row td:first-child{border-left:4px solid #15803d;padding-left:8px
 .workload-rule{margin-top:10px;color:#fde047;font-size:11px;font-weight:700}
 @media(max-width:980px){
   .t-detail-hdr{grid-template-columns:1fr}
-  .t-detail-identity-column{padding-right:0;padding-bottom:12px;border-right:0;border-bottom:1px solid rgba(255,255,255,.35)}
-  .workload-metrics{grid-template-columns:repeat(4,minmax(105px,1fr))}
+  .workload-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
-@media(max-width:680px){.workload-metrics{grid-template-columns:repeat(2,minmax(130px,1fr))}}
-@media(max-width:520px){.department-editor-entry{grid-template-columns:1fr}.department-editor-entry textarea,.department-remove{grid-column:1}}
+@media(max-width:680px){.workload-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:520px){.department-editor-entry{grid-template-columns:1fr}.department-editor-entry textarea,.department-remove{grid-column:1}.teacher-department-names{flex-direction:column;align-items:stretch;gap:2px}.teacher-department-ar{text-align:right}.teacher-department-en{text-align:left}}
 
 .empty{padding:48px 24px;text-align:center;color:var(--muted);font-size:13px}
 .distribution-controls{display:flex;flex-wrap:wrap;gap:12px;padding:12px 16px;background:#f8fafc;border-bottom:1px solid var(--border)}
@@ -580,6 +600,8 @@ let activeClass    = null;
 let activeKey      = null;
 let editingDepartmentKey = null;
 let departmentDraft = [];
+let editingDaeraKey = null;
+let daeraDraft = "";
 let activeSubject  = "";
 let activeSubjectClass = "";
 let activeSubjectBook = "all";
@@ -1039,7 +1061,12 @@ function teacherSortOrder(teacher) {
 }
 
 function selectTeacher(key) {
-  if (activeKey !== key) editingDepartmentKey = null;
+  if (activeKey !== key) {
+    editingDepartmentKey = null;
+    departmentDraft = [];
+    editingDaeraKey = null;
+    daeraDraft = "";
+  }
   activeKey = key;
   document.querySelectorAll(".t-item").forEach((el) =>
     el.classList.toggle("active", el.dataset.key === key));
@@ -1065,9 +1092,11 @@ function renderTeacherDetail(key) {
   for (const row of t.rows) {
     const daera = String(row.ustadDaera || "").trim();
     if (daera) {
-      daeraTotal += row.weekly;
-      daeraSet.add(row.rowNumber);
-      daeraNames.add(row.ustadDaera);
+      daeraNames.add(daera);
+      if (isDaeraSubjectMatch(daera, row.subject)) {
+        daeraTotal += Number(row.weekly) || 0;
+        daeraSet.add(row.rowNumber);
+      }
     }
   }
 
@@ -1119,10 +1148,7 @@ function renderTeacherDetail(key) {
           <span class="workload-subjects-label">Subjects assigned:</span>
           ${x(subjects.join(", ") || "—")}
         </div>
-        <div class="workload-daera">
-          <strong>Daerat:</strong> ${x([...daeraNames].sort().join(", ") || "—")}
-        </div>
-        ${teacherDepartmentsHtml(t, departments)}
+        ${teacherDaeraHtml(t, daeraNames)}
       </div>
       <div class="workload-card">
         <div class="workload-metrics">
@@ -1137,6 +1163,7 @@ function renderTeacherDetail(key) {
         <div class="workload-rule">Calculation basis: 40 hours/week · 28 teaching weeks/year</div>
       </div>
     </div>
+    ${teacherDepartmentsHtml(t, departments)}
     <div class="tbl-wrap">
       <table><thead><tr>
         <th>Sec</th><th>Subject</th><th>Book</th>
@@ -1144,6 +1171,84 @@ function renderTeacherDetail(key) {
         <th style="text-align:center">${x(historyHeader)}</th>
       </tr></thead><tbody>${rows}</tbody></table>
     </div>`;
+}
+
+function isDaeraSubjectMatch(daera, subject) {
+  const normalizedDaera = normaliseDaeraSubject(daera);
+  return Boolean(normalizedDaera && normalizedDaera === normaliseDaeraSubject(subject));
+}
+
+function teacherDaeraHtml(teacher, daeraNames) {
+  const values = [...daeraNames].sort((a, b) => a.localeCompare(b));
+  const inputValue = editingDaeraKey === teacher.key && values.length === 1
+    ? daeraDraft
+    : "";
+  const placeholder = values.length > 1 ? "Multiple values — enter one Daerat" : "Enter Daerat name";
+  const editor = editingDaeraKey === teacher.key
+    ? `<div class="daera-editor">
+        <input id="teacher-daera-input" type="text" aria-label="Teacher Daerat"
+          placeholder="${x(placeholder)}" value="${x(inputValue)}"
+          oninput="daeraDraft=this.value">
+        <button type="button" class="daera-save" onclick="saveTeacherDaera('${x(teacher.key)}')">Save Daerat</button>
+        <button type="button" onclick="cancelTeacherDaeraEdit()">Cancel</button>
+      </div>`
+    : "";
+  return `<div class="workload-daera">
+    <span class="workload-daera-label">Daerat:</span>
+    <span class="workload-daera-names">${x(values.join(", ") || "—")}</span>
+    ${teacher.its ? `<button type="button" class="daera-edit" onclick="openTeacherDaeraEditor('${x(teacher.key)}')">EDIT DAERAT</button>` : ""}
+    ${editor}
+  </div>`;
+}
+
+function openTeacherDaeraEditor(key) {
+  const teacher = teachers[key];
+  if (!teacher || !teacher.its) return;
+  editingDaeraKey = key;
+  const values = [...new Set(teacher.rows
+    .map((row) => String(row.ustadDaera || "").trim())
+    .filter(Boolean))];
+  daeraDraft = values.length === 1 ? values[0] : "";
+  renderTeacherDetail(key);
+}
+
+function cancelTeacherDaeraEdit() {
+  const key = editingDaeraKey;
+  editingDaeraKey = null;
+  daeraDraft = "";
+  if (key) renderTeacherDetail(key);
+}
+
+async function saveTeacherDaera(key) {
+  const teacher = teachers[key];
+  if (!teacher || !teacher.its) {
+    toast("A teacher ITS is required to update Daerat.", true);
+    return;
+  }
+  const input = document.getElementById("teacher-daera-input");
+  const daera = String(input ? input.value : daeraDraft).trim();
+  try {
+    const response = await apiFetch("daera-sync", {
+      method: "POST",
+      body: JSON.stringify({
+        its: teacher.its,
+        rowNumbers: teacher.rows.map((row) => row.rowNumber),
+        daera: daera
+      })
+    });
+    const result = await response.json();
+    if (!response.ok || !result.success) {
+      throw new Error(result.error || "Daerat could not be updated.");
+    }
+    teacher.rows.forEach((row) => { row.ustadDaera = daera; });
+    editingDaeraKey = null;
+    daeraDraft = "";
+    renderTeacherDetail(key);
+    renderDaeraDistribution();
+    toast("Daerat updated.");
+  } catch (err) {
+    toast("Daerat update failed: " + err.message, true);
+  }
 }
 
 function normaliseIts(value) {
@@ -1229,18 +1334,22 @@ function teacherDepartmentsHtml(teacher, assignments) {
     });
     content = grouped.size ? [...grouped.values()].map((assignment) => `
       <div class="teacher-department">
-        ${assignment.departmentAr ? `<div class="teacher-department-ar" dir="auto">${x(assignment.departmentAr)}</div>` : ""}
-        ${assignment.department ? `<div class="teacher-department-en">${x(assignment.department)}</div>` : ""}
+        <div class="teacher-department-names">
+          ${assignment.department ? `<div class="teacher-department-en" lang="en" dir="ltr">${x(assignment.department)}</div>` : ""}
+          ${assignment.departmentAr ? `<div class="teacher-department-ar" lang="ar" dir="rtl">${x(assignment.departmentAr)}</div>` : ""}
+        </div>
         ${assignment.designations.map((designation) => `<div class="teacher-department-designation"><span class="department-icon" aria-hidden="true">☆</span>${x(designation)}</div>`).join("")}
         ${assignment.responsibilities.map((responsibility) => `<div class="teacher-department-responsibility"><span class="department-icon department-check" aria-hidden="true">✓</span>${sanitizeDepartmentHtml(responsibility)}</div>`).join("")}
         ${assignment.masterResponsibilities.map((responsibility) => `<div class="teacher-department-responsibility"><span class="department-icon department-check" aria-hidden="true">✓</span>${sanitizeDepartmentHtml(responsibility)}</div>`).join("")}
       </div>`).join("") : '<div class="teacher-department-en">No department information available.</div>';
   }
 
-  return `<section class="teacher-departments" style="color:#fff;background:rgba(255,255,255,.07);border-color:rgba(255,255,255,.24)">
-    <div style="font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.65);margin-bottom:6px">Department details</div>
+  return `<section class="teacher-departments" aria-label="Department details">
+    <div class="teacher-departments-heading">
+      <span>Department details</span>
+      ${editingDepartmentKey === teacher.key || !teacher.its ? "" : `<button type="button" class="department-edit" data-teacher-key="${x(teacher.key)}" onclick="openDepartmentEditor(this.dataset.teacherKey)">EDIT DEPARTMENT</button>`}
+    </div>
     ${content}
-    ${editingDepartmentKey === teacher.key || !teacher.its ? "" : `<button type="button" class="department-edit" data-teacher-key="${x(teacher.key)}" onclick="openDepartmentEditor(this.dataset.teacherKey)">EDIT DEPARTMENT</button>`}
   </section>`;
 }
 
@@ -1256,8 +1365,6 @@ function departmentEditorEntryHtml(entry, index) {
       value="${x(entry.designation)}" oninput="updateDepartmentDraft(this)">
     <textarea aria-label="Responsibilities (HTML supported)" placeholder="Responsibilities (HTML supported)"
       data-index="${index}" data-field="responsibility" oninput="updateDepartmentDraft(this)">${x(entry.responsibility)}</textarea>
-    <textarea aria-label="Master responsibilities (HTML supported)" placeholder="Master responsibilities (HTML supported)"
-      data-index="${index}" data-field="deptResponsibilitiesMaster" oninput="updateDepartmentDraft(this)">${x(entry.deptResponsibilitiesMaster)}</textarea>
     <button type="button" class="department-remove" onclick="removeDepartmentDraftEntry(${index})">Remove department</button>
   </div>`;
 }

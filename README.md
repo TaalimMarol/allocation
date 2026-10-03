@@ -128,6 +128,10 @@ workload tables, compact class selectors, and a stacked teacher view on small
 screens. Use Chrome DevTools device emulation to test narrow widths and touch
 interactions.
 
+The dashboard uses the bundled Kanz Al Lulu WOFF2 font from
+[`assets/fonts/kanz-al-lulu-regular.woff2`](./assets/fonts/kanz-al-lulu-regular.woff2)
+with system fonts as fallbacks.
+
 ## Distribution dashboards
 
 - **Daerat Distribution** detects every non-empty `Ustad_Daera` value from the
@@ -142,6 +146,10 @@ interactions.
   contain HTML. Department details can be edited from a teacher's workload
   header, with English and Arabic department names available in both name
   pickers.
+- **Teacher Daerat** can be edited from the teacher workload header. The
+  change applies to that teacher's allocation rows in `1449Working`; workload
+  highlighting and Daerat periods are recalculated only for rows where the
+  normalized subject matches the Daerat name.
 - **Subject Distribution** can be filtered by subject, class, and optionally
   book name. It lists teacher, class/section, book, and either 1449 weekly or
   the detected `1448Tafweed` history value.

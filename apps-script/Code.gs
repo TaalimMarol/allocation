@@ -56,6 +56,9 @@ function handleRequest_(request, method) {
     if (method === "POST" && action === "department-sync") {
       return json_(syncTeacherDepartments_(request.its, request.assignments));
     }
+    if (method === "POST" && action === "daera-sync") {
+      return json_(syncTeacherDaera_(request.its, request.rowNumbers, request.daera));
+    }
     return json_({ error: "Unsupported action." }, 400);
   } catch (err) {
     console.error(err.stack || err.message);
@@ -226,12 +229,11 @@ function syncTeacherDepartments_(its, assignments) {
       department: String(assignment.department || "").trim(),
       departmentAr: String(assignment.departmentAr || "").trim(),
       designation: String(assignment.designation || "").trim(),
-      responsibility: String(assignment.responsibility || "").trim(),
-      deptResponsibilitiesMaster: String(assignment.deptResponsibilitiesMaster || "").trim()
+      responsibility: String(assignment.responsibility || "").trim()
     };
   }).filter(function (assignment) {
     return assignment.department || assignment.departmentAr ||
-      assignment.designation || assignment.responsibility || assignment.deptResponsibilitiesMaster;
+      assignment.designation || assignment.responsibility;
   });
 
   const existingCount = matchingRows.length;
@@ -252,10 +254,6 @@ function syncTeacherDepartments_(its, assignments) {
       if (columns.responsibility !== -1) {
         sheet.getRange(rowNumber, columns.responsibility + 1).setValue(assignment.responsibility);
       }
-      if (columns.deptResponsibilitiesMaster !== -1) {
-        sheet.getRange(rowNumber, columns.deptResponsibilitiesMaster + 1)
-          .setValue(assignment.deptResponsibilitiesMaster);
-      }
     } else if (matchingRows[i]) {
       sheet.getRange(rowNumber, columns.department + 1, 1, 1).clearContent();
       sheet.getRange(rowNumber, columns.departmentAr + 1, 1, 1).clearContent();
@@ -263,12 +261,51 @@ function syncTeacherDepartments_(its, assignments) {
       if (columns.responsibility !== -1) {
         sheet.getRange(rowNumber, columns.responsibility + 1, 1, 1).clearContent();
       }
-      if (columns.deptResponsibilitiesMaster !== -1) {
-        sheet.getRange(rowNumber, columns.deptResponsibilitiesMaster + 1, 1, 1).clearContent();
-      }
     }
   }
   return { success: true };
+}
+
+function syncTeacherDaera_(its, rowNumbers, daera) {
+  const teacherIts = String(its || "").trim();
+  if (!teacherIts) throw new Error("Teacher ITS is required.");
+  if (!Array.isArray(rowNumbers) || !rowNumbers.length) {
+    throw new Error("At least one teacher row is required.");
+  }
+
+  const uniqueRows = Array.from(new Set(rowNumbers.map(function (rowNumber) {
+    const number = Number(rowNumber);
+    if (!Number.isInteger(number) || number < 2) {
+      throw new Error("Invalid teacher sheet row.");
+    }
+    return number;
+  })));
+  const sheet = getSheet_();
+  const lastColumn = sheet.getLastColumn();
+  if (!lastColumn) throw new Error("The workload sheet has no header row.");
+  const headers = sheet.getRange(1, 1, 1, lastColumn).getDisplayValues()[0];
+  const index = buildColIdx_(headers);
+  const itsCol = findColumnIndex_(index, ["ITS", "Teacher ITS", "ITS Number"]);
+  const daeraCol = findColumnIndex_(index, [
+    "Ustad_Daera", "USTAD_DAERA", "ustad_daera", "ustadDaera",
+    "Ustad Daera", "Daera", "Daerat", "Daerat_Name", "Daerat Name"
+  ]);
+  if (itsCol === -1) throw new Error("The workload sheet is missing an ITS column.");
+  if (daeraCol === -1) throw new Error("The workload sheet is missing a Daerat column.");
+  const lastRow = sheet.getLastRow();
+
+  const expectedIts = normaliseIts_(teacherIts);
+  uniqueRows.forEach(function (rowNumber) {
+    if (rowNumber > lastRow) throw new Error("A selected row is outside the workload sheet.");
+    const rowIts = sheet.getRange(rowNumber, itsCol + 1).getDisplayValue();
+    if (normaliseIts_(rowIts) !== expectedIts) {
+      throw new Error("A selected row does not belong to this teacher.");
+    }
+  });
+  uniqueRows.forEach(function (rowNumber) {
+    sheet.getRange(rowNumber, daeraCol + 1).setValue(String(daera || "").trim());
+  });
+  return { success: true, updatedRows: uniqueRows.length };
 }
 
 function normaliseIts_(value) {
