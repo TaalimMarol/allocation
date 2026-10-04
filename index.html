@@ -425,20 +425,22 @@ tr[data-subject-color="Jameeiyah Ula"]>td,.hierarchy-subject-title[data-subject-
 .hierarchy-teacher-periods{font-weight:700;white-space:nowrap}
 .hierarchy-empty{padding:28px;text-align:center;color:var(--muted)}
 .daera-distribution-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:12px;padding:14px;background:#f8fafc}
+.daera-distribution-second-row{grid-template-columns:repeat(2,minmax(0,1fr));border-top:1px solid var(--border)}
 .daera-distribution-card{overflow:hidden;border:1px solid color-mix(in srgb,var(--daera-color),#172033 14%);border-radius:var(--r);background:color-mix(in srgb,var(--daera-color) 24%,#fff)}
 .daera-distribution-header{display:flex;align-items:baseline;justify-content:space-between;gap:12px;padding:12px 14px;color:#172033}
 .daera-distribution-name{min-width:0;font-size:15px;font-weight:800;overflow-wrap:anywhere}
 .daera-distribution-total{flex:none;font-size:13px;font-weight:800;white-space:nowrap}
 .daera-books{padding:0 14px 10px;color:#334155;font-size:12px;line-height:1.5}
 .daera-teacher-list{display:grid;gap:5px;padding:0 10px 10px}
-.daera-teacher{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:36px;padding:6px 9px;border:1px solid rgb(23 32 51 / 9%);border-radius:var(--rs);background:rgb(255 255 255 / 82%);font-size:12px}
-.daera-teacher-name{min-width:0;font-weight:600;overflow-wrap:anywhere}
+.daera-teacher{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:start;gap:12px;min-height:36px;padding:6px 9px;border:1px solid rgb(23 32 51 / 9%);border-radius:var(--rs);background:rgb(255 255 255 / 82%);font-size:11px}
+.daera-teacher-name{min-width:0;font-size:11px;font-weight:400;overflow:visible;text-overflow:clip;white-space:normal;overflow-wrap:anywhere}
 .daera-teacher-periods{flex:none;font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
 @media(max-width:760px){
   .metric-grid{grid-template-columns:repeat(2,1fr)}
   .hierarchy-grid,.daera-hierarchy-grid{grid-template-columns:1fr}
   .hierarchy-teacher{padding-left:30px}
   .daera-distribution-grid{grid-template-columns:1fr;padding:10px}
+  .daera-distribution-second-row{grid-template-columns:1fr}
 }
 
 /* ── TOAST ───────────────────────────────────────── */
@@ -1702,14 +1704,15 @@ function renderDaeraDistribution() {
     wrap.innerHTML = '<div class="empty">No Daerat allocations found.</div>';
     return;
   }
-  let html = '<div class="daera-distribution-grid">';
+  let firstRowCards = "";
+  let secondRowCards = "";
   roots.forEach((root) => {
     const color = subjectPaletteColor(root.daera);
     const books = [...root.books].sort((a, b) => a.localeCompare(b));
     const teachersForDaera = [...root.teachers.values()]
       .sort((a, b) => teacherSortOrder(a) - teacherSortOrder(b) ||
         a.name.localeCompare(b.name));
-    html += `<section class="daera-distribution-card" style="--daera-color:${color}">
+    const card = `<section class="daera-distribution-card" style="--daera-color:${color}">
       <header class="daera-distribution-header">
         <span class="daera-distribution-name">${x(root.daera)}</span>
         <span class="daera-distribution-total">${root.total} ${root.total === 1 ? "period" : "periods"}</span>
@@ -1718,12 +1721,20 @@ function renderDaeraDistribution() {
       <div class="daera-teacher-list">${teachersForDaera.map((teacher) => `
         <div class="daera-teacher">
           <span class="daera-teacher-name">${x(teacher.name)}</span>
-          <span class="daera-teacher-periods">${teacher.periods} ${teacher.periods === 1 ? "period" : "periods"}</span>
+          <span class="daera-teacher-periods">${teacher.periods}</span>
         </div>`).join("")}
       </div>
     </section>`;
+    const normalizedDaera = normaliseDaeraSubject(root.daera);
+    if (normalizedDaera === "adab" || normalizedDaera.startsWith("adab ") ||
+        normalizedDaera.includes("hikmat")) {
+      secondRowCards += card;
+    } else {
+      firstRowCards += card;
+    }
   });
-  wrap.innerHTML = html + "</div>";
+  wrap.innerHTML = `${firstRowCards ? `<div class="daera-distribution-grid">${firstRowCards}</div>` : ""}
+    ${secondRowCards ? `<div class="daera-distribution-grid daera-distribution-second-row">${secondRowCards}</div>` : ""}`;
 }
 
 function subjectPaletteColor(subject) {
