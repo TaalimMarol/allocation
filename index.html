@@ -424,10 +424,21 @@ tr[data-subject-color="Jameeiyah Ula"]>td,.hierarchy-subject-title[data-subject-
 .hierarchy-teacher-name{min-width:0;overflow:hidden;text-overflow:ellipsis}
 .hierarchy-teacher-periods{font-weight:700;white-space:nowrap}
 .hierarchy-empty{padding:28px;text-align:center;color:var(--muted)}
+.daera-distribution-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:12px;padding:14px;background:#f8fafc}
+.daera-distribution-card{overflow:hidden;border:1px solid color-mix(in srgb,var(--daera-color),#172033 14%);border-radius:var(--r);background:color-mix(in srgb,var(--daera-color) 24%,#fff)}
+.daera-distribution-header{display:flex;align-items:baseline;justify-content:space-between;gap:12px;padding:12px 14px;color:#172033}
+.daera-distribution-name{font-size:15px;font-weight:800}
+.daera-distribution-total{flex:none;font-size:13px;font-weight:800;white-space:nowrap}
+.daera-books{padding:0 14px 10px;color:#334155;font-size:12px;line-height:1.5}
+.daera-teacher-list{display:grid;gap:5px;padding:0 10px 10px}
+.daera-teacher{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:36px;padding:6px 9px;border:1px solid rgb(23 32 51 / 9%);border-radius:var(--rs);background:rgb(255 255 255 / 82%);font-size:12px}
+.daera-teacher-name{min-width:0;font-weight:600}
+.daera-teacher-periods{flex:none;font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
 @media(max-width:760px){
   .metric-grid{grid-template-columns:repeat(2,1fr)}
   .hierarchy-grid,.daera-hierarchy-grid{grid-template-columns:1fr}
   .hierarchy-teacher{padding-left:30px}
+  .daera-distribution-grid{grid-template-columns:1fr;padding:10px}
 }
 
 /* ── TOAST ───────────────────────────────────────── */
@@ -582,7 +593,7 @@ tr[data-subject-color="Jameeiyah Ula"]>td,.hierarchy-subject-title[data-subject-
   <!-- DAERA DISTRIBUTION VIEW -->
   <div class="view" id="view-daera">
     <div class="panel">
-      <div class="panel-hdr"><h2>DAWAIR distribution · subject-wise teacher periods</h2></div>
+      <div class="panel-hdr"><h2>DAWAIR distribution · weekly periods</h2></div>
       <div id="daera-tbl">
         <div class="empty">No Daerat allocations found.</div>
       </div>
@@ -1657,53 +1668,82 @@ function normaliseDaeraSubject(value) {
 
 function renderDaeraDistribution() {
   const wrap = document.getElementById("daera-tbl");
-  const daewair = {};
+  const daewair = new Map();
   allRows.forEach((row) => {
     const daera = String(row.ustadDaera || "").trim();
-    const subject = String(row.subject || "").trim();
-    if (!daera || !subject) return;
-    const teacher = String(row.name || row.its || "Unassigned").trim();
+    if (!daera) return;
+    const book = String(row.bookName || "").trim();
+    const teacherName = String(row.name || row.its || "Unassigned").trim();
+    const teacherKey = String(row.teacherKey || row.its || teacherName).trim();
     const periods = Number(row.weekly) || 0;
-    if (!daewair[daera]) daewair[daera] = { total: 0, subjects: {} };
-    if (!daewair[daera].subjects[subject]) {
-      daewair[daera].subjects[subject] = { total: 0, teachers: {} };
+    if (!daewair.has(daera)) {
+      daewair.set(daera, { total: 0, books: new Set(), teachers: new Map() });
     }
-    const branch = daewair[daera].subjects[subject];
-    if (!branch.teachers[teacher]) branch.teachers[teacher] = 0;
-    branch.teachers[teacher] += periods;
-    branch.total += periods;
-    daewair[daera].total += periods;
+    const group = daewair.get(daera);
+    if (book) group.books.add(book);
+    group.total += periods;
+    if (!group.teachers.has(teacherKey)) {
+      group.teachers.set(teacherKey, {
+        name: teacherName,
+        gender: String(row.teacherGender || ""),
+        periods: 0
+      });
+    }
+    const teacher = group.teachers.get(teacherKey);
+    if (!teacher.gender && row.teacherGender) teacher.gender = String(row.teacherGender);
+    teacher.periods += periods;
   });
-  const roots = Object.keys(daewair)
-    .map((daera) => ({ daera, ...daewair[daera] }))
+  const roots = [...daewair.entries()]
+    .map(([daera, values]) => ({ daera, ...values }))
     .sort((a, b) => daeraSortOrder(a.daera) - daeraSortOrder(b.daera) ||
       a.daera.localeCompare(b.daera));
   if (!roots.length) {
     wrap.innerHTML = '<div class="empty">No Daerat allocations found.</div>';
     return;
   }
-  let html = '<div class="hierarchy hierarchy-grid daera-hierarchy-grid"><div class="hierarchy-root">DAWAIR <span class="hierarchy-periods">(Ustad Daera)</span></div>';
+  let html = '<div class="daera-distribution-grid">';
   roots.forEach((root) => {
-    html += `<section class="hierarchy-branch">
-      <div class="hierarchy-branch-title green"><span>${x(root.daera)}</span>
-        <span class="hierarchy-periods">${root.total} periods</span></div>`;
-    Object.keys(root.subjects).sort().forEach((subject) => {
-      const branch = root.subjects[subject];
-      html += `<div class="hierarchy-subject">
-        <div class="hierarchy-subject-title" data-subject-color="${x(subjectColorKey(subject))}"><span>${x(subject)}</span>
-          <span class="hierarchy-periods">${branch.total} periods</span></div>`;
-      Object.keys(branch.teachers).sort((a, b) => branch.teachers[b] - branch.teachers[a] || a.localeCompare(b))
-        .forEach((teacher) => {
-          html += `<div class="hierarchy-teacher">
-            <span class="hierarchy-teacher-name">${x(teacher)}</span>
-            <span class="hierarchy-teacher-periods">(${branch.teachers[teacher]} periods)</span>
-          </div>`;
-        });
-      html += "</div>";
-    });
-    html += "</section>";
+    const color = subjectPaletteColor(root.daera);
+    const books = [...root.books].sort((a, b) => a.localeCompare(b));
+    const teachersForDaera = [...root.teachers.values()]
+      .sort((a, b) => teacherSortOrder(a) - teacherSortOrder(b) ||
+        a.name.localeCompare(b.name));
+    html += `<section class="daera-distribution-card" style="--daera-color:${color}">
+      <header class="daera-distribution-header">
+        <span class="daera-distribution-name">${x(root.daera)}</span>
+        <span class="daera-distribution-total">${root.total} ${root.total === 1 ? "period" : "periods"}</span>
+      </header>
+      ${books.length ? `<div class="daera-books">${books.map(x).join(", ")}</div>` : ""}
+      <div class="daera-teacher-list">${teachersForDaera.map((teacher) => `
+        <div class="daera-teacher">
+          <span class="daera-teacher-name">${x(teacher.name)}</span>
+          <span class="daera-teacher-periods">${teacher.periods} ${teacher.periods === 1 ? "period" : "periods"}</span>
+        </div>`).join("")}
+      </div>
+    </section>`;
   });
   wrap.innerHTML = html + "</div>";
+}
+
+function subjectPaletteColor(subject) {
+  const colors = {
+    "Adab / Tawil": "#F5E0CB",
+    "Al-Lisān al-ʿArabī": "#F2F3F8",
+    English: "#9796A6",
+    Fiqh: "#D5F1CA",
+    Hikmat: "#B3F7B2",
+    "Jameeiyaah Thaniyah": "#E5CCDF",
+    "Khaimat Riyadat": "#C9EBFB",
+    "Nashatat Ilmiyah": "#F1E3FE",
+    "Quran Kareem": "#FFD5E5",
+    Sciences: "#FFF6A3",
+    Akhbaar: "#CFF88A",
+    Takhassus: "#A3CBE3",
+    "Barāmij ʿIlmiyya": "#F8D0B3",
+    "Maqaalah Muwasah": "#BCC77C",
+    "Jameeiyah Ula": "#F8CBAB"
+  };
+  return colors[subjectColorKey(subject)] || "#F2F3F8";
 }
 
 function daeraSortOrder(value) {
