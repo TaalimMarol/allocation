@@ -2022,6 +2022,7 @@ function applyScriptTypography(root) {
     const parent = node.parentElement;
     if (!parent || !node.nodeValue) return;
     const text = node.nodeValue;
+    if (!arabicPattern.test(text)) return;
     const existing = parent.closest(".script-ar,.script-en");
 
     const parts = text.match(splitPattern);
