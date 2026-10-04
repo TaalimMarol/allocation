@@ -153,7 +153,7 @@ tbody tr{border-bottom:1px solid #f1f5f9}
 tbody tr:last-child{border-bottom:none}
 tbody tr:hover{background:#f8fafc}
 tbody td{padding:7px 12px;vertical-align:middle}
-.daera-match-text{font-weight:700;text-decoration:underline;text-underline-offset:2px}
+
 tr[data-subject-color="Adab / Tawil"]>td,.hierarchy-subject-title[data-subject-color="Adab / Tawil"]{background:#F5E0CB;color:#172033}
 tr[data-subject-color="Al-Lisān al-ʿArabī"]>td,.hierarchy-subject-title[data-subject-color="Al-Lisān al-ʿArabī"]{background:#F2F3F8;color:#172033}
 tr[data-subject-color="English"]>td,.hierarchy-subject-title[data-subject-color="English"]{background:#9796A6;color:#fff}
@@ -1160,8 +1160,8 @@ function renderTeacherDetail(key) {
     const isDaera = daeraSet.has(row.rowNumber);
     rows += `<tr data-subject-color="${x(subjectColorKey(row.subject))}">
       <td><span class="badge">${x(row.shorthand)}</span></td>
-      <td>${isDaera ? `<span class="daera-match-text">${x(row.subject)}</span>` : x(row.subject)}</td>
-      <td>${isDaera ? `<span class="daera-match-text">${x(row.bookName)}</span>` : x(row.bookName)}</td>
+      <td>${x(row.subject)}</td>
+      <td>${x(row.bookName)}</td>
       <td class="num" style="text-align:center">${row.weekly}</td>
       <td>
         <select class="sel"
