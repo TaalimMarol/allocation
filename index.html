@@ -288,6 +288,20 @@ tr[data-subject-color="Jameeiyah Ula"]>td,.hierarchy-subject-title[data-subject-
 .daera-editor input::placeholder{color:rgba(255,255,255,.6)}
 .daera-editor button{padding:5px 9px;border:1px solid rgba(255,255,255,.4);border-radius:var(--rs);color:#fff;font-size:10px;font-weight:700}
 .daera-editor .daera-save{background:#166534;border-color:#4ade80}
+.daera-reassign-panel{padding:14px 16px;border-bottom:1px solid var(--border);background:#f8fafc}
+.daera-reassign-heading{margin-bottom:10px}
+.daera-reassign-heading h3{font-size:14px;color:var(--navy)}
+.daera-reassign-heading p{font-size:12px;color:var(--muted)}
+.daera-reassign-list{display:grid;gap:6px}
+.daera-reassign-row{display:grid;grid-template-columns:minmax(0,1fr) auto auto;align-items:center;gap:10px;padding:8px 10px;border:1px solid #e2e8f0;border-radius:var(--rs);background:#fff}
+.daera-reassign-allocation{min-width:0;display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 9px}
+.daera-reassign-class{font-size:11px;font-weight:800;color:var(--navy);white-space:nowrap}
+.daera-reassign-book{font-size:12px;font-weight:600;overflow-wrap:anywhere}
+.daera-reassign-subject,.daera-reassign-current{font-size:11px;color:var(--muted)}
+.daera-reassign-action{padding:5px 9px;border-radius:var(--rs);background:var(--navy);color:#fff;font-size:11px;font-weight:700;white-space:nowrap}
+.daera-reassign-action:hover{background:var(--navy-dim)}
+.daera-reassign-action:focus-visible,.daera-teacher-link:focus-visible{outline:2px solid var(--sky);outline-offset:2px}
+.daera-no-candidates{padding:10px 12px;border:1px dashed var(--border);border-radius:var(--rs);color:var(--muted);font-size:12px}
 .teacher-departments{display:grid;gap:0;padding:0 16px 12px;background:#fff4cc;color:#172033}
 .teacher-departments-heading{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:4px 0 9px;color:#713f12;font-size:12px;font-weight:800;letter-spacing:.04em}
 .teacher-department{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:5px 16px;align-items:start;width:100%;padding:12px 14px;border:1px solid #e7c978;border-radius:var(--rs);background:#fff9e6;color:#172033}
@@ -434,6 +448,8 @@ tr[data-subject-color="Jameeiyah Ula"]>td,.hierarchy-subject-title[data-subject-
 .daera-teacher-list{display:grid;gap:5px;padding:0 10px 10px}
 .daera-teacher{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:start;gap:12px;min-height:36px;padding:6px 9px;border:1px solid rgb(23 32 51 / 9%);border-radius:var(--rs);background:rgb(255 255 255 / 82%);font-size:11px}
 .daera-teacher-name{min-width:0;font-size:11px;font-weight:400;overflow:visible;text-overflow:clip;white-space:normal;overflow-wrap:anywhere}
+.daera-teacher-link{padding:0;color:inherit;text-align:start;text-decoration:underline;text-decoration-color:rgb(23 32 51 / 35%);text-underline-offset:2px}
+.daera-teacher-link:hover{color:var(--navy);text-decoration-color:currentColor}
 .daera-teacher-periods{flex:none;font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
 @media(max-width:760px){
   .metric-grid{grid-template-columns:repeat(2,1fr)}
@@ -441,6 +457,9 @@ tr[data-subject-color="Jameeiyah Ula"]>td,.hierarchy-subject-title[data-subject-
   .hierarchy-teacher{padding-left:30px}
   .daera-distribution-grid{grid-template-columns:1fr;padding:10px}
   .daera-distribution-second-row{grid-template-columns:1fr}
+  .daera-reassign-row{grid-template-columns:minmax(0,1fr) auto}
+  .daera-reassign-current{grid-column:1}
+  .daera-reassign-action{grid-column:2;grid-row:1 / span 2}
 }
 
 /* ── TOAST ───────────────────────────────────────── */
@@ -672,6 +691,7 @@ let editingDepartmentKey = null;
 let departmentDraft = [];
 let editingDaeraKey = null;
 let daeraDraft = "";
+let activeDaeraContext = "";
 let activeSubject  = "";
 let activeSubjectClass = "";
 let activeSubjectBook = "all";
@@ -1130,7 +1150,8 @@ function teacherSortOrder(teacher) {
   return 2;
 }
 
-function selectTeacher(key) {
+function selectTeacher(key, daeraContext) {
+  activeDaeraContext = String(daeraContext || "").trim();
   if (activeKey !== key) {
     editingDepartmentKey = null;
     departmentDraft = [];
@@ -1207,6 +1228,8 @@ function renderTeacherDetail(key) {
     </tr>`;
   }
 
+  const daeraCandidatesHtml = renderDaeraReassignCandidates(t);
+
   panel.innerHTML = `
     <div class="t-detail-hdr">
       <div class="t-detail-identity-column">
@@ -1241,6 +1264,7 @@ function renderTeacherDetail(key) {
       </div>
     </div>
     ${teacherDepartmentsHtml(t, departments)}
+    ${daeraCandidatesHtml}
     <div class="tbl-wrap">
       <table><thead><tr>
         <th>Sec</th><th>Subject</th><th>Book</th>
@@ -1248,6 +1272,50 @@ function renderTeacherDetail(key) {
         <th style="text-align:center">${x(historyHeader)}</th>
       </tr></thead><tbody>${rows}</tbody></table>
     </div>`;
+  panel.querySelectorAll("[data-daera-candidate-row]").forEach((button) => {
+    button.addEventListener("click", () => reassignAllocation(
+      Number(button.dataset.daeraCandidateRow),
+      key
+    ));
+  });
+}
+
+function renderDaeraReassignCandidates(teacher) {
+  if (!activeDaeraContext) return "";
+  const candidates = allRows
+    .filter((row) => String(row.ustadDaera || "").trim() === activeDaeraContext &&
+      isDaeraSubjectMatch(activeDaeraContext, row.subject) &&
+      row.teacherKey !== teacher.key)
+    .sort((a, b) => Number(a.class) - Number(b.class) ||
+      String(a.class || "").localeCompare(String(b.class || "")) ||
+      String(a.section || "").localeCompare(String(b.section || "")) ||
+      String(a.bookName || "").localeCompare(String(b.bookName || "")));
+  const candidateRows = candidates.length
+    ? candidates.map((row) => `<div class="daera-reassign-row">
+        <div class="daera-reassign-allocation">
+          <span class="daera-reassign-class">Class ${x(row.class)}${row.section ? ` · ${x(row.section)}` : ""}${row.gender ? ` · ${x(row.gender)}` : ""}</span>
+          <span class="daera-reassign-book">${x(row.bookName || "—")}</span>
+          <span class="daera-reassign-subject">${x(row.subject)}</span>
+        </div>
+        <span class="daera-reassign-current">Currently: ${x(row.name || row.its || "Unknown")}</span>
+        <button type="button" class="daera-reassign-action"
+          data-daera-candidate-row="${row.rowNumber}">
+          Assign to ${x(teacher.name || teacher.its || "teacher")}
+        </button>
+      </div>`).join("")
+    : `<div class="daera-no-candidates">No other class/book allocations from this Daerat are available to assign.</div>`;
+  return `<section class="daera-reassign-panel" aria-label="Possible allocations from ${x(activeDaeraContext)}">
+    <div class="daera-reassign-heading">
+      <h3>Possible allocations from ${x(activeDaeraContext)}</h3>
+      <p>Choose a class and book to move to this teacher. Their existing allocations from this Daerat are not listed.</p>
+    </div>
+    <div class="daera-reassign-list">${candidateRows}</div>
+  </section>`;
+}
+
+function openDaeraTeacher(key, daera) {
+  switchView("teacher");
+  selectTeacher(key, daera);
 }
 
 function isDaeraSubjectMatch(daera, subject) {
@@ -1687,6 +1755,7 @@ function renderDaeraDistribution() {
     group.total += periods;
     if (!group.teachers.has(teacherKey)) {
       group.teachers.set(teacherKey, {
+        key: teacherKey,
         name: teacherName,
         gender: String(row.teacherGender || ""),
         periods: 0
@@ -1719,7 +1788,10 @@ function renderDaeraDistribution() {
       ${books.length ? `<div class="daera-books">${books.map(x).join(", ")}</div>` : ""}
       <div class="daera-teacher-list">${teachersForDaera.map((teacher) => `
         <div class="daera-teacher">
-          <span class="daera-teacher-name">${x(teacher.name)}</span>
+          <button type="button" class="daera-teacher-name daera-teacher-link"
+            data-teacher-key="${x(teacher.key)}" data-daera-name="${x(root.daera)}">
+            ${x(teacher.name)}
+          </button>
           <span class="daera-teacher-periods">${teacher.periods}</span>
         </div>`).join("")}
       </div>
@@ -1734,6 +1806,12 @@ function renderDaeraDistribution() {
   });
   wrap.innerHTML = `${firstRowCards ? `<div class="daera-distribution-grid">${firstRowCards}</div>` : ""}
     ${secondRowCards ? `<div class="daera-distribution-grid daera-distribution-second-row">${secondRowCards}</div>` : ""}`;
+  wrap.querySelectorAll(".daera-teacher-link").forEach((button) => {
+    button.addEventListener("click", () => openDaeraTeacher(
+      button.dataset.teacherKey,
+      button.dataset.daeraName
+    ));
+  });
 }
 
 function subjectPaletteColor(subject) {
@@ -1960,17 +2038,22 @@ function selectOpts(opts, selectedKey) {
 // ================================================================
 function reassign(sel) {
   const rowNum  = Number(sel.dataset.row);
-  const weekly  = Number(sel.dataset.weekly);
-  const oldKey  = sel.dataset.oldKey;
   const newKey  = sel.value;
-  const opt     = sel.options[sel.selectedIndex];
-  const newName = opt.dataset.name;
-  const newIts  = opt.dataset.its;
+  reassignAllocation(rowNum, newKey);
+}
 
-  if (newKey === oldKey) return;
-
+function reassignAllocation(rowNum, newKey) {
   const row = allRows.find((r) => r.rowNumber === rowNum);
   if (!row) return;
+  const oldKey = row.teacherKey;
+  const newTeacher = teachers[newKey];
+  if (!newTeacher) {
+    toast("Cannot assign this allocation: selected teacher was not found.", true);
+    return;
+  }
+  if (newKey === oldKey) return;
+  const newName = newTeacher.name || newTeacher.its || "Unknown";
+  const newIts = newTeacher.its || "";
 
   // Move row in teacher index
   if (teachers[oldKey]) {
@@ -1992,7 +2075,6 @@ function reassign(sel) {
   teachers[newKey].rows.push(row);
 
   recalcTotals();
-  sel.dataset.oldKey = newKey;
 
   // Refresh entire UI with updated totals
   refreshDropdowns();
