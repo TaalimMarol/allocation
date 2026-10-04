@@ -9,7 +9,7 @@
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <style>
 @font-face{
-  font-family:"Kanz Al Lulu";
+  font-family:"Kanz-al-lulu";
   src:url("assets/fonts/kanz-al-lulu-regular.woff2") format("woff2");
   font-style:normal;
   font-weight:400;
@@ -17,6 +17,14 @@
 }
 /* ── TOKENS ─────────────────────────────────────── */
 :root {
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.25rem;
+  --text-2xl: 1.5rem;
+  --text-3xl: 1.875rem;
+  --text-4xl: 2.25rem;
   --bg:         #e0f2fe;
   --surface:    #ffffff;
   --navy:       #1e3a8a;
@@ -36,8 +44,12 @@
   --rs:         4px;
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-body{font-family:"Kanz Al Lulu","KanzalLulu",system-ui,-apple-system,'Segoe UI',sans-serif;font-size:13px;
+body{font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;font-size:var(--text-base);
   background:var(--bg);color:var(--text);min-height:100vh;line-height:1.5}
+[lang="ar"]{font-family:"Kanz-al-lulu",Arial,sans-serif;line-height:1.7;direction:rtl;unicode-bidi:isolate}
+[lang="en"]{font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;line-height:1.5;direction:ltr;unicode-bidi:isolate}
+.script-ar{font-size:calc(1em + 2px)}
+input,select,textarea{font-size:var(--text-base)!important}
 button{cursor:pointer;border:none;background:none;font:inherit}
 select{font:inherit}
 .hidden{display:none!important}
@@ -58,7 +70,7 @@ select{font:inherit}
 }
 .auth-logo svg{width:30px;height:30px;fill:none;stroke:#fff;stroke-width:1.6;
   stroke-linecap:round;stroke-linejoin:round}
-.auth-card h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:4px}
+.auth-card h1{font-size:var(--text-xl);font-weight:700;color:var(--navy);margin-bottom:4px}
 .auth-card p{font-size:12px;color:var(--muted);margin-bottom:28px}
 .google-btn{
   display:flex;align-items:center;justify-content:center;gap:10px;
@@ -127,7 +139,7 @@ select{font:inherit}
   padding:12px 16px;background:var(--navy);color:#fff;
   display:flex;align-items:center;gap:10px;
 }
-.panel-hdr h2{font-size:13px;font-weight:700;flex:1}
+.panel-hdr h2{font-size:var(--text-sm);font-weight:700;flex:1}
 
 /* ── TABLE ───────────────────────────────────────── */
 .tbl-wrap{overflow-x:auto;max-height:calc(100vh - 175px)}
@@ -141,9 +153,23 @@ tbody tr{border-bottom:1px solid #f1f5f9}
 tbody tr:last-child{border-bottom:none}
 tbody tr:hover{background:#f8fafc}
 tbody td{padding:7px 12px;vertical-align:middle}
-tbody tr.daera-row{background:#bbf7d0}
-tbody tr.daera-row td{background:#bbf7d0}
-tbody tr.daera-row td:first-child{border-left:4px solid #15803d;padding-left:8px}
+.daera-match-text{font-weight:700;text-decoration:underline;text-underline-offset:2px}
+.subject-tag{display:inline-block;padding:2px 7px;border-radius:6px;background:#F2F3F8;color:#172033}
+.subject-tag[data-subject-color="Adab / Tawil"]{background:#F5E0CB}
+.subject-tag[data-subject-color="Al-Lisān al-ʿArabī"]{background:#F2F3F8}
+.subject-tag[data-subject-color="English"]{background:#9796A6;color:#fff}
+.subject-tag[data-subject-color="Fiqh"]{background:#D5F1CA}
+.subject-tag[data-subject-color="Hikmat"]{background:#B3F7B2}
+.subject-tag[data-subject-color="Jameeiyaah Thaniyah"]{background:#E5CCDF}
+.subject-tag[data-subject-color="Khaimat Riyadat"]{background:#C9EBFB}
+.subject-tag[data-subject-color="Nashatat Ilmiyah"]{background:#F1E3FE}
+.subject-tag[data-subject-color="Quran Kareem"]{background:#FFD5E5}
+.subject-tag[data-subject-color="Sciences"]{background:#FFF6A3}
+.subject-tag[data-subject-color="Akhbaar"]{background:#CFF88A}
+.subject-tag[data-subject-color="Takhassus"]{background:#A3CBE3}
+.subject-tag[data-subject-color="Barāmij ʿIlmiyya"]{background:#F8D0B3}
+.subject-tag[data-subject-color="Maqaalah Muwasah"]{background:#BCC77C;color:#172033}
+.subject-tag[data-subject-color="Jameeiyah Ula"]{background:#F8CBAB}
 
 .badge{
   display:inline-block;background:var(--badge-bg);color:var(--badge-txt);
@@ -227,7 +253,7 @@ tbody tr.daera-row td:first-child{border-left:4px solid #15803d;padding-left:8px
 .t-detail-identity{display:flex;align-items:center;gap:12px;min-width:0}
 .t-detail-identity-column{min-width:0}
 .workload-card{min-width:0}
-.t-detail-name{font-size:15px;font-weight:700}
+.t-detail-name{font-size:var(--text-lg);font-weight:700}
 .t-detail-sub{font-size:11px;color:rgba(255,255,255,.6);margin-top:2px}
 .info-badges{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
 .ibadge{padding:3px 9px;border-radius:10px;font-size:11px;font-weight:600;background:rgba(255,255,255,.15);color:#fff}
@@ -417,6 +443,16 @@ tbody tr.daera-row td:first-child{border-left:4px solid #15803d;padding-left:8px
   .distribution-controls label{justify-content:space-between}
   .filter-select{flex:1;min-width:0}
   #toast{left:10px;right:10px;bottom:10px;max-width:none;text-align:center}
+}
+@media(max-width:768px){
+  :root{
+    --text-4xl:2rem;
+    --text-3xl:1.625rem;
+    --text-2xl:1.375rem;
+    --text-xl:1.125rem;
+  }
+  .auth-card h1{font-size:var(--text-xl)}
+  .t-detail-name{font-size:var(--text-lg)}
 }
 </style>
 </head>
@@ -859,7 +895,7 @@ function renderClassTable() {
   for (const row of rows) {
     html += `<tr>
       <td><span class="badge">${x(row.shorthand)}</span></td>
-      <td>${x(row.subject)}</td>
+      <td>${subjectTagHtml(row.subject)}</td>
       <td>${x(row.bookName)}</td>
       <td class="num" style="text-align:center">${row.weekly}</td>
       <td>
@@ -1106,16 +1142,21 @@ function renderTeacherDetail(key) {
     ? `<img class="t-avatar-lg" src="${photo}" alt="${x(t.name)}" data-photo-its="${x(t.its)}">`
     : `<div class="t-avatar-lg-ph" data-photo-its="${x(t.its || "")}">${initial}</div>`;
 
-  const sortedRows = [...t.rows].sort((a, b) =>
-    a.subject.localeCompare(b.subject) || a.bookName.localeCompare(b.bookName));
+  const sortedRows = [...t.rows].sort((a, b) => {
+    const aIsDaera = daeraSet.has(a.rowNumber);
+    const bIsDaera = daeraSet.has(b.rowNumber);
+    if (aIsDaera !== bIsDaera) return aIsDaera ? -1 : 1;
+    if (aIsDaera) return a.bookName.localeCompare(b.bookName);
+    return a.subject.localeCompare(b.subject) || a.bookName.localeCompare(b.bookName);
+  });
 
   let rows = "";
   for (const row of sortedRows) {
     const isDaera = daeraSet.has(row.rowNumber);
-    rows += `<tr class="${isDaera ? "daera-row" : ""}">
+    rows += `<tr>
       <td><span class="badge">${x(row.shorthand)}</span></td>
-      <td>${x(row.subject)}</td>
-      <td>${x(row.bookName)}</td>
+      <td>${subjectTagHtml(row.subject, isDaera)}</td>
+      <td>${isDaera ? `<span class="daera-match-text">${x(row.bookName)}</span>` : x(row.bookName)}</td>
       <td class="num" style="text-align:center">${row.weekly}</td>
       <td>
         <select class="sel"
@@ -1176,6 +1217,45 @@ function renderTeacherDetail(key) {
 function isDaeraSubjectMatch(daera, subject) {
   const normalizedDaera = normaliseDaeraSubject(daera);
   return Boolean(normalizedDaera && normalizedDaera === normaliseDaeraSubject(subject));
+}
+
+function subjectTagHtml(subject, daeraMatch) {
+  const name = String(subject || "").trim();
+  const normalized = normaliseDaeraSubject(name).normalize("NFD").replace(/\p{M}/gu, "");
+  let colorKey = name;
+  if (normalized === "adab" || normalized === "tawil" || normalized.includes("adab tawil")) {
+    colorKey = "Adab / Tawil";
+  } else if (normalized.includes("lisan") && normalized.includes("arab")) {
+    colorKey = "Al-Lisān al-ʿArabī";
+  } else if (normalized === "fiqh") {
+    colorKey = "Fiqh";
+  } else if (normalized.includes("hikmat")) {
+    colorKey = "Hikmat";
+  } else if (normalized.includes("jameeiyaah thaniyah") || normalized.includes("saqafat aamah")) {
+    colorKey = "Jameeiyaah Thaniyah";
+  } else if (normalized.includes("khaimat riyadat")) {
+    colorKey = "Khaimat Riyadat";
+  } else if (normalized.includes("nashatat ilmiyah")) {
+    colorKey = "Nashatat Ilmiyah";
+  } else if (normalized.includes("quran kareem")) {
+    colorKey = "Quran Kareem";
+  } else if (["sciences", "science", "maths", "math", "geography", "biology", "chemistry", "physics"]
+    .some((term) => normalized === term || normalized.includes(`${term} `))) {
+    colorKey = "Sciences";
+  } else if (normalized.includes("akhbaar") || normalized.includes("akhbar")) {
+    colorKey = "Akhbaar";
+  } else if (normalized.includes("takhassus")) {
+    colorKey = "Takhassus";
+  } else if (normalized.includes("baramij ilmiyya")) {
+    colorKey = "Barāmij ʿIlmiyya";
+  } else if (normalized.includes("maqaalah muwasah")) {
+    colorKey = "Maqaalah Muwasah";
+  } else if (normalized.includes("jameeiyah ula")) {
+    colorKey = "Jameeiyah Ula";
+  } else if (normalized === "english") {
+    colorKey = "English";
+  }
+  return `<span class="subject-tag${daeraMatch ? " daera-match-text" : ""}" data-subject="${x(name)}" data-subject-color="${x(colorKey)}">${x(name)}</span>`;
 }
 
 function teacherDaeraHtml(teacher, daeraNames) {
@@ -1571,7 +1651,7 @@ function renderDaeraDistribution() {
     Object.keys(root.subjects).sort().forEach((subject) => {
       const branch = root.subjects[subject];
       html += `<div class="hierarchy-subject">
-        <div class="hierarchy-subject-title"><span>${x(subject)}</span>
+        <div class="hierarchy-subject-title"><span>${subjectTagHtml(subject)}</span>
           <span class="hierarchy-periods">${branch.total} periods</span></div>`;
       Object.keys(branch.teachers).sort((a, b) => branch.teachers[b] - branch.teachers[a] || a.localeCompare(b))
         .forEach((teacher) => {
@@ -1749,7 +1829,7 @@ function renderAnalytics() {
     Object.keys(groupSubjects).sort().forEach((subject) => {
       const subjectData = groupSubjects[subject];
       html += `<div class="hierarchy-subject">
-        <div class="hierarchy-subject-title"><span>${x(subject)}</span></div>
+        <div class="hierarchy-subject-title"><span>${subjectTagHtml(subject)}</span></div>
         <div class="hierarchy-books">${x([...subjectData.books].sort().join(", "))}</div>`;
       Object.keys(subjectData.teachers)
         .sort((a, b) => subjectData.teachers[b] - subjectData.teachers[a] || a.localeCompare(b))
@@ -1921,6 +2001,75 @@ function x(str) {
     .replace(/&/g, "&amp;").replace(/</g, "&lt;")
     .replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 }
+
+function applyScriptTypography(root) {
+  if (!root || typeof root.nodeType !== "number") return;
+  const arabicPattern = /[\u0600-\u06ff\u0750-\u077f\u08a0-\u08ff\ufb50-\ufdff\ufe70-\ufeff]/u;
+  const splitPattern = /([\u0600-\u06ff\u0750-\u077f\u08a0-\u08ff\ufb50-\ufdff\ufe70-\ufeff]+)|([^\u0600-\u06ff\u0750-\u077f\u08a0-\u08ff\ufb50-\ufdff\ufe70-\ufeff]+)/gu;
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+    acceptNode(node) {
+      const parent = node.parentElement;
+      if (!parent || parent.closest("script,style,textarea,input,select,option,svg")) {
+        return NodeFilter.FILTER_REJECT;
+      }
+      return NodeFilter.FILTER_ACCEPT;
+    }
+  });
+  const textNodes = [];
+  while (walker.nextNode()) textNodes.push(walker.currentNode);
+
+  textNodes.forEach((node) => {
+    const parent = node.parentElement;
+    if (!parent || !node.nodeValue) return;
+    const text = node.nodeValue;
+    const existing = parent.closest(".script-ar,.script-en");
+
+    const parts = text.match(splitPattern);
+    if (!parts) return;
+
+    if (existing && parts.length === 1) {
+      const isArabic = arabicPattern.test(text);
+      existing.className = isArabic ? "script-ar" : "script-en";
+      existing.lang = isArabic ? "ar" : "en";
+      existing.dir = isArabic ? "rtl" : "ltr";
+      return;
+    }
+
+    const fragment = document.createDocumentFragment();
+    parts.forEach((part) => {
+      const isArabic = arabicPattern.test(part);
+      const span = document.createElement("span");
+      span.className = isArabic ? "script-ar" : "script-en";
+      span.lang = isArabic ? "ar" : "en";
+      span.dir = isArabic ? "rtl" : "ltr";
+      span.textContent = part;
+      fragment.appendChild(span);
+    });
+
+    if (existing) {
+      existing.replaceWith(fragment);
+    } else {
+      node.replaceWith(fragment);
+    }
+  });
+}
+
+applyScriptTypography(document.body);
+new MutationObserver((records) => {
+  records.forEach((record) => {
+    if (record.type === "characterData") {
+      if (record.target.parentElement) applyScriptTypography(record.target.parentElement);
+    } else {
+      record.addedNodes.forEach((node) => {
+        if (node.nodeType === Node.TEXT_NODE) {
+          applyScriptTypography(node.parentElement);
+        } else if (node.nodeType === Node.ELEMENT_NODE) {
+          applyScriptTypography(node);
+        }
+      });
+    }
+  });
+}).observe(document.body, { childList: true, characterData: true, subtree: true });
 </script>
 </body>
 </html>
