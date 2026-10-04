@@ -427,12 +427,12 @@ tr[data-subject-color="Jameeiyah Ula"]>td,.hierarchy-subject-title[data-subject-
 .daera-distribution-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:12px;padding:14px;background:#f8fafc}
 .daera-distribution-card{overflow:hidden;border:1px solid color-mix(in srgb,var(--daera-color),#172033 14%);border-radius:var(--r);background:color-mix(in srgb,var(--daera-color) 24%,#fff)}
 .daera-distribution-header{display:flex;align-items:baseline;justify-content:space-between;gap:12px;padding:12px 14px;color:#172033}
-.daera-distribution-name{font-size:15px;font-weight:800}
+.daera-distribution-name{min-width:0;font-size:15px;font-weight:800;overflow-wrap:anywhere}
 .daera-distribution-total{flex:none;font-size:13px;font-weight:800;white-space:nowrap}
 .daera-books{padding:0 14px 10px;color:#334155;font-size:12px;line-height:1.5}
 .daera-teacher-list{display:grid;gap:5px;padding:0 10px 10px}
 .daera-teacher{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:36px;padding:6px 9px;border:1px solid rgb(23 32 51 / 9%);border-radius:var(--rs);background:rgb(255 255 255 / 82%);font-size:12px}
-.daera-teacher-name{min-width:0;font-weight:600}
+.daera-teacher-name{min-width:0;font-weight:600;overflow-wrap:anywhere}
 .daera-teacher-periods{flex:none;font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
 @media(max-width:760px){
   .metric-grid{grid-template-columns:repeat(2,1fr)}
@@ -1671,7 +1671,8 @@ function renderDaeraDistribution() {
   const daewair = new Map();
   allRows.forEach((row) => {
     const daera = String(row.ustadDaera || "").trim();
-    if (!daera) return;
+    const subject = String(row.subject || "").trim();
+    if (!daera || !isDaeraSubjectMatch(daera, subject)) return;
     const book = String(row.bookName || "").trim();
     const teacherName = String(row.name || row.its || "Unassigned").trim();
     const teacherKey = String(row.teacherKey || row.its || teacherName).trim();
