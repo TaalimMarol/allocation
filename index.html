@@ -154,22 +154,21 @@ tbody tr:last-child{border-bottom:none}
 tbody tr:hover{background:#f8fafc}
 tbody td{padding:7px 12px;vertical-align:middle}
 .daera-match-text{font-weight:700;text-decoration:underline;text-underline-offset:2px}
-.subject-tag{display:inline-block;padding:2px 7px;border-radius:6px;background:#F2F3F8;color:#172033}
-.subject-tag[data-subject-color="Adab / Tawil"]{background:#F5E0CB}
-.subject-tag[data-subject-color="Al-Lisān al-ʿArabī"]{background:#F2F3F8}
-.subject-tag[data-subject-color="English"]{background:#9796A6;color:#fff}
-.subject-tag[data-subject-color="Fiqh"]{background:#D5F1CA}
-.subject-tag[data-subject-color="Hikmat"]{background:#B3F7B2}
-.subject-tag[data-subject-color="Jameeiyaah Thaniyah"]{background:#E5CCDF}
-.subject-tag[data-subject-color="Khaimat Riyadat"]{background:#C9EBFB}
-.subject-tag[data-subject-color="Nashatat Ilmiyah"]{background:#F1E3FE}
-.subject-tag[data-subject-color="Quran Kareem"]{background:#FFD5E5}
-.subject-tag[data-subject-color="Sciences"]{background:#FFF6A3}
-.subject-tag[data-subject-color="Akhbaar"]{background:#CFF88A}
-.subject-tag[data-subject-color="Takhassus"]{background:#A3CBE3}
-.subject-tag[data-subject-color="Barāmij ʿIlmiyya"]{background:#F8D0B3}
-.subject-tag[data-subject-color="Maqaalah Muwasah"]{background:#BCC77C;color:#172033}
-.subject-tag[data-subject-color="Jameeiyah Ula"]{background:#F8CBAB}
+tr[data-subject-color="Adab / Tawil"]>td,.hierarchy-subject-title[data-subject-color="Adab / Tawil"]{background:#F5E0CB;color:#172033}
+tr[data-subject-color="Al-Lisān al-ʿArabī"]>td,.hierarchy-subject-title[data-subject-color="Al-Lisān al-ʿArabī"]{background:#F2F3F8;color:#172033}
+tr[data-subject-color="English"]>td,.hierarchy-subject-title[data-subject-color="English"]{background:#9796A6;color:#fff}
+tr[data-subject-color="Fiqh"]>td,.hierarchy-subject-title[data-subject-color="Fiqh"]{background:#D5F1CA;color:#172033}
+tr[data-subject-color="Hikmat"]>td,.hierarchy-subject-title[data-subject-color="Hikmat"]{background:#B3F7B2;color:#172033}
+tr[data-subject-color="Jameeiyaah Thaniyah"]>td,.hierarchy-subject-title[data-subject-color="Jameeiyaah Thaniyah"]{background:#E5CCDF;color:#172033}
+tr[data-subject-color="Khaimat Riyadat"]>td,.hierarchy-subject-title[data-subject-color="Khaimat Riyadat"]{background:#C9EBFB;color:#172033}
+tr[data-subject-color="Nashatat Ilmiyah"]>td,.hierarchy-subject-title[data-subject-color="Nashatat Ilmiyah"]{background:#F1E3FE;color:#172033}
+tr[data-subject-color="Quran Kareem"]>td,.hierarchy-subject-title[data-subject-color="Quran Kareem"]{background:#FFD5E5;color:#172033}
+tr[data-subject-color="Sciences"]>td,.hierarchy-subject-title[data-subject-color="Sciences"]{background:#FFF6A3;color:#172033}
+tr[data-subject-color="Akhbaar"]>td,.hierarchy-subject-title[data-subject-color="Akhbaar"]{background:#CFF88A;color:#172033}
+tr[data-subject-color="Takhassus"]>td,.hierarchy-subject-title[data-subject-color="Takhassus"]{background:#A3CBE3;color:#172033}
+tr[data-subject-color="Barāmij ʿIlmiyya"]>td,.hierarchy-subject-title[data-subject-color="Barāmij ʿIlmiyya"]{background:#F8D0B3;color:#172033}
+tr[data-subject-color="Maqaalah Muwasah"]>td,.hierarchy-subject-title[data-subject-color="Maqaalah Muwasah"]{background:#BCC77C;color:#172033}
+tr[data-subject-color="Jameeiyah Ula"]>td,.hierarchy-subject-title[data-subject-color="Jameeiyah Ula"]{background:#F8CBAB;color:#172033}
 
 .badge{
   display:inline-block;background:var(--badge-bg);color:var(--badge-txt);
@@ -273,24 +272,30 @@ tbody td{padding:7px 12px;vertical-align:middle}
 .daera-editor input::placeholder{color:rgba(255,255,255,.6)}
 .daera-editor button{padding:5px 9px;border:1px solid rgba(255,255,255,.4);border-radius:var(--rs);color:#fff;font-size:10px;font-weight:700}
 .daera-editor .daera-save{background:#166534;border-color:#4ade80}
-.teacher-departments{display:grid;gap:0;padding:0 16px 12px;background:var(--navy);color:#fff}
-.teacher-departments-heading{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:4px 0 9px;color:rgba(255,255,255,.7);font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}
-.teacher-department{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:5px 16px;align-items:start;width:100%;padding:12px 14px;border:1px solid rgba(255,255,255,.22);border-radius:var(--rs);background:rgba(255,255,255,.07)}
+.teacher-departments{display:grid;gap:0;padding:0 16px 12px;background:#fff4cc;color:#172033}
+.teacher-departments-heading{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:4px 0 9px;color:#713f12;font-size:var(--text-xs);font-weight:800;letter-spacing:.04em}
+.teacher-department{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:5px 16px;align-items:start;width:100%;padding:12px 14px;border:1px solid #e7c978;border-radius:var(--rs);background:#fff9e6;color:#172033}
 .teacher-department+.teacher-department{margin-top:8px}
-.teacher-department-names{display:flex;justify-content:space-between;align-items:baseline;gap:14px;min-width:0}
-.teacher-department-ar{flex:1;min-width:0;font-size:16px;font-weight:700;color:#fff;text-align:right;direction:rtl}
-.teacher-department-en{flex:1;min-width:0;font-size:14px;font-weight:600;color:rgba(255,255,255,.88);text-align:left;direction:ltr}
-.teacher-department-designation,.teacher-department-responsibility{grid-column:1/-1;margin-top:3px;font-size:12px;color:rgba(255,255,255,.9)}
-.teacher-department-designation{font-weight:800}
-.teacher-department-responsibility{text-decoration:underline;text-underline-offset:2px}
-.department-icon{display:inline-block;width:17px;color:#fde68a;font-size:14px;vertical-align:top}
-.department-check{color:#86efac}
-.department-edit{margin-top:0;padding:5px 9px;border:1px solid rgba(255,255,255,.42);border-radius:var(--rs);background:rgba(255,255,255,.1);color:#fff;font-size:10px;font-weight:800;letter-spacing:.04em}
-.department-edit:hover{background:rgba(255,255,255,.2)}
-.department-editor{grid-column:1/-1;margin-top:10px;padding:10px;border:1px solid rgba(255,255,255,.3);border-radius:var(--rs);background:rgba(8,25,65,.42)}
-.department-editor-entry{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid rgba(255,255,255,.18)}
-.department-editor-entry input,.department-editor-entry textarea{width:100%;min-width:0;padding:6px 7px;border:1px solid rgba(255,255,255,.34);border-radius:var(--rs);background:rgba(255,255,255,.1);color:#fff;font:inherit;font-size:11px}
-.department-editor-entry input::placeholder,.department-editor-entry textarea::placeholder{color:rgba(255,255,255,.56)}
+.teacher-department-names{display:flex;align-items:baseline;gap:14px;min-width:0}
+.teacher-department-ar{flex:1;min-width:0;font-size:18px;font-weight:700;color:#172033;text-align:right;direction:rtl}
+.teacher-department-en{position:relative;display:flex;flex-wrap:wrap;align-items:baseline;gap:0;min-width:0;font-size:16px;font-weight:600;color:#172033;text-align:start;direction:ltr}
+.teacher-department-designation{margin-inline-start:2em;font-weight:800}
+.teacher-department-responsibility{margin-inline-start:.35em}
+.teacher-department-responsibility::before{content:"("}
+.teacher-department-responsibility::after{content:")"}
+.department-master-tooltip{position:fixed;z-index:300;display:none;width:min(32rem,calc(100vw - 16px));max-height:16rem;overflow:auto;padding:10px 12px;border:1px solid #c49b3f;border-radius:6px;background:#fffef8;color:#172033;box-shadow:0 6px 20px rgb(15 23 42 / 20%);font:16px/1.5 "Helvetica Neue",Helvetica,Arial,sans-serif;font-weight:400;text-align:start;white-space:normal}
+.department-master-tooltip.visible{display:block}
+.department-edit{margin-top:0;padding:5px 9px;border:1px solid #b7791f;border-radius:var(--rs);background:#fff9e6;color:#713f12;font-size:var(--text-xs);font-weight:800}
+.department-edit:hover{background:#ffefb8}
+.department-editor{grid-column:1/-1;margin-top:10px;padding:10px;border:1px solid #d6b65f;border-radius:var(--rs);background:#fff9e6;color:#172033}
+.department-editor-entry{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid #e7c978}
+.department-editor-entry input,.department-editor-entry textarea{width:100%;min-width:0;padding:6px 7px;border:1px solid #c49b3f;border-radius:var(--rs);background:#fffef8;color:#172033;font:inherit;font-size:var(--text-sm)}
+.department-editor-entry input::placeholder,.department-editor-entry textarea::placeholder{color:#64748b}
+.department-name-tooltip-anchor{position:relative;display:inline-block;cursor:help;text-decoration:underline;text-decoration-style:dotted;text-underline-offset:3px}
+.department-name-tooltip-anchor:focus{outline:2px solid #b7791f;outline-offset:2px}
+.department-editor-actions button{padding:5px 9px;border:1px solid #b7791f;border-radius:var(--rs);color:#713f12;font-size:var(--text-xs);font-weight:700}
+.department-editor-actions .department-save{background:#166534;border-color:#4ade80;color:#fff}
+.department-remove{grid-column:1/-1;justify-self:start;color:#b91c1c!important}
 .department-editor-entry textarea{grid-column:1/-1;min-height:58px;resize:vertical}
 .department-editor-actions{display:flex;flex-wrap:wrap;gap:7px}
 .department-editor-actions button{padding:5px 9px;border:1px solid rgba(255,255,255,.36);border-radius:var(--rs);color:#fff;font-size:10px;font-weight:700}
@@ -307,7 +312,7 @@ tbody td{padding:7px 12px;vertical-align:middle}
   .workload-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
 @media(max-width:680px){.workload-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}}
-@media(max-width:520px){.department-editor-entry{grid-template-columns:1fr}.department-editor-entry textarea,.department-remove{grid-column:1}.teacher-department-names{flex-direction:column;align-items:stretch;gap:2px}.teacher-department-ar{text-align:right}.teacher-department-en{text-align:left}}
+@media(max-width:520px){.department-editor-entry{grid-template-columns:1fr}.department-editor-entry textarea,.department-remove{grid-column:1}.teacher-department-names{flex-direction:column;align-items:stretch;gap:2px}.teacher-department-ar{text-align:end}.teacher-department-en{text-align:start}}
 
 .empty{padding:48px 24px;text-align:center;color:var(--muted);font-size:13px}
 .distribution-controls{display:flex;flex-wrap:wrap;gap:12px;padding:12px 16px;background:#f8fafc;border-bottom:1px solid var(--border)}
@@ -893,9 +898,9 @@ function renderClassTable() {
   </tr></thead><tbody>`;
 
   for (const row of rows) {
-    html += `<tr>
+    html += `<tr data-subject-color="${x(subjectColorKey(row.subject))}">
       <td><span class="badge">${x(row.shorthand)}</span></td>
-      <td>${subjectTagHtml(row.subject)}</td>
+      <td>${x(row.subject)}</td>
       <td>${x(row.bookName)}</td>
       <td class="num" style="text-align:center">${row.weekly}</td>
       <td>
@@ -1153,9 +1158,9 @@ function renderTeacherDetail(key) {
   let rows = "";
   for (const row of sortedRows) {
     const isDaera = daeraSet.has(row.rowNumber);
-    rows += `<tr>
+    rows += `<tr data-subject-color="${x(subjectColorKey(row.subject))}">
       <td><span class="badge">${x(row.shorthand)}</span></td>
-      <td>${subjectTagHtml(row.subject, isDaera)}</td>
+      <td>${isDaera ? `<span class="daera-match-text">${x(row.subject)}</span>` : x(row.subject)}</td>
       <td>${isDaera ? `<span class="daera-match-text">${x(row.bookName)}</span>` : x(row.bookName)}</td>
       <td class="num" style="text-align:center">${row.weekly}</td>
       <td>
@@ -1219,7 +1224,7 @@ function isDaeraSubjectMatch(daera, subject) {
   return Boolean(normalizedDaera && normalizedDaera === normaliseDaeraSubject(subject));
 }
 
-function subjectTagHtml(subject, daeraMatch) {
+function subjectColorKey(subject) {
   const name = String(subject || "").trim();
   const normalized = normaliseDaeraSubject(name).normalize("NFD").replace(/\p{M}/gu, "");
   let colorKey = name;
@@ -1255,7 +1260,7 @@ function subjectTagHtml(subject, daeraMatch) {
   } else if (normalized === "english") {
     colorKey = "English";
   }
-  return `<span class="subject-tag${daeraMatch ? " daera-match-text" : ""}" data-subject="${x(name)}" data-subject-color="${x(colorKey)}">${x(name)}</span>`;
+  return colorKey;
 }
 
 function teacherDaeraHtml(teacher, daeraNames) {
@@ -1412,16 +1417,32 @@ function teacherDepartmentsHtml(teacher, assignments) {
         group.masterResponsibilities.push(assignment.deptResponsibilitiesMaster);
       }
     });
-    content = grouped.size ? [...grouped.values()].map((assignment) => `
+    content = grouped.size ? [...grouped.values()].map((assignment, index) => {
+      const tooltipId = `department-master-${x(teacher.key)}-${index}`;
+      const masterResponsibilities = assignment.masterResponsibilities
+        .map((responsibility) => sanitizeDepartmentHtml(responsibility))
+        .filter(Boolean)
+        .join("<br>");
+      const designation = assignment.designations.map((value) => x(value)).join(", ");
+      const responsibility = assignment.responsibilities
+        .map((value) => sanitizeDepartmentHtml(value))
+        .filter(Boolean)
+        .join("; ");
+      return `
       <div class="teacher-department">
         <div class="teacher-department-names">
-          ${assignment.department ? `<div class="teacher-department-en" lang="en" dir="ltr">${x(assignment.department)}</div>` : ""}
+          ${assignment.department ? `<div class="teacher-department-en" lang="en" dir="ltr">
+            <span class="department-name-tooltip-anchor" tabindex="0"${masterResponsibilities ? ` aria-describedby="${tooltipId}" onmouseenter="showDepartmentTooltip(this)" onmouseleave="hideDepartmentTooltip(this)" onfocus="showDepartmentTooltip(this)" onblur="hideDepartmentTooltip(this)"` : ""}>
+              ${x(assignment.department)}
+              ${masterResponsibilities ? `<span class="department-master-tooltip" id="${tooltipId}" role="tooltip">${masterResponsibilities}</span>` : ""}
+            </span>
+            ${designation ? `<span class="teacher-department-designation">${designation}</span>` : ""}
+            ${responsibility ? `<span class="teacher-department-responsibility">${responsibility}</span>` : ""}
+          </div>` : ""}
           ${assignment.departmentAr ? `<div class="teacher-department-ar" lang="ar" dir="rtl">${x(assignment.departmentAr)}</div>` : ""}
         </div>
-        ${assignment.designations.map((designation) => `<div class="teacher-department-designation"><span class="department-icon" aria-hidden="true">☆</span>${x(designation)}</div>`).join("")}
-        ${assignment.responsibilities.map((responsibility) => `<div class="teacher-department-responsibility"><span class="department-icon department-check" aria-hidden="true">✓</span>${sanitizeDepartmentHtml(responsibility)}</div>`).join("")}
-        ${assignment.masterResponsibilities.map((responsibility) => `<div class="teacher-department-responsibility"><span class="department-icon department-check" aria-hidden="true">✓</span>${sanitizeDepartmentHtml(responsibility)}</div>`).join("")}
-      </div>`).join("") : '<div class="teacher-department-en">No department information available.</div>';
+      </div>`;
+    }).join("") : '<div class="teacher-department-en">No department information available.</div>';
   }
 
   return `<section class="teacher-departments" aria-label="Department details">
@@ -1651,7 +1672,7 @@ function renderDaeraDistribution() {
     Object.keys(root.subjects).sort().forEach((subject) => {
       const branch = root.subjects[subject];
       html += `<div class="hierarchy-subject">
-        <div class="hierarchy-subject-title"><span>${subjectTagHtml(subject)}</span>
+        <div class="hierarchy-subject-title" data-subject-color="${x(subjectColorKey(subject))}"><span>${x(subject)}</span>
           <span class="hierarchy-periods">${branch.total} periods</span></div>`;
       Object.keys(branch.teachers).sort((a, b) => branch.teachers[b] - branch.teachers[a] || a.localeCompare(b))
         .forEach((teacher) => {
@@ -1734,7 +1755,7 @@ function renderSubjectDistribution() {
     <th>Reassign To</th></tr></thead><tbody>`;
   rows.forEach((row) => {
     const periods = row[mode === "history" ? "periods1448" : "weekly"];
-    html += `<tr><td>${x(row.name || row.its || "Unassigned")}</td>
+    html += `<tr data-subject-color="${x(subjectColorKey(row.subject))}"><td>${x(row.name || row.its || "Unassigned")}</td>
       <td><span class="badge">${x(row.class + " · " + row.shorthand)}</span></td>
       <td>${x(row.bookName)}</td>
       <td class="num" style="text-align:center">${periods || "—"}</td>
@@ -1829,7 +1850,7 @@ function renderAnalytics() {
     Object.keys(groupSubjects).sort().forEach((subject) => {
       const subjectData = groupSubjects[subject];
       html += `<div class="hierarchy-subject">
-        <div class="hierarchy-subject-title"><span>${subjectTagHtml(subject)}</span></div>
+        <div class="hierarchy-subject-title" data-subject-color="${x(subjectColorKey(subject))}"><span>${x(subject)}</span></div>
         <div class="hierarchy-books">${x([...subjectData.books].sort().join(", "))}</div>`;
       Object.keys(subjectData.teachers)
         .sort((a, b) => subjectData.teachers[b] - subjectData.teachers[a] || a.localeCompare(b))
@@ -2000,6 +2021,27 @@ function x(str) {
   return String(str ?? "")
     .replace(/&/g, "&amp;").replace(/</g, "&lt;")
     .replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+
+function showDepartmentTooltip(anchor) {
+  const tooltipId = anchor.getAttribute("aria-describedby");
+  const tooltip = tooltipId && document.getElementById(tooltipId);
+  if (!tooltip) return;
+  const rect = anchor.getBoundingClientRect();
+  tooltip.classList.add("visible");
+  const tooltipRect = tooltip.getBoundingClientRect();
+  const left = Math.max(8, Math.min(rect.left, window.innerWidth - tooltipRect.width - 8));
+  const top = rect.bottom + tooltipRect.height + 8 <= window.innerHeight
+    ? rect.bottom + 6
+    : Math.max(8, rect.top - tooltipRect.height - 6);
+  tooltip.style.insetInlineStart = `${left}px`;
+  tooltip.style.insetBlockStart = `${top}px`;
+}
+
+function hideDepartmentTooltip(anchor) {
+  const tooltipId = anchor.getAttribute("aria-describedby");
+  const tooltip = tooltipId && document.getElementById(tooltipId);
+  if (tooltip) tooltip.classList.remove("visible");
 }
 
 function applyScriptTypography(root) {
