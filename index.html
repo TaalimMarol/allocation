@@ -1710,8 +1710,7 @@ function renderDaeraDistribution() {
     const color = subjectPaletteColor(root.daera);
     const books = [...root.books].sort((a, b) => a.localeCompare(b));
     const teachersForDaera = [...root.teachers.values()]
-      .sort((a, b) => teacherSortOrder(a) - teacherSortOrder(b) ||
-        a.name.localeCompare(b.name));
+      .sort((a, b) => b.periods - a.periods || a.name.localeCompare(b.name));
     const card = `<section class="daera-distribution-card" style="--daera-color:${color}">
       <header class="daera-distribution-header">
         <span class="daera-distribution-name">${x(root.daera)}</span>
