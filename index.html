@@ -251,6 +251,7 @@ tr[data-subject-color="Jameeiyah Ula"]>td,.hierarchy-subject-title[data-subject-
 .t-detail-info{flex:1}
 .t-detail-identity{display:flex;align-items:center;gap:12px;min-width:0}
 .t-detail-identity-column{min-width:0}
+.teacher-student-count{margin-top:4px;font-size:12px;font-weight:800;color:#fff}
 .workload-card{min-width:0}
 .t-detail-name{font-size:var(--text-lg);font-weight:700}
 .t-detail-sub{font-size:11px;color:rgba(255,255,255,.6);margin-top:2px}
@@ -710,6 +711,48 @@ let historyHeader = "1448 Tafweed";
 let pendingSync    = 0;
 let googleToken    = sessionStorage.getItem("allocation_google_token") || "";
 let googleEmail    = sessionStorage.getItem("allocation_google_email") || "";
+
+const mushrifStudentCountsByIts = Object.freeze({
+  "20359050": 5,
+  "20372362": 4,
+  "30408730": 3,
+  "20359704": 3,
+  "20373782": 3,
+  "20359132": 3,
+  "20359564": 3,
+  "20359779": 3,
+  "30472653": 2,
+  "30316376": 2,
+  "30312593": 2,
+  "20359366": 2,
+  "30355846": 2,
+  "20359531": 2,
+  "40489336": 2,
+  "20304619": 2,
+  "20361076": 2,
+  "20441281": 2,
+  "40418736": 1,
+  "20359796": 1,
+  "78652222": 1,
+  "20359594": 1,
+  "30461609": 1,
+  "30304126": 1,
+  "60434690": 1,
+  "20359330": 1,
+  "20359187": 1,
+  "20359705": 1,
+  "30410170": 1,
+  "30338702": 1,
+  "20359131": 1,
+  "30338707": 1,
+  "20359130": 1,
+  "30347071": 1,
+  "78652048": 1,
+  "30355689": 1,
+  "78652262": 1,
+  "20359362": 1,
+  "30408579": 1
+});
 
 function backendUrl() {
   const url = window.APP_CONFIG && window.APP_CONFIG.backendUrl;
@@ -1183,6 +1226,7 @@ function renderTeacherDetail(key) {
   const ov      = t.total > 30;
   const initial = (t.name || t.its || "?")[0].toUpperCase();
   const opts    = buildOpts();
+  const mushrifStudentCount = mushrifStudentCountsByIts[String(t.its || "").trim()];
   const workload = calculateAvailableAdminCapacity(t);
   const subjects = [...new Set(t.rows.map((row) => row.subject).filter(Boolean))]
     .sort((a, b) => a.localeCompare(b));
@@ -1249,6 +1293,7 @@ function renderTeacherDetail(key) {
           <div class="t-detail-info">
             <div class="t-detail-name">${x(t.name || t.its || "Unknown")}</div>
             <div class="t-detail-sub">ITS: ${x(t.its || "—")}</div>
+            ${mushrifStudentCount !== undefined ? `<div class="teacher-student-count">MUSHRIF of: ${x(mushrifStudentCount)} students</div>` : ""}
             <div class="info-badges">
               <span class="ibadge${ov ? " warn" : ""}">${t.total} periods${ov ? " ⚠" : ""}</span>
               ${daeraTotal > 0 ? `<span class="ibadge daera" data-subject-color="${x(daeraColorKey)}">Daerat-Periods: ${daeraTotal}</span>` : ""}
