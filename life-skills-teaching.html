@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blended Curriculum Strategy</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        primary: '#1e40af',
+                        secondary: '#047857',
+                        accent: '#f59e0b',
+                        dark: '#1f2937',
+                        light: '#f3f4f6'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
+        
+        .animate-fadeIn { 
+            animation: fadeIn 0.4s ease-in-out forwards; 
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        
+        .card-hover { transition: all 0.3s ease; }
+        .card-hover:hover { transform: translateY(-5px); box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1); }
+    </style>
+</head>
+<body class="text-gray-800 antialiased h-screen flex flex-col overflow-hidden">
+
+    <!-- Dynamic Header -->
+    <header class="bg-dark text-white shadow-md z-10 relative transition-all duration-300">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            <div class="flex justify-between items-center">
+                <div>
+                    <h1 id="header-title" class="text-2xl md:text-3xl font-bold tracking-tight text-white flex items-center gap-3">
+                        <i class="fas fa-layer-group text-accent" id="header-icon"></i>
+                        Loading...
+                    </h1>
+                    <p class="mt-2 text-sm md:text-base text-gray-300">
+                        15-Hour Masterclass Framework: Integrating Modules & Practical Application
+                    </p>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="flex-1 flex flex-col md:flex-row overflow-hidden">
+        
+        <!-- Dynamic Sidebar for Course Sets -->
+        <nav class="bg-white w-full md:w-64 flex-shrink-0 shadow-[4px_0_24px_rgba(0,0,0,0.05)] z-10 flex flex-row md:flex-col overflow-x-auto md:overflow-y-auto" id="sidebar-menu">
+            <!-- Populated by JavaScript based on active class -->
+        </nav>
+
+        <main class="flex-1 overflow-y-auto p-4 md:p-8 bg-gray-50 flex flex-col items-center">
+            
+            <div class="w-full max-w-5xl">
+                <!-- Top Navigation: Class Topics -->
+                <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100 mb-8 w-full">
+                    <h2 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Class Topics</h2>
+                    <div class="flex flex-wrap gap-3" id="class-topics-nav">
+                        <button id="btn-class8" onclick="switchClass('class8')" class="class-topic-btn px-5 py-2.5 rounded-lg font-medium transition-all duration-200 border border-gray-200 text-gray-600 hover:bg-gray-50 flex items-center gap-2">
+                            <i class="fas fa-bullhorn"></i> Class 8
+                        </button>
+                        <button id="btn-class9" onclick="switchClass('class9')" class="class-topic-btn px-5 py-2.5 rounded-lg font-medium transition-all duration-200 border border-gray-200 text-gray-600 hover:bg-gray-50 flex items-center gap-2">
+                            <i class="fas fa-user-shield"></i> Class 9
+                        </button>
+                        <button id="btn-class10" onclick="switchClass('class10')" class="class-topic-btn px-5 py-2.5 rounded-lg font-medium transition-all duration-200 border border-gray-200 text-gray-600 hover:bg-gray-50 flex items-center gap-2">
+                            <i class="fas fa-lightbulb"></i> Class 10
+                        </button>
+                        <button id="btn-class11" onclick="switchClass('class11')" class="class-topic-btn px-5 py-2.5 rounded-lg font-medium transition-all duration-200 border border-gray-200 text-gray-600 hover:bg-gray-50 flex items-center gap-2">
+                            <i class="fas fa-chalkboard-teacher"></i> Class 11
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Content Area -->
+                <div id="content-area" class="w-full relative">
+                    
+                    <!-- Class 8 Content -->
+                    <div id="class8" class="class-content hidden">
+                        <div class="mb-6 flex justify-between items-center border-b pb-4">
+                            <p class="text-gray-600 font-medium"><i class="fas fa-clock text-blue-500 mr-2"></i> Total Allotted Time: 15 Hours</p>
+                            <p class="text-gray-600 font-medium"><i class="fas fa-chalkboard-teacher text-blue-500 mr-2"></i> 3 Specialist Teachers</p>
+                        </div>
+                        
+                        <!-- Set 1 -->
+                        <div id="c8-set1" class="set-container bg-white rounded-xl p-8 shadow-sm border border-gray-100 flex flex-col relative overflow-hidden hidden">
+                            <div class="absolute top-0 left-0 w-full h-1 bg-blue-500"></div>
+                            <span class="bg-blue-100 text-blue-800 text-xs font-bold px-3 py-1 rounded-full w-max mb-4">Core Communication (6 Hrs)</span>
+                            <h3 class="text-2xl font-bold text-gray-800 mb-2">The Press Conference Simulator</h3>
+                            <p class="text-sm text-gray-500 mb-6 border-b pb-6">Modules: Verbal, Non-verbal, Written, Listening, Impromptu, Group Discussion, Conversation.</p>
+                            
+                            <h4 class="font-semibold text-gray-700 flex items-center gap-2 text-lg"><i class="fas fa-blender text-blue-500"></i> Blending Strategy</h4>
+                            <p class="text-base text-gray-600 mt-2 mb-8 leading-relaxed">Instead of teaching speaking and listening separately, students participate in a mock "Press Conference". They must draft a written statement, present it (verbal/non-verbal), handle impromptu questions, and engage in interactive listening to respond accurately to "reporters".</p>
+                            
+                            <div class="bg-gray-50 rounded-lg p-5 border border-gray-100 border-l-4 border-l-green-500">
+                                <h4 class="font-semibold text-gray-800 flex items-center gap-2"><i class="fas fa-map-marked-alt text-green-600"></i> On-Field Assignment</h4>
+                                <p class="text-sm text-gray-600 mt-2 leading-relaxed"><strong>Community Interview:</strong> Conduct a 10-minute live interview with a local business owner or senior teacher. Analyze their non-verbal cues, practice interactive listening, and submit a written summary of the interaction.</p>
+                            </div>
+                        </div>
+
+                        <!-- Set 2 -->
+                        <div id="c8-set2" class="set-container bg-white rounded-xl p-8 shadow-sm border border-gray-100 flex flex-col relative overflow-hidden hidden">
+                            <div class="absolute top-0 left-0 w-full h-1 bg-indigo-500"></div>
+                            <span class="bg-indigo-100 text-indigo-800 text-xs font-bold px-3 py-1 rounded-full w-max mb-4">Interpersonal Dynamics (5 Hrs)</span>
+                            <h3 class="text-2xl font-bold text-gray-800 mb-2">The Crisis Mediation Roleplay</h3>
+                            <p class="text-sm text-gray-500 mb-6 border-b pb-6">Modules: Questioning, Feedback (SWOT), Emotional Intelligence, Networking, Motivating, Conflict.</p>
+                            
+                            <h4 class="font-semibold text-gray-700 flex items-center gap-2 text-lg"><i class="fas fa-blender text-indigo-500"></i> Blending Strategy</h4>
+                            <p class="text-base text-gray-600 mt-2 mb-8 leading-relaxed">A masterclass revolving around "Workplace Crisis". Students are paired up to resolve a staged conflict. They must use Emotional Intelligence to gauge the room, apply the Art of Questioning to find the root cause, and deliver Constructive Feedback using the SWOT framework to motivate their peer.</p>
+                            
+                            <div class="bg-gray-50 rounded-lg p-5 border border-gray-100 border-l-4 border-l-green-500">
+                                <h4 class="font-semibold text-gray-800 flex items-center gap-2"><i class="fas fa-map-marked-alt text-green-600"></i> On-Field Assignment</h4>
+                                <p class="text-sm text-gray-600 mt-2 leading-relaxed"><strong>Networking Audit:</strong> Attend a school inter-house event or local gathering. Initiate 3 meaningful conversations using open-ended questioning. Report back with a personal SWOT analysis of your own networking performance.</p>
+                            </div>
+                        </div>
+
+                        <!-- Set 3 -->
+                        <div id="c8-set3" class="set-container bg-white rounded-xl p-8 shadow-sm border border-gray-100 flex flex-col relative overflow-hidden hidden">
+                            <div class="absolute top-0 left-0 w-full h-1 bg-teal-500"></div>
+                            <span class="bg-teal-100 text-teal-800 text-xs font-bold px-3 py-1 rounded-full w-max mb-4">Public Relations (4 Hrs)</span>
+                            <h3 class="text-2xl font-bold text-gray-800 mb-2">The Campaign Pitch</h3>
+                            <p class="text-sm text-gray-500 mb-6 border-b pb-6">Modules: PR/Dawat, Stakeholders, Media Relations, Event Planning, Ethics & Evaluating.</p>
+                            
+                            <h4 class="font-semibold text-gray-700 flex items-center gap-2 text-lg"><i class="fas fa-blender text-teal-500"></i> Blending Strategy</h4>
+                            <p class="text-base text-gray-600 mt-2 mb-8 leading-relaxed">Students form PR agencies. They are tasked with planning a single Dawat/Community Event. In this 4-hour bootcamp, they identify stakeholders, craft the narrative, design a digital media strategy, and present an ethical evaluation plan for their proposed event.</p>
+                            
+                            <div class="bg-gray-50 rounded-lg p-5 border border-gray-100 border-l-4 border-l-green-500">
+                                <h4 class="font-semibold text-gray-800 flex items-center gap-2"><i class="fas fa-map-marked-alt text-green-600"></i> On-Field Assignment</h4>
+                                <p class="text-sm text-gray-600 mt-2 leading-relaxed"><strong>Mini PR Campaign:</strong> Execute a real 3-day PR campaign for a school club or local charity. Capture 5 photos/videos, write 2 social media captions aligned with the core narrative, and evaluate the audience engagement.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Class 9 Content -->
+                    <div id="class9" class="class-content hidden">
+                        <div class="mb-6 flex justify-between items-center border-b pb-4">
+                            <p class="text-gray-600 font-medium"><i class="fas fa-clock text-secondary mr-2"></i> Total Allotted Time: 15 Hours</p>
+                            <p class="text-gray-600 font-medium"><i class="fas fa-chalkboard-teacher text-secondary mr-2"></i> 2 Specialist Teachers</p>
+                        </div>
+                        
+                        <!-- Set 1 -->
+                        <div id="c9-set1" class="set-container bg-white rounded-xl p-8 shadow-sm border border-gray-100 flex flex-col relative overflow-hidden hidden">
+                            <div class="absolute top-0 left-0 w-full h-1 bg-emerald-500"></div>
+                            <span class="bg-emerald-100 text-emerald-800 text-xs font-bold px-3 py-1 rounded-full w-max mb-4">Internal Mindset (7.5 Hrs)</span>
+                            <h3 class="text-2xl font-bold text-gray-800 mb-2">The Resilience Audit</h3>
+                            <p class="text-sm text-gray-500 mb-6 border-b pb-6">Modules: Self Awareness, Accepting Change, Positivity, Accountable, Humility, Criticism, Stress.</p>
+                            
+                            <h4 class="font-semibold text-gray-700 flex items-center gap-2 text-lg"><i class="fas fa-blender text-emerald-500"></i> Blending Strategy</h4>
+                            <p class="text-base text-gray-600 mt-2 mb-8 leading-relaxed">A deeply reflective bootcamp. Rather than lecturing on "humility", the teacher creates a "Feedback Sandbox" where students review each other's past work. Students practice taking criticism, managing their stress response in real-time, maintaining positivity, and writing a self-awareness journal detailing their emotional triggers.</p>
+                            
+                            <div class="bg-gray-50 rounded-lg p-5 border border-gray-100 border-l-4 border-l-green-500">
+                                <h4 class="font-semibold text-gray-800 flex items-center gap-2"><i class="fas fa-map-marked-alt text-green-600"></i> On-Field Assignment</h4>
+                                <p class="text-sm text-gray-600 mt-2 leading-relaxed"><strong>The Feedback Loop:</strong> Approach 3 people (a parent, a teacher, a peer) and ask for genuine, constructive criticism on a specific habit or past project. Accept it with humility (no defending yourself), document the physical/emotional stress you felt, and write a positivity plan to address the feedback.</p>
+                            </div>
+                        </div>
+
+                        <!-- Set 2 -->
+                        <div id="c9-set2" class="set-container bg-white rounded-xl p-8 shadow-sm border border-gray-100 flex flex-col relative overflow-hidden hidden">
+                            <div class="absolute top-0 left-0 w-full h-1 bg-lime-500"></div>
+                            <span class="bg-lime-100 text-lime-800 text-xs font-bold px-3 py-1 rounded-full w-max mb-4">Strategic Execution (7.5 Hrs)</span>
+                            <h3 class="text-2xl font-bold text-gray-800 mb-2">The 30-Day Blueprint</h3>
+                            <p class="text-sm text-gray-500 mb-6 border-b pb-6">Modules: Self Leadership, Setting Goals, Time Management, Strategic Planning, Delegation, Initiatives, Habits.</p>
+                            
+                            <h4 class="font-semibold text-gray-700 flex items-center gap-2 text-lg"><i class="fas fa-blender text-lime-500"></i> Blending Strategy</h4>
+                            <p class="text-base text-gray-600 mt-2 mb-8 leading-relaxed">This block functions as a personal project incubator. Students pick a single "Initiative" they want to launch. Throughout the session, they apply Strategic Planning to build a roadmap, set SMART Goals, map out the Time Management required, and define the daily Habits needed to execute the plan, learning self-leadership by doing.</p>
+                            
+                            <div class="bg-gray-50 rounded-lg p-5 border border-gray-100 border-l-4 border-l-green-500">
+                                <h4 class="font-semibold text-gray-800 flex items-center gap-2"><i class="fas fa-map-marked-alt text-green-600"></i> On-Field Assignment</h4>
+                                <p class="text-sm text-gray-600 mt-2 leading-relaxed"><strong>Community Initiative Sprint:</strong> Take the initiative to organize a small, tangible project (e.g., organizing a neighborhood library shelf, a small bake sale, or a family cleanup day). Delegate at least two tasks to others, track your time strictly over 7 days, and report on the execution.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Class 10 Content -->
+                    <div id="class10" class="class-content hidden">
+                        <div class="mb-6 flex justify-between items-center border-b pb-4">
+                            <p class="text-gray-600 font-medium"><i class="fas fa-clock text-accent mr-2"></i> Total Allotted Time: 15 Hours</p>
+                            <p class="text-gray-600 font-medium"><i class="fas fa-chalkboard-teacher text-accent mr-2"></i> 3 Specialist Teachers</p>
+                        </div>
+                        
+                        <!-- Set 1 -->
+                        <div id="c10-set1" class="set-container bg-white rounded-xl p-8 shadow-sm border border-gray-100 flex flex-col relative overflow-hidden hidden">
+                            <div class="absolute top-0 left-0 w-full h-1 bg-yellow-500"></div>
+                            <span class="bg-yellow-100 text-yellow-800 text-xs font-bold px-3 py-1 rounded-full w-max mb-4">Problem Solving (5 Hrs)</span>
+                            <h3 class="text-2xl font-bold text-gray-800 mb-2">Design Thinking Hackathon</h3>
+                            <p class="text-sm text-gray-500 mb-6 border-b pb-6">Modules: Observations, Structuring Problems, Mind Mapping, Analytical/Lateral Thinking, Innovation, Decision Making.</p>
+                            
+                            <h4 class="font-semibold text-gray-700 flex items-center gap-2 text-lg"><i class="fas fa-blender text-yellow-500"></i> Blending Strategy</h4>
+                            <p class="text-base text-gray-600 mt-2 mb-8 leading-relaxed">A rapid-fire hackathon. Students are given a complex, messy case study. They must use Critical Observation to find the real issue, structure the problem via Mind Mapping, apply Lateral Thinking to brainstorm off-the-wall innovations, and use Analytical Decision Making to select the final solution.</p>
+                            
+                            <div class="bg-gray-50 rounded-lg p-5 border border-gray-100 border-l-4 border-l-green-500">
+                                <h4 class="font-semibold text-gray-800 flex items-center gap-2"><i class="fas fa-map-marked-alt text-green-600"></i> On-Field Assignment</h4>
+                                <p class="text-sm text-gray-600 mt-2 leading-relaxed"><strong>Root-Cause Field Study:</strong> Identify a recurring inefficiency in your school or local community (e.g., canteen crowding, traffic drop-off). Map the root cause, develop an innovative lateral solution, and pitch the mapped decision to a school administrator.</p>
+                            </div>
+                        </div>
+
+                        <!-- Set 2 -->
+                        <div id="c10-set2" class="set-container bg-white rounded-xl p-8 shadow-sm border border-gray-100 flex flex-col relative overflow-hidden hidden">
+                            <div class="absolute top-0 left-0 w-full h-1 bg-orange-500"></div>
+                            <span class="bg-orange-100 text-orange-800 text-xs font-bold px-3 py-1 rounded-full w-max mb-4">Core Strategy (5 Hrs)</span>
+                            <h3 class="text-2xl font-bold text-gray-800 mb-2">The Market Disruption Model</h3>
+                            <p class="text-sm text-gray-500 mb-6 border-b pb-6">Modules: Business Mindset, Scaling, Fair Trade, Research, Trend-setting, Odyssey, Ecosystem.</p>
+                            
+                            <h4 class="font-semibold text-gray-700 flex items-center gap-2 text-lg"><i class="fas fa-blender text-orange-500"></i> Blending Strategy</h4>
+                            <p class="text-base text-gray-600 mt-2 mb-8 leading-relaxed">Students step into the shoes of venture capitalists. They analyze an existing Business Ecosystem. They conduct simulated Market Research to find a gap, design a Trend-setting product, and develop a strategic plan for Scaling the business while maintaining Fair Trade principles.</p>
+                            
+                            <div class="bg-gray-50 rounded-lg p-5 border border-gray-100 border-l-4 border-l-green-500">
+                                <h4 class="font-semibold text-gray-800 flex items-center gap-2"><i class="fas fa-map-marked-alt text-green-600"></i> On-Field Assignment</h4>
+                                <p class="text-sm text-gray-600 mt-2 leading-relaxed"><strong>Bazaar Ethnography:</strong> Visit a local bustling market or bazaar. Observe one specific vendor. Diagram their complete business ecosystem (suppliers to buyers), perform a brief market analysis, and suggest one strategic scaling idea to the vendor.</p>
+                            </div>
+                        </div>
+
+                        <!-- Set 3 -->
+                        <div id="c10-set3" class="set-container bg-white rounded-xl p-8 shadow-sm border border-gray-100 flex flex-col relative overflow-hidden hidden">
+                            <div class="absolute top-0 left-0 w-full h-1 bg-red-500"></div>
+                            <span class="bg-red-100 text-red-800 text-xs font-bold px-3 py-1 rounded-full w-max mb-4">Adv Enterprise (5 Hrs)</span>
+                            <h3 class="text-2xl font-bold text-gray-800 mb-2">The Boardroom Simulation</h3>
+                            <p class="text-sm text-gray-500 mb-6 border-b pb-6">Modules: Boldness, Compliance, Collaborative, Global, Financial Prudence, Hobbyist, Adaptive.</p>
+                            
+                            <h4 class="font-semibold text-gray-700 flex items-center gap-2 text-lg"><i class="fas fa-blender text-red-500"></i> Blending Strategy</h4>
+                            <p class="text-base text-gray-600 mt-2 mb-8 leading-relaxed">Operating as a board of directors, students take a "Hobbyist Enterprise" and map its trajectory to "Global Expansion". They must demonstrate Strategic Boldness in pitching partnerships (Collaborative Strategy), while rigorously proving Financial Prudence and strict legal Compliance in their expansion roadmap.</p>
+                            
+                            <div class="bg-gray-50 rounded-lg p-5 border border-gray-100 border-l-4 border-l-green-500">
+                                <h4 class="font-semibold text-gray-800 flex items-center gap-2"><i class="fas fa-map-marked-alt text-green-600"></i> On-Field Assignment</h4>
+                                <p class="text-sm text-gray-600 mt-2 leading-relaxed"><strong>The Micro-Enterprise Challenge:</strong> Start a 1-week Hobbyist Enterprise (e.g., selling handmade crafts or a digital service to friends/family). Maintain a prudent financial ledger, ensure ethical compliance, and write a reflection on adapting your approach based on sales.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Class 11 Content -->
+                    <div id="class11" class="class-content hidden">
+                        <div class="mb-6 flex justify-between items-center border-b pb-4">
+                            <p class="text-gray-600 font-medium"><i class="fas fa-clock text-purple-600 mr-2"></i> Total Allotted Time: 15 Hours</p>
+                            <p class="text-gray-600 font-medium"><i class="fas fa-chalkboard-teacher text-purple-600 mr-2"></i> 3 Specialist Teachers</p>
+                        </div>
+                        
+                        <!-- Set 1 -->
+                        <div id="c11-set1" class="set-container bg-white rounded-xl p-8 shadow-sm border border-gray-100 flex flex-col relative overflow-hidden hidden">
+                            <div class="absolute top-0 left-0 w-full h-1 bg-purple-500"></div>
+                            <span class="bg-purple-100 text-purple-800 text-xs font-bold px-3 py-1 rounded-full w-max mb-4">Ed-Theory (5.5 Hrs)</span>
+                            <h3 class="text-2xl font-bold text-gray-800 mb-2">The Micro-Teaching Lab</h3>
+                            <p class="text-sm text-gray-500 mb-6 border-b pb-6">Modules: Profession, Taxonomies, Planning, Assessment, Methods, Curriculum, Tech.</p>
+                            
+                            <h4 class="font-semibold text-gray-700 flex items-center gap-2 text-lg"><i class="fas fa-blender text-purple-500"></i> Blending Strategy</h4>
+                            <p class="text-base text-gray-600 mt-2 mb-8 leading-relaxed">Students build a comprehensive curriculum slice. They define learning outcomes using Taxonomies, structure the Lesson Planning, choose diverse Teaching Methods, integrate Educational Technology, and design the final Assessment rubric—all in one fluid curriculum development cycle.</p>
+                            
+                            <div class="bg-gray-50 rounded-lg p-5 border border-gray-100 border-l-4 border-l-green-500">
+                                <h4 class="font-semibold text-gray-800 flex items-center gap-2"><i class="fas fa-map-marked-alt text-green-600"></i> On-Field Assignment</h4>
+                                <p class="text-sm text-gray-600 mt-2 leading-relaxed"><strong>Live Guest Teaching:</strong> Design a 15-minute lesson plan integrating one piece of Ed-Tech. Secure permission to teach it to a group of junior students (or peers), and assess their learning in real-time using Bloom's Taxonomy principles.</p>
+                            </div>
+                        </div>
+
+                        <!-- Set 2 -->
+                        <div id="c11-set2" class="set-container bg-white rounded-xl p-8 shadow-sm border border-gray-100 flex flex-col relative overflow-hidden hidden">
+                            <div class="absolute top-0 left-0 w-full h-1 bg-pink-500"></div>
+                            <span class="bg-pink-100 text-pink-800 text-xs font-bold px-3 py-1 rounded-full w-max mb-4">Classroom Practice (4 Hrs)</span>
+                            <h3 class="text-2xl font-bold text-gray-800 mb-2">The Ecosystem Observation</h3>
+                            <p class="text-sm text-gray-500 mb-6 border-b pb-6">Modules: Classroom Dynamics, Al-Muntalaq-ul-Islami, Teacher Ethics, Practicals 1 & 2.</p>
+                            
+                            <h4 class="font-semibold text-gray-700 flex items-center gap-2 text-lg"><i class="fas fa-blender text-pink-500"></i> Blending Strategy</h4>
+                            <p class="text-base text-gray-600 mt-2 mb-8 leading-relaxed">A heavily practical workshop. The specialist sets up simulated disruptive classroom environments. Trainees must navigate these Dynamics while upholding Teacher Ethics and foundational principles (Al-Muntalaq). The session serves as guided Practicals for real-time classroom management.</p>
+                            
+                            <div class="bg-gray-50 rounded-lg p-5 border border-gray-100 border-l-4 border-l-green-500">
+                                <h4 class="font-semibold text-gray-800 flex items-center gap-2"><i class="fas fa-map-marked-alt text-green-600"></i> On-Field Assignment</h4>
+                                <p class="text-sm text-gray-600 mt-2 leading-relaxed"><strong>Teacher Shadowing:</strong> Shadow a veteran senior teacher for half a day. Document the unspoken classroom dynamics, identify specific instances where the teacher exercised ethical judgment, and write a reflective practical report.</p>
+                            </div>
+                        </div>
+
+                        <!-- Set 3 -->
+                        <div id="c11-set3" class="set-container bg-white rounded-xl p-8 shadow-sm border border-gray-100 flex flex-col relative overflow-hidden hidden">
+                            <div class="absolute top-0 left-0 w-full h-1 bg-fuchsia-500"></div>
+                            <span class="bg-fuchsia-100 text-fuchsia-800 text-xs font-bold px-3 py-1 rounded-full w-max mb-4">Org Leadership (5.5 Hrs)</span>
+                            <h3 class="text-2xl font-bold text-gray-800 mb-2">The Leadership Taskforce</h3>
+                            <p class="text-sm text-gray-500 mb-6 border-b pb-6">Modules: Team Building, Inspiring, Collab, Mentor, Soft/Hard Leadership, Facilitation, Crisis.</p>
+                            
+                            <h4 class="font-semibold text-gray-700 flex items-center gap-2 text-lg"><i class="fas fa-blender text-fuchsia-500"></i> Blending Strategy</h4>
+                            <p class="text-base text-gray-600 mt-2 mb-8 leading-relaxed">The instructor acts as a "Crisis Facilitator". Students are grouped and thrown into a simulated organizational crisis. One student acts as the Mentor, utilizing Soft/Hard leadership to guide the team. They must practice advanced Facilitation Skills and cross-functional Collaboration to survive the scenario.</p>
+                            
+                            <div class="bg-gray-50 rounded-lg p-5 border border-gray-100 border-l-4 border-l-green-500">
+                                <h4 class="font-semibold text-gray-800 flex items-center gap-2"><i class="fas fa-map-marked-alt text-green-600"></i> On-Field Assignment</h4>
+                                <p class="text-sm text-gray-600 mt-2 leading-relaxed"><strong>Junior Facilitation:</strong> Act as a mentor and facilitate a 30-minute conflict-resolution, planning, or team-building session for a junior student council, a sports team, or scout troop. Document how you balanced soft and hard leadership styles.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+            
+            <!-- Footer spacing -->
+            <div class="h-12 w-full"></div>
+        </main>
+    </div>
+
+    <script>
+        const classData = {
+            class8: {
+                title: 'Class 8: Communication & Public Relations',
+                icon: 'fa-bullhorn',
+                sets: [
+                    { id: 'c8-set1', name: 'Set 1: Core Communication' },
+                    { id: 'c8-set2', name: 'Set 2: Interpersonal Dynamics' },
+                    { id: 'c8-set3', name: 'Set 3: Public Relations' }
+                ]
+            },
+            class9: {
+                title: 'Class 9: Self-Management & Personal Leadership',
+                icon: 'fa-user-shield',
+                sets: [
+                    { id: 'c9-set1', name: 'Set 1: Internal Mindset' },
+                    { id: 'c9-set2', name: 'Set 2: Strategic Execution' }
+                ]
+            },
+            class10: {
+                title: 'Class 10: Critical Thinking & Entrepreneurship',
+                icon: 'fa-lightbulb',
+                sets: [
+                    { id: 'c10-set1', name: 'Set 1: Problem Solving' },
+                    { id: 'c10-set2', name: 'Set 2: Core Strategy' },
+                    { id: 'c10-set3', name: 'Set 3: Adv Enterprise' }
+                ]
+            },
+            class11: {
+                title: 'Class 11: Pedagogy & Leadership',
+                icon: 'fa-chalkboard-teacher',
+                sets: [
+                    { id: 'c11-set1', name: 'Set 1: Ed-Theory' },
+                    { id: 'c11-set2', name: 'Set 2: Classroom Practice' },
+                    { id: 'c11-set3', name: 'Set 3: Org Leadership' }
+                ]
+            }
+        };
+
+        function switchClass(classId) {
+            const data = classData[classId];
+            
+            // 1. Update Header Title and Icon
+            document.getElementById('header-title').innerHTML = `<i class="fas ${data.icon} text-accent mr-2"></i> ${data.title}`;
+
+            // 2. Update Class Topics Button States
+            document.querySelectorAll('.class-topic-btn').forEach(btn => {
+                btn.classList.remove('bg-primary', 'text-white', 'shadow-md', 'border-primary');
+                btn.classList.add('bg-white', 'text-gray-600', 'border-gray-200');
+            });
+            const activeBtn = document.getElementById('btn-' + classId);
+            activeBtn.classList.remove('bg-white', 'text-gray-600', 'border-gray-200');
+            activeBtn.classList.add('bg-primary', 'text-white', 'shadow-md', 'border-primary');
+
+            // 3. Populate Sidebar with Course Sets
+            const sidebar = document.getElementById('sidebar-menu');
+            sidebar.innerHTML = '<div class="p-4 hidden md:block border-b border-gray-100"><h2 class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Course Sets</h2></div>';
+            
+            data.sets.forEach((set, index) => {
+                const btn = document.createElement('button');
+                btn.onclick = () => switchSet(classId, set.id);
+                btn.id = `btn-${set.id}`;
+                btn.className = `set-sidebar-btn w-full text-left px-6 py-4 flex items-center gap-3 border-l-4 transition-colors whitespace-nowrap outline-none ${index === 0 ? 'border-primary bg-blue-50 text-primary font-medium' : 'border-transparent text-gray-600 hover:bg-gray-50'}`;
+                btn.innerHTML = `<i class="fas fa-layer-group w-5 text-center"></i> ${set.name}`;
+                sidebar.appendChild(btn);
+            });
+
+            // 4. Hide all classes, show active class container
+            document.querySelectorAll('.class-content').forEach(el => el.classList.add('hidden'));
+            document.getElementById(classId).classList.remove('hidden');
+
+            // 5. Default switch to the first set
+            switchSet(classId, data.sets[0].id);
+        }
+
+        function switchSet(classId, setId) {
+            // Update sidebar button states
+            document.querySelectorAll('.set-sidebar-btn').forEach(btn => {
+                btn.classList.remove('border-primary', 'bg-blue-50', 'text-primary', 'font-medium');
+                btn.classList.add('border-transparent', 'text-gray-600');
+            });
+            const activeSetBtn = document.getElementById('btn-' + setId);
+            if(activeSetBtn) {
+                activeSetBtn.classList.remove('border-transparent', 'text-gray-600');
+                activeSetBtn.classList.add('border-primary', 'bg-blue-50', 'text-primary', 'font-medium');
+            }
+
+            // Hide all sets inside this class
+            document.querySelectorAll(`#${classId} .set-container`).forEach(el => {
+                el.classList.add('hidden');
+                el.classList.remove('animate-fadeIn');
+            });
+
+            // Show and animate the active set
+            const activeSet = document.getElementById(setId);
+            if(activeSet) {
+                activeSet.classList.remove('hidden');
+                // Trigger reflow to restart animation
+                void activeSet.offsetWidth;
+                activeSet.classList.add('animate-fadeIn');
+            }
+        }
+
+        // Initialize on load
+        document.addEventListener('DOMContentLoaded', () => {
+            switchClass('class8');
+        });
+    </script>
+</body>
+</html>
