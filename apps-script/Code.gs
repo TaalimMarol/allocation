@@ -3,6 +3,8 @@ const CONFIG = {
   googleClientId: "4790857483-dfsu661skbet2drpfhlpb6hgihvndfhg.apps.googleusercontent.com",
   sheetName: "1449Working",
   departmentSheetName: "Dept_Allocation",
+  teacherProfileSheetName: "Teacher_Profile",
+  departmentPeriodsSheetName: "Department_Periods",
   photoFolderId: "1stZ952fMp9RD1YjlV4YYv6BCSb6CSXBB",
   allowedEmails: [
     "fakhruddin.burhanpurwala@jameasaifiyah.edu",
@@ -87,7 +89,15 @@ function authenticate_(token) {
 function getAllData_() {
   const sheet = getSheet_();
   const values = sheet.getDataRange().getDisplayValues();
-  if (values.length < 2) return { rows: [], headers: [] };
+  if (values.length < 2) {
+    return {
+      rows: [],
+      headers: values[0] || [],
+      historyHeader: "1448 Tafweed",
+      profileRows: getTeacherProfileData_(),
+      departmentPeriodRows: getDepartmentPeriodData_()
+    };
+  }
 
   const headers = values[0].map(function (h) { return String(h || "").trim(); });
   const index = buildColIdx_(headers);
@@ -129,7 +139,103 @@ function getAllData_() {
       ])).trim()
     });
   }
-  return { rows: rows, headers: headers, historyHeader: historyHeader };
+  return {
+    rows: rows,
+    headers: headers,
+    historyHeader: historyHeader,
+    profileRows: getTeacherProfileData_(),
+    departmentPeriodRows: getDepartmentPeriodData_()
+  };
+}
+
+function getTeacherProfileData_() {
+  const sheet = getOptionalNamedSheet_(CONFIG.teacherProfileSheetName);
+  if (!sheet) return [];
+
+  const values = sheet.getDataRange().getDisplayValues();
+  if (!values.length) return [];
+  const headers = values[0].map(function (header) { return String(header || "").trim(); });
+  const index = buildColIdx_(headers);
+  const itsCol = findColumnIndex_(index, [
+    "ITS", "Teacher ITS", "ITS Number", "ITS No", "ITS_No", "ITS ID", "ITS_ID",
+    "ITSID", "ItsID", "TeacherITS"
+  ]);
+  if (itsCol === -1) throw new Error("Teacher_Profile is missing an ITS column.");
+
+  const rows = [];
+  for (let r = 1; r < values.length; r++) {
+    const row = values[r];
+    if (!row.some(function (cell) { return cell !== ""; })) continue;
+    const its = String(row[itsCol] || "").trim();
+    if (!its) throw new Error("Teacher_Profile row " + (r + 1) + " is missing ITS.");
+    rows.push({
+      its: its,
+      sequenceNo: String(getCol_(index, row, ["SequenceNo", "Sequence No", "Sequence"])).trim(),
+      hifzCertificate: String(getCol_(index, row, [
+        "HifzCertificate", "Hifz Certificate", "CertificateHifz"
+      ])).trim(),
+      takhassus: String(getCol_(index, row, ["Takhassus"])).trim(),
+      idara: String(getCol_(index, row, ["Idara", "Idarah"])).trim(),
+      serviceDuration: String(getCol_(index, row, [
+        "ServiceDuration", "Service Duration", "DurationOfService"
+      ])).trim(),
+      yearOfCompletion: String(getCol_(index, row, [
+        "YearOfCompletion", "Year Of Completion"
+      ])).trim(),
+      universitySanad: String(getCol_(index, row, [
+        "UniversitySanad", "University Sanad"
+      ])).trim(),
+      category: String(getCol_(index, row, ["Category"])).trim(),
+      appointmentYear: String(getCol_(index, row, [
+        "AppointmentYear", "Appointment Year"
+      ])).trim()
+    });
+  }
+  return rows;
+}
+
+function getDepartmentPeriodData_() {
+  const sheet = getOptionalNamedSheet_(CONFIG.departmentPeriodsSheetName);
+  if (!sheet) return [];
+
+  const values = sheet.getDataRange().getDisplayValues();
+  if (!values.length) return [];
+  const headers = values[0].map(function (header) { return String(header || "").trim(); });
+  const index = buildColIdx_(headers);
+  const itsCol = findColumnIndex_(index, [
+    "TeacherITS", "Teacher ITS", "ITS", "ITS Number", "ITS No", "ITS_ID"
+  ]);
+  const subjectCol = findColumnIndex_(index, ["Subject"]);
+  const bookNameCol = findColumnIndex_(index, ["BookName", "Book Name"]);
+  const classNameCol = findColumnIndex_(index, ["ClassName", "Class Name", "Class"]);
+  const weeklyCol = findColumnIndex_(index, [
+    "WeeklyPeriods", "Weekly Periods", "Weekly", "PeriodsWeekly"
+  ]);
+  if (itsCol === -1) throw new Error("Department_Periods is missing a TeacherITS column.");
+  if (subjectCol === -1) throw new Error("Department_Periods is missing a Subject column.");
+  if (bookNameCol === -1) throw new Error("Department_Periods is missing a BookName column.");
+  if (weeklyCol === -1) throw new Error("Department_Periods is missing a WeeklyPeriods column.");
+
+  const rows = [];
+  for (let r = 1; r < values.length; r++) {
+    const row = values[r];
+    if (!row.some(function (cell) { return cell !== ""; })) continue;
+    const its = String(row[itsCol] || "").trim();
+    if (!its) throw new Error("Department_Periods row " + (r + 1) + " is missing TeacherITS.");
+    const weeklyValue = String(row[weeklyCol] || "").trim();
+    const weekly = Number(weeklyValue);
+    if (!weeklyValue || !Number.isFinite(weekly) || weekly < 0) {
+      throw new Error("Department_Periods row " + (r + 1) + " has invalid WeeklyPeriods.");
+    }
+    rows.push({
+      its: its,
+      subject: String(row[subjectCol] || "").trim(),
+      bookName: String(row[bookNameCol] || "").trim(),
+      className: classNameCol === -1 ? "" : String(row[classNameCol] || "").trim(),
+      weekly: weekly
+    });
+  }
+  return rows;
 }
 
 function getDepartmentData_() {
@@ -389,16 +495,18 @@ function getSheet_() {
 }
 
 function getNamedSheet_(name) {
-  const spreadsheet = SpreadsheetApp.openById(CONFIG.spreadsheetId);
-  if (!name) return spreadsheet.getSheets()[0];
-  const exact = spreadsheet.getSheetByName(name);
-  if (exact) return exact;
-  const wanted = name.toLowerCase();
-  const match = spreadsheet.getSheets().find(function (sheet) {
-    return sheet.getName().toLowerCase() === wanted;
-  });
+  const match = getOptionalNamedSheet_(name);
   if (!match) throw new Error("Sheet tab not found: " + name);
   return match;
+}
+
+function getOptionalNamedSheet_(name) {
+  const spreadsheet = SpreadsheetApp.openById(CONFIG.spreadsheetId);
+  if (!name) return spreadsheet.getSheets()[0] || null;
+  const wanted = name.toLowerCase();
+  return spreadsheet.getSheets().find(function (sheet) {
+    return sheet.getName().toLowerCase() === wanted;
+  }) || null;
 }
 
 function buildColIdx_(headers) {

@@ -238,6 +238,8 @@ tr[data-subject-color="Jameeiyah Ula"]>td,.hierarchy-subject-title[data-subject-
 
 .t-detail{background:var(--surface);border-radius:var(--r);box-shadow:var(--shadow);overflow:hidden}
 .t-detail-hdr{padding:14px 16px;background:var(--navy);color:#fff;display:grid;grid-template-columns:minmax(260px,.8fr) minmax(0,1.8fr);gap:16px;align-items:stretch}
+.teacher-report-open{padding:7px 10px;border:1px solid rgba(255,255,255,.55);border-radius:var(--rs);background:rgba(255,255,255,.12);color:#fff;font-size:11px;font-weight:700}
+.teacher-report-open:hover{background:rgba(255,255,255,.22)}
 .t-avatar-lg{
   width:88px;height:88px;border-radius:50%;object-fit:cover;
   border:2px solid rgba(255,255,255,.3);flex-shrink:0;background:rgba(255,255,255,.1);
@@ -350,6 +352,73 @@ tr[data-subject-color="Jameeiyah Ula"]>td,.hierarchy-subject-title[data-subject-
 .distribution-controls label{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:var(--navy)}
 .filter-select{min-width:170px;padding:6px 8px;border:1.5px solid var(--border);border-radius:var(--rs);background:#fff;color:var(--text)}
 .filter-select:focus{outline:none;border-color:var(--sky)}
+
+/* ── TEACHER PRINT REPORT ───────────────────────── */
+.teacher-report{max-width:980px;margin:0 auto;padding:18px;background:#fff;color:#111;box-shadow:var(--shadow)}
+.teacher-report-actions{display:flex;justify-content:space-between;gap:10px;margin-bottom:12px}
+.teacher-report-actions button{padding:7px 12px;border:1px solid var(--border);border-radius:var(--rs);color:var(--navy);font-size:12px;font-weight:700}
+.teacher-report-actions button:hover{background:#f1f5f9}
+.teacher-report-heading{text-align:center;font-family:"Kanz-al-lulu",Arial,sans-serif;direction:rtl;line-height:1.55;margin-bottom:14px}
+.teacher-report-heading-title{font-size:24px;font-weight:700}
+.teacher-report-heading-place{font-size:16px}
+.teacher-report-heading-year{font-size:17px}
+.teacher-report-person{
+  display:grid;grid-template-columns:210px minmax(0,1fr) 110px;
+  grid-template-areas:"facts identity photo";gap:14px;align-items:center;direction:rtl;margin-bottom:12px
+}
+.teacher-report-photo,.teacher-report-photo-ph{width:100px;height:120px;object-fit:cover;border:1px solid #9ca3af}
+.teacher-report-photo-ph{display:flex;align-items:center;justify-content:center;background:#f1f5f9;color:#475569;font-size:20px;font-weight:700}
+.teacher-report-person>.teacher-report-photo,.teacher-report-person>.teacher-report-photo-ph{grid-area:photo}
+.teacher-report-identity{text-align:center;font-family:"Kanz-al-lulu",Arial,sans-serif;direction:rtl;grid-area:identity}
+.teacher-report-name{font-size:22px;font-weight:700}
+.teacher-report-its{font-family:"Kanz-al-lulu",Arial,sans-serif;font-size:16px;margin-top:8px;direction:rtl}
+.teacher-report-sequence{font-family:"Kanz-al-lulu",Arial,sans-serif;font-size:14px;margin-top:8px;direction:rtl}
+.teacher-report-facts{font-family:"Kanz-al-lulu",Arial,sans-serif;font-size:13px;line-height:1.9;direction:rtl;grid-area:facts}
+.teacher-report-fact{display:flex;gap:5px;align-items:baseline}
+.teacher-report-fact-label{font-weight:700;white-space:nowrap}
+.teacher-report-fact-value{min-width:0}
+.teacher-report-profile-table,.teacher-report-table{width:100%;border-collapse:collapse;font-family:"Kanz-al-lulu",Arial,sans-serif;direction:rtl}
+.teacher-report-profile-table{margin-bottom:10px;font-size:12px}
+.teacher-report-profile-table th,.teacher-report-profile-table td,.teacher-report-table th,.teacher-report-table td{border:1px solid #8b8b8b;padding:4px 6px;text-align:center;vertical-align:middle}
+.teacher-report-profile-table th,.teacher-report-table thead th{background:#f8fafc;color:#111;font-weight:700;white-space:normal;position:static}
+.teacher-report-total-wrap{text-align:left}
+.teacher-report-total{display:inline-block;margin:0 0 5px;padding:3px 12px;background:#ffed70;border:1px solid #a68d00;font-size:17px;font-weight:800;direction:rtl}
+.teacher-report-section{margin-top:7px;break-inside:avoid}
+.teacher-report-section-title{padding:4px 8px;background:#f1f5f9;font-family:"Kanz-al-lulu",Arial,sans-serif;font-size:14px;font-weight:700;text-align:right;direction:rtl}
+.teacher-report-table{font-size:12px}
+.teacher-report-table tbody tr{border:0}
+.teacher-report-table tbody tr.teacher-report-masul-row td{background:#c9e8d5}
+.teacher-report-table tbody tr.teacher-report-musanid-row td{background:#fff0a6}
+.teacher-report-table tfoot th{background:#f8fafc;font-weight:800}
+.teacher-report-empty{padding:7px;text-align:center;color:#555}
+.teacher-report-departments{margin-top:8px;font-family:"Kanz-al-lulu",Arial,sans-serif;direction:rtl}
+.teacher-report-departments-title{font-size:14px;font-weight:800}
+.teacher-report-departments ul{margin:4px 20px 0 0;padding:0 16px 0 0}
+.teacher-report-departments li{padding:1px 0;font-size:12px}
+@media(max-width:680px){
+  .teacher-report{padding:12px}
+  .teacher-report-person{
+    grid-template-columns:minmax(0,1fr) 80px;
+    grid-template-areas:"identity photo" "facts facts";gap:8px;direction:rtl
+  }
+  .teacher-report-photo,.teacher-report-photo-ph{width:76px;height:94px}
+  .teacher-report-facts{grid-column:1 / -1}
+  .teacher-report-table{font-size:10px}
+}
+@media print{
+  @page{size:A4 portrait;margin:8mm}
+  body{min-height:0;background:#fff}
+  #auth-screen,#loading,#nav,#toast,#main>.view:not(#view-teacher-report),.teacher-report-actions{display:none!important}
+  #main{display:block!important;padding:0!important}
+  #view-teacher-report{display:block!important}
+  .teacher-report{max-width:none;margin:0;padding:0;box-shadow:none}
+  .teacher-report-person,.teacher-report-profile-table,.teacher-report-departments{break-inside:avoid}
+  .teacher-report-table thead{display:table-header-group}
+  .teacher-report-table tr{break-inside:avoid}
+  .teacher-report-table tbody tr.teacher-report-masul-row td{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .teacher-report-table tbody tr.teacher-report-musanid-row td{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .teacher-report-total{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}
 
 /* ── AL-MASŪL GRID ─────────────────────────────── */
 .masul-grid-wrap{padding:14px;overflow:auto}
@@ -613,6 +682,11 @@ tr[data-subject-color="Jameeiyah Ula"]>td,.hierarchy-subject-title[data-subject-
     </div>
   </div>
 
+  <!-- TEACHER PRINT REPORT -->
+  <div class="view" id="view-teacher-report">
+    <div id="teacher-report-content"></div>
+  </div>
+
   <!-- DAERA DISTRIBUTION VIEW -->
   <div class="view" id="view-daera">
     <div class="panel">
@@ -695,10 +769,13 @@ tr[data-subject-color="Jameeiyah Ula"]>td,.hierarchy-subject-title[data-subject-
 // ================================================================
 let allRows        = [];
 let departmentRows = [];
+let teacherProfileRows = [];
+let departmentPeriodRows = [];
 let teachers       = {};   // keyed by teacherKey
 let photos         = {};   // keyed by ITS
 let activeClass    = null;
 let activeKey      = null;
+let activeReportKey = null;
 let editingDepartmentKey = null;
 let departmentDraft = [];
 let editingDaeraKey = null;
@@ -877,6 +954,8 @@ async function loadData() {
 
     allRows = data.rows || [];
     departmentRows = departmentData.rows || [];
+    teacherProfileRows = data.profileRows || [];
+    departmentPeriodRows = data.departmentPeriodRows || [];
     historyHeader = data.historyHeader || "1448 Tafweed";
     buildTeacherIndex();
 
@@ -909,6 +988,7 @@ async function fetchPhotos() {
       if (photos[its]) swapPhoto(el, its);
     });
     renderMasulGrid();
+    if (activeReportKey) renderTeacherReport(activeReportKey);
   } catch (_) { /* silent */ }
 }
 
@@ -941,6 +1021,7 @@ function recalcTotals() {
 //  VIEW SWITCH
 // ================================================================
 function switchView(v) {
+  activeReportKey = null;
   document.querySelectorAll(".view").forEach((el) => el.classList.remove("active"));
   document.querySelectorAll(".nav-tab").forEach((el) => el.classList.remove("active"));
   document.getElementById("view-" + v).classList.add("active");
@@ -1305,6 +1386,9 @@ function renderTeacherDetail(key) {
           ${x(subjects.join(", ") || "—")}
         </div>
         ${teacherDaeraHtml(t, daeraNames)}
+        <button type="button" class="teacher-report-open" data-teacher-report-key="${x(key)}">
+          عرض جدول التدريس / Print report
+        </button>
       </div>
       <div class="workload-card">
         <div class="workload-metrics">
@@ -1328,12 +1412,206 @@ function renderTeacherDetail(key) {
         <th style="text-align:center">${x(historyHeader)}</th>
       </tr></thead><tbody>${rows}</tbody></table>
     </div>`;
+  const reportButton = panel.querySelector("[data-teacher-report-key]");
+  if (reportButton) {
+    reportButton.addEventListener("click", () => openTeacherReport(reportButton.dataset.teacherReportKey));
+  }
   panel.querySelectorAll("[data-daera-candidate-row]").forEach((button) => {
     button.addEventListener("click", () => reassignAllocation(
       Number(button.dataset.daeraCandidateRow),
       key
     ));
   });
+}
+
+function openTeacherReport(key) {
+  if (!teachers[key]) {
+    toast("The selected teacher is no longer available.", true);
+    return;
+  }
+  activeReportKey = key;
+  renderTeacherReport(key);
+  document.querySelectorAll(".view").forEach((el) => el.classList.remove("active"));
+  document.getElementById("view-teacher-report").classList.add("active");
+}
+
+function closeTeacherReport() {
+  activeReportKey = null;
+  document.querySelectorAll(".view").forEach((el) => el.classList.remove("active"));
+  document.getElementById("view-teacher").classList.add("active");
+}
+
+function printTeacherReport() {
+  if (!activeReportKey || !teachers[activeReportKey]) {
+    toast("Select a teacher before printing the report.", true);
+    return;
+  }
+  window.print();
+}
+
+function renderTeacherReport(key) {
+  const teacher = teachers[key];
+  if (!teacher) return;
+
+  const profile = teacherProfileRows.find((row) =>
+    normaliseIts(row.its) === normaliseIts(teacher.its)) || {};
+  const directRows = [...teacher.rows].sort(compareTeacherReportRows);
+  const masulRows = allRows.filter((row) =>
+    row.teacherKey === teacher.key && isMasulRow(row));
+  const masulClassKeys = new Set(masulRows
+    .filter((row) => row.class || row.section || row.gender)
+    .map(teacherReportClassKey));
+  const teacherIdentities = new Set(
+    [teacher.name, teacher.its, ...teacher.rows.map((row) => row.name)]
+      .map(normaliseTeacherReportIdentity)
+      .filter(Boolean)
+  );
+  const musanidRows = allRows
+    .filter((row) => row.teacherKey !== teacher.key && teacherMatchesMusaid(row, teacherIdentities))
+    .sort(compareTeacherReportRows);
+  const extraDepartmentRows = departmentPeriodRows
+    .filter((row) => normaliseIts(row.its) === normaliseIts(teacher.its));
+  const daeras = [...new Set(teacher.rows
+    .map((row) => String(row.ustadDaera || "").trim())
+    .filter(Boolean))];
+  const masulClasses = [...new Set(masulRows
+    .map((row) => reportClassName(row))
+    .filter(Boolean))];
+  const directTotal = sumReportPeriods(directRows);
+  const musanidTotal = sumReportPeriods(musanidRows);
+  const departmentTotal = sumReportPeriods(extraDepartmentRows);
+  const total = directTotal + musanidTotal + departmentTotal;
+  const departments = [...new Set(getTeacherDepartments(teacher.its)
+    .map((row) => row.departmentAr || row.department)
+    .map((value) => String(value || "").trim())
+    .filter(Boolean))];
+  const photo = getPhoto(teacher.its);
+  const initial = (teacher.name || teacher.its || "?")[0].toUpperCase();
+  const photoHtml = photo
+    ? `<img class="teacher-report-photo" src="${photo}" alt="${x(teacher.name || "Teacher")}">`
+    : `<div class="teacher-report-photo-ph" aria-hidden="true">${x(initial)}</div>`;
+  const departmentList = departments.length
+    ? `<ul>${departments.map((department) => `<li>${x(department)}</li>`).join("")}</ul>`
+    : "";
+  const report = document.getElementById("teacher-report-content");
+  report.innerHTML = `
+    <article class="teacher-report" lang="ar" dir="rtl">
+      <div class="teacher-report-actions">
+        <button type="button" onclick="closeTeacherReport()">رجوع إلى لوحة التدريس</button>
+        <button type="button" onclick="printTeacherReport()">طباعة / حفظ PDF</button>
+      </div>
+      <header class="teacher-report-heading">
+        <div class="teacher-report-heading-title">جدول حصـص التدريس</div>
+        <div class="teacher-report-heading-place">ممبئي (مرول)</div>
+        <div class="teacher-report-heading-year">1448-1449</div>
+      </header>
+      <section class="teacher-report-person">
+        ${photoHtml}
+        <div class="teacher-report-identity">
+          <div class="teacher-report-name">${x(teacher.name || teacher.its || "—")}</div>
+          <div class="teacher-report-its">${x(teacher.its || "—")}</div>
+          ${profile.sequenceNo ? `<div class="teacher-report-sequence">(${x(profile.sequenceNo)})</div>` : ""}
+        </div>
+        <div class="teacher-report-facts">
+          <div class="teacher-report-fact"><span class="teacher-report-fact-label">شهادة الحفظ:</span><span class="teacher-report-fact-value">${x(profile.hifzCertificate || "")}</span></div>
+          <div class="teacher-report-fact"><span class="teacher-report-fact-label">التخصص في:</span><span class="teacher-report-fact-value">${x(profile.takhassus || "")}</span></div>
+          ${profile.appointmentYear ? `<div class="teacher-report-fact"><span class="teacher-report-fact-label">سنة التعيين:</span><span class="teacher-report-fact-value">${x(profile.appointmentYear)}</span></div>` : ""}
+          <div class="teacher-report-fact"><span class="teacher-report-fact-label">المسؤول عن الدرجة:</span><span class="teacher-report-fact-value">${x(masulClasses.join("، ") || "—")}</span></div>
+          <div class="teacher-report-fact"><span class="teacher-report-fact-label">الرغبة في موضوع:</span><span class="teacher-report-fact-value">${x(daeras.join("، "))}</span></div>
+        </div>
+      </section>
+      <table class="teacher-report-profile-table">
+        <thead><tr>
+          <th>الإدارة</th><th>الفئة</th><th>مدة الخدمة في الجامعة السيفية</th><th>سند الجامعة</th><th>سنة الفراغ</th>
+        </tr></thead>
+        <tbody><tr>
+          <td>${x(profile.idara || "")}</td>
+          <td>${x(profile.category || "")}</td>
+          <td>${x(profile.serviceDuration || "")}</td>
+          <td>${x(profile.universitySanad || "")}</td>
+          <td>${x(profile.yearOfCompletion || "")}</td>
+        </tr></tbody>
+      </table>
+      <div class="teacher-report-total-wrap"><span class="teacher-report-total">${total}</span></div>
+      ${teacherReportSectionHtml("حصص التدريس", directRows, "teacher-report-masul-row",
+        (row) => row.musaid || "", masulClassKeys)}
+      ${musanidRows.length
+        ? teacherReportSectionHtml("حصص المساندة", musanidRows, "teacher-report-musanid-row",
+          (row) => row.name || "", new Set(), true)
+        : ""}
+      ${teacherReportSectionHtml("حصص الإدارات", extraDepartmentRows, "",
+        () => "", new Set())}
+      <section class="teacher-report-departments">
+        <div class="teacher-report-departments-title">الإدارات والدوائر</div>
+        ${departmentList}
+      </section>
+    </article>`;
+}
+
+function teacherReportSectionHtml(title, rows, rowClass, musanidValue, masulClassKeys,
+  highlightAllRows) {
+  const total = sumReportPeriods(rows);
+  const body = rows.length
+    ? rows.map((row) => {
+      const isMasulClass = masulClassKeys.has(teacherReportClassKey(row));
+      const className = row.class !== undefined
+        ? reportClassName(row)
+        : String(row.className || "").trim();
+      const currentClass = rowClass && (highlightAllRows || isMasulClass) ? rowClass : "";
+      return `<tr${currentClass ? ` class="${currentClass}"` : ""}>
+        <td>${x(musanidValue(row) || "")}</td>
+        <td>${x(row.subject || "")}</td>
+        <td>${x(row.bookName || "")}</td>
+        <td>${x(className)}</td>
+        <td>${x(row.weekly === undefined ? "" : row.weekly)}</td>
+      </tr>`;
+    }).join("")
+    : '<tr><td class="teacher-report-empty" colspan="5">لا توجد حصص مسجلة</td></tr>';
+  return `<section class="teacher-report-section">
+    <div class="teacher-report-section-title">${x(title)}</div>
+    <table class="teacher-report-table">
+      <thead><tr><th>المساند</th><th>الموضوع</th><th>الكتاب</th><th>الدرجة</th><th>الحصص الأسبوعية</th></tr></thead>
+      <tbody>${body}</tbody>
+      <tfoot><tr><th colspan="4">المجموع</th><th>${total}</th></tr></tfoot>
+    </table>
+  </section>`;
+}
+
+function teacherMatchesMusaid(row, teacherIdentities) {
+  const musaid = normaliseTeacherReportIdentity(row.musaid);
+  return Boolean(musaid && teacherIdentities.has(musaid));
+}
+
+function normaliseTeacherReportIdentity(value) {
+  return String(value || "").toLowerCase()
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^\p{L}\p{N}]+/gu, "");
+}
+
+function teacherReportClassKey(row) {
+  return [row.class, row.section, row.gender]
+    .map((value) => String(value || "").trim().toLowerCase())
+    .join("\u0000");
+}
+
+function reportClassName(row) {
+  return [row.class, row.section, row.gender]
+    .map((value) => String(value || "").trim())
+    .filter(Boolean)
+    .join(" ");
+}
+
+function compareTeacherReportRows(a, b) {
+  return Number(a.class || 0) - Number(b.class || 0) ||
+    String(a.class || "").localeCompare(String(b.class || "")) ||
+    String(a.section || "").localeCompare(String(b.section || "")) ||
+    String(a.subject || "").localeCompare(String(b.subject || "")) ||
+    String(a.bookName || "").localeCompare(String(b.bookName || ""));
+}
+
+function sumReportPeriods(rows) {
+  return rows.reduce((total, row) => total + (Number(row.weekly) || 0), 0);
 }
 
 function renderDaeraReassignCandidates(teacher) {

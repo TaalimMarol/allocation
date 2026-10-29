@@ -134,6 +134,22 @@ with system fonts as fallbacks.
 
 ## Distribution dashboards
 
+- **Teacher workload report** opens a print-friendly A4 report for the selected
+  teacher while keeping allocation edits in the existing Teacher Workload
+  dashboard. Direct allocations in the teacher's Al-Masʾūl class/section are
+  highlighted green. Rows whose `Musaid` value matches the selected teacher's
+  name or ITS are shown separately in yellow, with the primary `Name` shown as
+  the main mufawwaz. The total includes direct, Musanid, and department periods.
+- **Teacher_Profile** is an optional tab for report metadata, keyed by `ITS`.
+  Suggested columns are `ITS`, `SequenceNo`, `HifzCertificate`, `Takhassus`,
+  `Idara`, `ServiceDuration`, `YearOfCompletion`, `UniversitySanad`,
+  `Category`, and `AppointmentYear`. Until populated, these report fields stay
+  blank.
+- **Department_Periods** is an optional tab for teaching periods outside the
+  teacher's class allocations. Add one row per assignment with columns
+  `TeacherITS`, `Subject`, `BookName`, `ClassName` (leave blank when not
+  class-based), and `WeeklyPeriods`. The report labels this section
+  `حصص الإدارات`; its periods are included in the top total.
 - **Daerat Distribution** detects every non-empty `Ustad_Daera` value from the
   configured `1449Working` tab, groups those values into columns, and lists
   every teacher with a Daera assignment using the 1449 weekly period values.
