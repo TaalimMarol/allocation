@@ -976,6 +976,7 @@ async function loadData() {
     if (hashView && document.getElementById("view-" + hashView) && document.getElementById("tab-" + hashView)) {
       switchView(hashView);
     }
+  } catch (err) {
     hideLoading();
     toast("Failed to load data: " + err.message, true);
   }
