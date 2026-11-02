@@ -520,6 +520,11 @@ function className(row) {
   return [row.class, row.section, row.gender].map((v) => String(v || "").trim()).filter(Boolean).join(" ");
 }
 
+function numeralsFirst(text) {
+  const parts = String(text || "").trim().split(/\s+/).filter(Boolean);
+  return [...parts.filter((p) => /^\d+$/.test(p)), ...parts.filter((p) => !/^\d+$/.test(p))].join(" ");
+}
+
 function compareRows(a, b) {
   return Number(a.class || 0) - Number(b.class || 0) ||
     String(a.class || "").localeCompare(String(b.class || "")) ||
@@ -658,7 +663,7 @@ function sectionHtml(title, rows, o) {
       <td>${x(o.firstCol(row) || "")}</td>
       <td${oldCls}>${x(row.subject || "")}</td>
       <td${oldCls}>${x(row.bookNameAr || row.bookName || "")}</td>
-      <td class="cls-cell">${x(row.class !== undefined ? className(row) : String(row.className || "").trim())}</td>
+      <td class="cls-cell">${x(numeralsFirst(row.class !== undefined ? className(row) : String(row.className || "").trim()))}</td>
       <td>${x(row.weekly === undefined ? "" : row.weekly)}</td>
       ${showEdit ? editCellHtml(row, o, differs) : ""}
     </tr>`;
