@@ -1,0 +1,240 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Daerat Distribution · Layout Preview</title>
+  <style>
+    :root {
+      --page: #f1f5f9;
+      --surface: #fff;
+      --ink: #172033;
+      --muted: #64748b;
+      --line: #dbe2ea;
+      --navy: #1e3a8a;
+      --text-sm: 0.875rem;
+      --text-base: 1rem;
+      --text-lg: 1.125rem;
+      font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+      font-size: 16px;
+      line-height: 1.5;
+      color: var(--ink);
+      background: var(--page);
+    }
+
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--page); }
+    button { font: inherit; }
+
+    .topbar {
+      padding: 1rem clamp(1rem, 4vw, 3rem);
+      background: var(--navy);
+      color: #fff;
+    }
+
+    .topbar h1 {
+      margin: 0;
+      font-size: 1.375rem;
+    }
+
+    main {
+      width: min(100% - 2rem, 76rem);
+      margin-inline: auto;
+      padding-block: 1.5rem 3rem;
+    }
+
+    .intro {
+      margin-block-end: 1rem;
+      color: var(--muted);
+    }
+
+    .sample-note {
+      margin-block-end: 1.5rem;
+      padding: 0.75rem 1rem;
+      border: 1px solid #f0d98d;
+      border-radius: 0.5rem;
+      background: #fff9e6;
+      color: #713f12;
+      font-size: var(--text-sm);
+    }
+
+    .daerat-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(min(100%, 21rem), 1fr));
+      gap: 1rem;
+    }
+
+    .daerat-card {
+      overflow: hidden;
+      border: 1px solid color-mix(in srgb, var(--daerat-color), #172033 14%);
+      border-radius: 0.75rem;
+      background: var(--daerat-color);
+      box-shadow: 0 0.25rem 1rem rgb(15 23 42 / 7%);
+    }
+
+    .daerat-header {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 1rem;
+      padding: 0.875rem 1rem;
+      color: #172033;
+      font-weight: 800;
+    }
+
+    .daerat-name {
+      font-size: var(--text-lg);
+    }
+
+    .daerat-total {
+      flex: none;
+      font-size: var(--text-base);
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .teacher-list {
+      display: grid;
+      gap: 0.375rem;
+      padding: 0.625rem;
+    }
+
+    .teacher-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      min-height: 2.75rem;
+      padding: 0.5rem 0.75rem;
+      border: 1px solid rgb(23 32 51 / 8%);
+      border-radius: 0.5rem;
+      background: rgb(255 255 255 / 82%);
+    }
+
+    .teacher-name {
+      min-width: 0;
+      font-weight: 600;
+    }
+
+    .teacher-periods {
+      flex: none;
+      color: #172033;
+      font-weight: 800;
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+    }
+
+    .empty {
+      grid-column: 1 / -1;
+      padding: 2rem;
+      border: 1px solid var(--line);
+      border-radius: 0.75rem;
+      background: var(--surface);
+      color: var(--muted);
+      text-align: center;
+    }
+
+    @media (max-width: 768px) {
+      .topbar h1 { font-size: 1.25rem; }
+      .daerat-name { font-size: 1rem; }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <h1>Daerat Distribution</h1>
+  </header>
+  <main>
+    <p class="intro">Weekly periods allocated to each Daerat, with teachers ordered male first and female second.</p>
+    <p class="sample-note">
+      Layout preview only: names and period counts below are illustrative. The live dashboard will calculate these totals from the 1449working sheet tab.
+    </p>
+    <div class="daerat-grid" id="daerat-list" aria-live="polite"></div>
+  </main>
+
+  <script>
+    const subjectColors = {
+      "Adab / Tawil": "#F5E0CB",
+      "Al-Lisān al-ʿArabī": "#F2F3F8",
+      English: "#9796A6",
+      Fiqh: "#D5F1CA",
+      Hikmat: "#B3F7B2",
+      "Jameeiyaah Thaniyah": "#E5CCDF",
+      "Khaimat Riyadat": "#C9EBFB",
+      "Nashatat Ilmiyah": "#F1E3FE",
+      "Quran Kareem": "#FFD5E5",
+      Sciences: "#FFF6A3",
+      Akhbaar: "#CFF88A",
+      Takhassus: "#A3CBE3",
+      "Barāmij ʿIlmiyya": "#F8D0B3",
+      "Maqaalah Muwasah": "#BCC77C",
+      "Jameeiyah Ula": "#F8CBAB"
+    };
+
+    const sampleRows = [
+      { daera: "Fiqh", subjectColor: "Fiqh", teacher: "Ustadh Ahmed", gender: "male", weekly: 8 },
+      { daera: "Fiqh", subjectColor: "Fiqh", teacher: "Ustadh Bilal", gender: "male", weekly: 6 },
+      { daera: "Fiqh", subjectColor: "Fiqh", teacher: "Ustadha Mariam", gender: "female", weekly: 5 },
+      { daera: "Akhbaar", subjectColor: "Akhbaar", teacher: "Ustadh Yusuf", gender: "male", weekly: 7 },
+      { daera: "Akhbaar", subjectColor: "Akhbaar", teacher: "Ustadha Fatema", gender: "female", weekly: 4 },
+      { daera: "Adab / Tawil", subjectColor: "Adab / Tawil", teacher: "Ustadh Hasan", gender: "male", weekly: 9 }
+    ];
+
+    const genderOrder = (gender) => {
+      const value = String(gender || "").trim().toLowerCase();
+      if (value === "m" || value === "male") return 0;
+      if (value === "f" || value === "female") return 1;
+      return 2;
+    };
+
+    const grouped = new Map();
+    sampleRows.forEach((row) => {
+      if (!row.daera) return;
+      if (!grouped.has(row.daera)) {
+        grouped.set(row.daera, { color: row.subjectColor, total: 0, teachers: new Map() });
+      }
+      const daera = grouped.get(row.daera);
+      daera.total += Number(row.weekly) || 0;
+      const teacher = daera.teachers.get(row.teacher) || {
+        name: row.teacher,
+        gender: row.gender,
+        periods: 0
+      };
+      teacher.periods += Number(row.weekly) || 0;
+      daera.teachers.set(row.teacher, teacher);
+    });
+
+    const escapeHtml = (value) => String(value).replace(/[&<>"']/g, (character) => ({
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      "\"": "&quot;",
+      "'": "&#39;"
+    })[character]);
+
+    const cards = [...grouped.entries()]
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([name, daera]) => {
+        const teachers = [...daera.teachers.values()]
+          .sort((a, b) => genderOrder(a.gender) - genderOrder(b.gender) ||
+            a.name.localeCompare(b.name));
+        const rows = teachers.map((teacher) => `
+          <div class="teacher-row">
+            <span class="teacher-name">${escapeHtml(teacher.name)}</span>
+            <span class="teacher-periods">${teacher.periods} periods</span>
+          </div>`).join("");
+        return `
+          <section class="daerat-card" style="--daerat-color:${subjectColors[daera.color] || "#F2F3F8"}">
+            <header class="daerat-header">
+              <span class="daerat-name">${escapeHtml(name)}</span>
+              <span class="daerat-total">${daera.total} periods</span>
+            </header>
+            <div class="teacher-list">${rows}</div>
+          </section>`;
+      }).join("");
+
+    document.getElementById("daerat-list").innerHTML =
+      cards || '<div class="empty">No Daerat allocations found.</div>';
+  </script>
+</body>
+</html>

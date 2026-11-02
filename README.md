@@ -17,7 +17,9 @@ provides the authenticated backend for Google Sheets and Drive.
 
 ```text
 GitHub Pages
-  └── index.html + config.js
+  ├── index.html (1448 Tafweed vs 1449 comparison, landing page)
+  ├── Asateza_Masooliyaat.html (teacher workload dashboard)
+  └── config.js
       └── Google Identity Services sign-in
           └── Apps Script Web App
               ├── Google Sheets read/write

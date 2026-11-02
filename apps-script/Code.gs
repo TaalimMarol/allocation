@@ -46,6 +46,9 @@ function handleRequest_(request, method) {
     if (method === "GET" && action === "data") {
       return json_(getAllData_());
     }
+    if (method === "GET" && action === "data-compare") {
+      return json_(getAllData_({ includeUnassigned: true }));
+    }
     if (method === "GET" && action === "photos") {
       return json_(getTeacherPhotos_());
     }
@@ -86,7 +89,8 @@ function authenticate_(token) {
   return { ok: true, email: email };
 }
 
-function getAllData_() {
+function getAllData_(options) {
+  const includeUnassigned = Boolean(options && options.includeUnassigned);
   const sheet = getSheet_();
   const values = sheet.getDataRange().getDisplayValues();
   if (values.length < 2) {
@@ -115,17 +119,17 @@ function getAllData_() {
     const gender = String(getCol_(index, row, ["Gender", "gender"])).trim();
     const its = String(getCol_(index, row, ["ITS", "its"])).trim();
     const name = String(getCol_(index, row, ["Name", "name"])).trim();
-    if (!its && !name) continue;
     const historyAssignment = String(getCol_(index, row, [
       "1448Tafweed", "1448 Tafweed", "1448_Tafweed", "Tafweed1448"
     ])).trim();
+    if (!its && !name && !(includeUnassigned && historyAssignment)) continue;
     const bookName = String(getCol_(index, row, ["BookName", "bookname"])).trim();
     rows.push({
       rowNumber: r + 1, class: cls, section: section, gender: gender,
       shorthand: cls + section + gender, subject: subject,
       bookName: bookName,
       weekly: Number(getCol_(index, row, ["Weekly", "weekly"])) || 0,
-      its: its, teacherKey: its || "NAME:" + name, name: name,
+      its: its, teacherKey: its || (name ? "NAME:" + name : ""), name: name,
       periods1448: historyAssignment,
       history1448: historyAssignment,
       isRepeatAssignment: matchesTeacherHistory_(name, its, historyAssignment),
