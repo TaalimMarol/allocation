@@ -59,6 +59,13 @@ button{cursor:pointer;border:none;background:none;font:inherit}
 #main{padding:6px}
 .layout{display:grid;grid-template-columns:190px minmax(0,1fr);gap:6px;align-items:start}
 .t-list-panel{background:var(--surface);border-radius:var(--r);box-shadow:var(--shadow);overflow:hidden;display:flex;flex-direction:column;position:sticky;top:44px;max-height:calc(100vh - 50px)}
+@media(min-width:901px){
+  .layout.collapsed{grid-template-columns:18px minmax(0,1fr)}
+  .layout.collapsed .t-list-panel{width:18px;z-index:50;transition:width .15s;cursor:e-resize}
+  .layout.collapsed .t-list-panel>*{opacity:0;pointer-events:none;min-width:190px}
+  .layout.collapsed .t-list-panel:hover,.layout.collapsed .t-list-panel:focus-within{width:190px;cursor:auto}
+  .layout.collapsed .t-list-panel:hover>*,.layout.collapsed .t-list-panel:focus-within>*{opacity:1;pointer-events:auto}
+}
 .t-list-hdr{padding:6px 10px;background:var(--navy);color:#fff;font-size:12px;font-weight:700}
 .t-search{width:100%;padding:6px 10px;border:0;border-bottom:1px solid var(--border);font:inherit;font-size:13px}
 .t-search:focus{outline:none;box-shadow:inset 0 -2px var(--sky)}
@@ -99,12 +106,12 @@ button{cursor:pointer;border:none;background:none;font:inherit}
 .rep-fact b{white-space:nowrap}
 .rep-fact input{flex:1;min-width:0;width:90px;padding:1px 4px;border:1px solid #22c55e;border-radius:3px;font:inherit;font-size:12px;direction:rtl}
 .rep-fact button{padding:0 7px;border:1px solid #166534;border-radius:3px;background:#166534;color:#fff;font-size:11px}
-table.rt{width:100%;border-collapse:collapse;direction:rtl;font-size:14.5px}
+table.rt{width:100%;border-collapse:collapse;direction:rtl;font-size:16.5px}
 table.rt td.old-subject{color:#dc2626;font-weight:800;text-decoration:underline}
 table.rt th,table.rt td{border:1px solid #8b8b8b;padding:2px 4px;text-align:center;vertical-align:middle}
 table.rt thead th{background:#f1f5f9;font-weight:700}
 table.rt tfoot th{background:#f8fafc;font-weight:800}
-table.rt.profile{margin-bottom:4px;font-size:12.5px}
+table.rt.profile{margin-bottom:4px;font-size:14.5px}
 .rep-sec{margin-top:4px}
 .rep-sec-title{padding:1px 6px;background:#e2e8f0;font-size:13px;font-weight:700;text-align:right}
 tr.row-masul td{background:#c9e8d5}
@@ -141,7 +148,7 @@ tr.row-diff td{box-shadow:inset 0 -2px 0 #f59e0b}
   .rep{box-shadow:none;outline:0!important;padding:2px 4px;font-size:10px}
   .rep-title{font-size:13px}
   .rep-name{font-size:13px}
-  .rep-facts,table.rt,table.rt.profile,.rep-deps{font-size:11px}
+  .rep-facts,table.rt,table.rt.profile,.rep-deps{font-size:13px}
   table.rt td.old-subject{color:#dc2626!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
   .rep-photo,.rep-photo-ph{width:46px;height:57px}
   .rep-person{grid-template-columns:46px minmax(0,1fr)}
@@ -474,7 +481,9 @@ function selectTeacher(key) {
     editingDepartmentKey = null;
     departmentDraft = [];
   }
+  const firstSelection = !activeKey;
   activeKey = key;
+  if (!firstSelection) document.querySelector(".layout").classList.add("collapsed");
   document.querySelectorAll(".t-item").forEach((el) =>
     el.classList.toggle("active", el.dataset.key === key));
   renderCompare();
@@ -563,6 +572,12 @@ function photoHtml(teacher) {
   return `<div class="rep-photo-ph" aria-hidden="true">${x(initial)}</div>`;
 }
 
+// A subject is "old" when the teacher already had the same class number, subject and book in 1448 (section/gender ignored)
+function oldMatchKey(row) {
+  return [row.class, row.subject, row.bookName]
+    .map((v) => normaliseText(v).replace(/\s+/g, " ").trim()).join("\u0000");
+}
+
 function reportHtml(side, key, editable, opts) {
   const ctx = reportData(key);
   const { teacher, profile, identities, departmentPeriods, departments, daeras } = ctx;
@@ -584,7 +599,8 @@ function reportHtml(side, key, editable, opts) {
   const fact = (label, value) =>
     `<div class="rep-fact"><b>${label}:</b><span>${x(value || "")}</span></div>`;
 
-  const secOpts = { editable, side, opts: opts || [] };
+  const oldKeys = new Set((hist1448[key] || []).map(oldMatchKey));
+  const secOpts = { editable, side, opts: opts || [], oldKeys };
   return `<article class="rep rep-${side}${editable ? " rep-edit" : ""}" lang="ar" dir="rtl">
     <header class="rep-head">
       <span class="rep-year">${side === "1448" ? "تفويض 1448" : "1449"}</span>
@@ -635,7 +651,7 @@ function sectionHtml(title, rows, o) {
     const differs = Boolean(row.rowNumber !== undefined && h && h.key && h.key !== row.teacherKey);
     if (showEdit && differs) cls.push("row-diff");
     const klass = cls.filter(Boolean).join(" ");
-    const old = o.side === "1449" && o.markOld && Boolean(h && h.key && h.key === row.teacherKey);
+    const old = o.side === "1449" && o.markOld && o.oldKeys.has(oldMatchKey(row));
     const oldCls = old ? ' class="old-subject"' : "";
     return `<tr${klass ? ` class="${klass}"` : ""}>
       <td>${x(o.firstCol(row) || "")}</td>

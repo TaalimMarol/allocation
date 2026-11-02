@@ -128,7 +128,7 @@ function getAllData_(options) {
       rowNumber: r + 1, class: cls, section: section, gender: gender,
       shorthand: cls + section + gender, subject: subject,
       bookName: bookName,
-      bookNameAr: String(getCol_(index, row, ["BookName_AR", "bookname_AR", "BookNameAR", "BookName AR"])).trim(),
+      bookNameAr: findArabicBook_(headers, row, index),
       weekly: Number(getCol_(index, row, ["Weekly", "weekly"])) || 0,
       its: its, teacherKey: its || (name ? "NAME:" + name : ""), name: name,
       periods1448: historyAssignment,
@@ -512,6 +512,18 @@ function getOptionalNamedSheet_(name) {
   return spreadsheet.getSheets().find(function (sheet) {
     return sheet.getName().toLowerCase() === wanted;
   }) || null;
+}
+
+function findArabicBook_(headers, row, index) {
+  const exact = getCol_(index, row, ["BookName_AR", "BookName_Ar", "BookNameAR", "BookName AR", "Book_AR", "BookAR"]);
+  if (exact) return String(exact).trim();
+  for (let i = 0; i < headers.length; i++) {
+    const h = String(headers[i] || "").toLowerCase().replace(/[^a-z\u0600-\u06ff]/g, "");
+    const isBook = h.indexOf("book") !== -1 || h.indexOf("\u0643\u062a\u0627\u0628") !== -1;
+    const isArabic = /ar$/.test(h) || h.indexOf("arabic") !== -1 || h.indexOf("\u0639\u0631\u0628") !== -1;
+    if (isBook && isArabic && row[i] !== "") return String(row[i]).trim();
+  }
+  return "";
 }
 
 function buildColIdx_(headers) {
