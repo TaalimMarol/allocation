@@ -94,8 +94,9 @@ select{font:inherit}
   padding:0 20px;gap:14px;box-shadow:0 2px 8px rgba(0,0,0,.18);
 }
 .nav-brand{font-size:14px;font-weight:700;color:#fff;margin-right:4px;white-space:nowrap}
-.nav-tabs{display:flex;gap:4px;flex:1}
+.nav-tabs{display:flex;gap:4px;flex:1;min-width:0;overflow-x:auto}
 .nav-tab{
+  white-space:nowrap;flex:none;
   padding:6px 16px;border-radius:20px;
   font-size:12px;font-weight:600;color:rgba(255,255,255,.6);transition:all .14s;
 }
@@ -971,7 +972,10 @@ async function loadData() {
     populateAnalyticsFilters();
     renderAnalytics();
     fetchPhotos(); // non-blocking
-  } catch (err) {
+    const hashView = location.hash.slice(1);
+    if (hashView && document.getElementById("view-" + hashView) && document.getElementById("tab-" + hashView)) {
+      switchView(hashView);
+    }
     hideLoading();
     toast("Failed to load data: " + err.message, true);
   }

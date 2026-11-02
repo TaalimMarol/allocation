@@ -128,6 +128,7 @@ function getAllData_(options) {
       rowNumber: r + 1, class: cls, section: section, gender: gender,
       shorthand: cls + section + gender, subject: subject,
       bookName: bookName,
+      bookNameAr: String(getCol_(index, row, ["BookName_AR", "bookname_AR", "BookNameAR", "BookName AR"])).trim(),
       weekly: Number(getCol_(index, row, ["Weekly", "weekly"])) || 0,
       its: its, teacherKey: its || (name ? "NAME:" + name : ""), name: name,
       periods1448: historyAssignment,

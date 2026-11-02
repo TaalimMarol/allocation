@@ -99,11 +99,12 @@ button{cursor:pointer;border:none;background:none;font:inherit}
 .rep-fact b{white-space:nowrap}
 .rep-fact input{flex:1;min-width:0;width:90px;padding:1px 4px;border:1px solid #22c55e;border-radius:3px;font:inherit;font-size:12px;direction:rtl}
 .rep-fact button{padding:0 7px;border:1px solid #166534;border-radius:3px;background:#166534;color:#fff;font-size:11px}
-table.rt{width:100%;border-collapse:collapse;direction:rtl;font-size:12px}
+table.rt{width:100%;border-collapse:collapse;direction:rtl;font-size:14.5px}
+table.rt td.old-subject{color:#dc2626;font-weight:800;text-decoration:underline}
 table.rt th,table.rt td{border:1px solid #8b8b8b;padding:2px 4px;text-align:center;vertical-align:middle}
 table.rt thead th{background:#f1f5f9;font-weight:700}
 table.rt tfoot th{background:#f8fafc;font-weight:800}
-table.rt.profile{margin-bottom:4px;font-size:11px}
+table.rt.profile{margin-bottom:4px;font-size:12.5px}
 .rep-sec{margin-top:4px}
 .rep-sec-title{padding:1px 6px;background:#e2e8f0;font-size:13px;font-weight:700;text-align:right}
 tr.row-masul td{background:#c9e8d5}
@@ -140,7 +141,8 @@ tr.row-diff td{box-shadow:inset 0 -2px 0 #f59e0b}
   .rep{box-shadow:none;outline:0!important;padding:2px 4px;font-size:10px}
   .rep-title{font-size:13px}
   .rep-name{font-size:13px}
-  .rep-facts,table.rt,table.rt.profile,.rep-deps{font-size:9.5px}
+  .rep-facts,table.rt,table.rt.profile,.rep-deps{font-size:11px}
+  table.rt td.old-subject{color:#dc2626!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
   .rep-photo,.rep-photo-ph{width:46px;height:57px}
   .rep-person{grid-template-columns:46px minmax(0,1fr)}
   table.rt th,table.rt td{padding:1px 3px}
@@ -183,7 +185,11 @@ tr.row-diff td{box-shadow:inset 0 -2px 0 #f59e0b}
 
 <nav id="nav" class="hidden">
   <span class="nav-brand">📚 1448 Tafweed vs 1449</span>
-  <a class="nav-link" href="Asateza_Masooliyaat.html">Teacher Workload &amp; Dashboard →</a>
+  <a class="nav-link" href="Asateza_Masooliyaat.html#teacher">Teacher Workload</a>
+  <a class="nav-link" href="Asateza_Masooliyaat.html#daera">Daerat Distribution</a>
+  <a class="nav-link" href="Asateza_Masooliyaat.html#life-skills">Life Skills</a>
+  <a class="nav-link" href="Asateza_Masooliyaat.html#curriculum">Curriculum Simulator</a>
+  <a class="nav-link" href="Asateza_Masooliyaat.html#masul">Asateza Masooliyaat</a>
   <div class="nav-right">
     <span class="sdot hidden" id="sdot" title="Saving to 1449Working"></span>
     <span class="nav-email" id="nav-email"></span>
@@ -607,7 +613,7 @@ function reportHtml(side, key, editable, opts) {
       </tr></tbody>
     </table>
     ${sectionHtml("حصص التدريس", direct, Object.assign({
-      rowClass: "row-masul", firstCol: (r) => r.musaid || "", masulKeys, highlightAll: false, edit: true
+      rowClass: "row-masul", firstCol: (r) => r.musaid || "", masulKeys, highlightAll: false, edit: true, markOld: true
     }, secOpts))}
     ${musanid.length ? sectionHtml("حصص المساندة", musanid, Object.assign({
       rowClass: "row-musanid", firstCol: (r) => owner.ownerName(r) || "(لا يوجد معلم)",
@@ -629,10 +635,12 @@ function sectionHtml(title, rows, o) {
     const differs = Boolean(row.rowNumber !== undefined && h && h.key && h.key !== row.teacherKey);
     if (showEdit && differs) cls.push("row-diff");
     const klass = cls.filter(Boolean).join(" ");
+    const old = o.side === "1449" && o.markOld && Boolean(h && h.key && h.key === row.teacherKey);
+    const oldCls = old ? ' class="old-subject"' : "";
     return `<tr${klass ? ` class="${klass}"` : ""}>
       <td>${x(o.firstCol(row) || "")}</td>
-      <td>${x(row.subject || "")}</td>
-      <td>${x(row.bookName || "")}</td>
+      <td${oldCls}>${x(row.subject || "")}</td>
+      <td${oldCls}>${x(row.bookNameAr || row.bookName || "")}</td>
       <td>${x(row.class !== undefined ? className(row) : String(row.className || "").trim())}</td>
       <td>${x(row.weekly === undefined ? "" : row.weekly)}</td>
       ${showEdit ? editCellHtml(row, o, differs) : ""}
