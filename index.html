@@ -657,7 +657,7 @@ function sectionHtml(title, rows, o) {
       <td>${x(o.firstCol(row) || "")}</td>
       <td${oldCls}>${x(row.subject || "")}</td>
       <td${oldCls}>${x(row.bookNameAr || row.bookName || "")}</td>
-      <td>${x(row.class !== undefined ? className(row) : String(row.className || "").trim())}</td>
+      <td class="cls-cell">${x(row.class !== undefined ? className(row) : String(row.className || "").trim())}</td>
       <td>${x(row.weekly === undefined ? "" : row.weekly)}</td>
       ${showEdit ? editCellHtml(row, o, differs) : ""}
     </tr>`;
