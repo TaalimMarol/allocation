@@ -635,7 +635,7 @@ table.rt{width:100%;border-collapse:collapse;direction:rtl;font-size:16.5px}
 table.rt td.cls-cell{direction:ltr;unicode-bidi:isolate;text-align:center}
 table.rt td.old-subject{color:#dc2626;font-weight:800;text-decoration:underline}
 table.rt th,table.rt td{border:1px solid #8b8b8b;padding:2px 4px;text-align:center;vertical-align:middle}
-table.rt thead th{background:#f1f5f9;font-weight:700}
+table.rt thead th{background:#14532d;color:#fff;font-weight:700;-webkit-print-color-adjust:exact;print-color-adjust:exact}
 table.rt tfoot th{background:#f8fafc;font-weight:800}
 table.rt.profile{margin-bottom:4px;font-size:14.5px}
 .rep-sec{margin-top:4px}
@@ -1723,13 +1723,13 @@ function renderTeacherReport(key) {
         </tr></tbody>
       </table>
       <div class="teacher-report-total-wrap"><span class="teacher-report-total">${total}</span></div>
-      ${teacherReportSectionHtml("حصص التدريس", directRows, "teacher-report-masul-row",
+      ${teacherReportSectionHtml("حصـص التدريس", directRows, "teacher-report-masul-row",
         (row) => row.musaid || "", masulClassKeys)}
       ${musanidRows.length
-        ? teacherReportSectionHtml("حصص المساندة", musanidRows, "teacher-report-musanid-row",
+        ? teacherReportSectionHtml("حصـص المساندة", musanidRows, "teacher-report-musanid-row",
           (row) => row.name || "", new Set(), true)
         : ""}
-      ${teacherReportSectionHtml("حصص الإدارات", extraDepartmentRows, "",
+      ${teacherReportSectionHtml("حصـص الإدارات", extraDepartmentRows, "",
         () => "", new Set())}
       <section class="teacher-report-departments">
         <div class="teacher-report-departments-title">الإدارات والدوائر</div>
@@ -1756,11 +1756,11 @@ function teacherReportSectionHtml(title, rows, rowClass, musanidValue, masulClas
         <td>${x(row.weekly === undefined ? "" : row.weekly)}</td>
       </tr>`;
     }).join("")
-    : '<tr><td class="teacher-report-empty" colspan="5">لا توجد حصص مسجلة</td></tr>';
+    : '<tr><td class="teacher-report-empty" colspan="5">لا توجد حصـص مسجلة</td></tr>';
   return `<section class="teacher-report-section">
     <div class="teacher-report-section-title">${x(title)}</div>
     <table class="teacher-report-table">
-      <thead><tr><th>المساند</th><th>الموضوع</th><th>الكتاب</th><th>الدرجة</th><th>الحصص الأسبوعية</th></tr></thead>
+      <thead><tr><th>المساند</th><th>الموضوع</th><th>الكتاب</th><th>الدرجة</th><th>الحصـص الأسبوعية</th></tr></thead>
       <tbody>${body}</tbody>
       <tfoot><tr><th colspan="4">المجموع</th><th>${total}</th></tr></tfoot>
     </table>
@@ -3199,14 +3199,14 @@ function reportHtml(side, key, editable, opts) {
         <td>${x(profile.yearOfCompletion || "")}</td>
       </tr></tbody>
     </table>
-    ${sectionHtml("حصص التدريس", direct, Object.assign({
+    ${sectionHtml("حصـص التدريس", direct, Object.assign({
       rowClass: "row-masul", firstCol: (r) => r.musaid || "", masulKeys, highlightAll: false, edit: true, markOld: true
     }, secOpts))}
-    ${musanid.length ? sectionHtml("حصص المساندة", musanid, Object.assign({
+    ${musanid.length ? sectionHtml("حصـص المساندة", musanid, Object.assign({
       rowClass: "row-musanid", firstCol: (r) => owner.ownerName(r) || "(لا يوجد معلم)",
       masulKeys: new Set(), highlightAll: true, edit: true
     }, secOpts)) : ""}
-    ${sectionHtml("حصص الإدارات", departmentPeriods, Object.assign({
+    ${sectionHtml("حصـص الإدارات", departmentPeriods, Object.assign({
       rowClass: "", firstCol: () => "", masulKeys: new Set(), highlightAll: false, edit: false
     }, secOpts))}
     ${departmentsHtml(teacher, departments, editable)}
@@ -3232,11 +3232,11 @@ function sectionHtml(title, rows, o) {
       <td>${x(row.weekly === undefined ? "" : row.weekly)}</td>
       ${showEdit ? editCellHtml(row, o, differs) : ""}
     </tr>`;
-  }).join("") : `<tr><td class="rep-empty" colspan="${showEdit ? 6 : 5}">لا توجد حصص مسجلة</td></tr>`;
+  }).join("") : `<tr><td class="rep-empty" colspan="${showEdit ? 6 : 5}">لا توجد حصـص مسجلة</td></tr>`;
   return `<section class="rep-sec">
     <div class="rep-sec-title">${x(title)}</div>
     <table class="rt">
-      <thead><tr><th>المساند</th><th>الموضوع</th><th>الكتاب</th><th>الدرجة</th><th>الحصص</th>${showEdit ? '<th class="no-print">' + (o.editable ? "تعديل المعلم" : "") + "</th>" : ""}</tr></thead>
+      <thead><tr><th>المساند</th><th>الموضوع</th><th>الكتاب</th><th>الدرجة</th><th>الحصـص</th>${showEdit ? '<th class="no-print">' + (o.editable ? "تعديل المعلم" : "") + "</th>" : ""}</tr></thead>
       <tbody>${body}</tbody>
       <tfoot><tr><th colspan="4">المجموع</th><th>${sumPeriods(rows)}</th>${showEdit ? '<th class="no-print"></th>' : ""}</tr></tfoot>
     </table>
