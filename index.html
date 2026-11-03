@@ -3272,9 +3272,9 @@ function reportHtml(side, key, editable, opts) {
         <td>${x(profile.yearOfCompletion || "")}</td>
       </tr></tbody>
     </table>
-    ${sectionHtml("حصـص التدريس", direct, Object.assign({
+    ${direct.length || !musanid.length ? sectionHtml("حصـص التدريس", direct, Object.assign({
       rowClass: "row-masul", firstCol: (r) => r.musaid || "", masulKeys, highlightAll: false, edit: true, markOld: true
-    }, secOpts))}
+    }, secOpts)) : ""}
     ${musanid.length ? sectionHtml("حصـص المساندة", musanid, Object.assign({
       rowClass: "row-musanid", firstCol: (r) => owner.ownerName(r) || "(لا يوجد معلم)",
       masulKeys: new Set(), highlightAll: true, edit: true
