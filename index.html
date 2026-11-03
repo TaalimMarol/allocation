@@ -1162,11 +1162,32 @@ function buildTeacherIndex() {
     teachers[key].total += row.weekly;
     teachers[key].rows.push(row);
   }
+  recalcTotals();
 }
 
 function recalcTotals() {
+  attachMusanid(teachers);
   for (const k in teachers) {
-    teachers[k].total = teachers[k].rows.reduce((s, r) => s + r.weekly, 0);
+    const t = teachers[k];
+    t.total = t.rows.reduce((s, r) => s + (Number(r.weekly) || 0), 0) +
+      t.musanidRows.reduce((s, r) => s + (Number(r.weekly) || 0), 0);
+  }
+}
+
+// Links each row to the teacher named in its Musaid column so musanid periods count as teaching load
+function attachMusanid(map) {
+  const byIdentity = new Map();
+  for (const t of Object.values(map)) {
+    t.musanidRows = [];
+    for (const value of [t.its, t.name]) {
+      const id = normaliseTeacherReportIdentity(value);
+      if (id && !byIdentity.has(id)) byIdentity.set(id, t);
+    }
+  }
+  for (const row of allRows) {
+    const id = normaliseTeacherReportIdentity(row.musaid);
+    const t = id && byIdentity.get(id);
+    if (t && t.key !== row.teacherKey) t.musanidRows.push(row);
   }
 }
 
@@ -1521,6 +1542,17 @@ function renderTeacherDetail(key) {
     </tr>`;
   }
 
+  const musanidRowsHtml = [...(t.musanidRows || [])].sort(compareTeacherReportRows).map((row) =>
+    `<tr data-subject-color="${x(subjectColorKey(row.subject))}">
+      <td><span class="badge">${x(row.shorthand)}</span></td>
+      <td>${x(row.subject)}</td>
+      <td>${x(row.bookName)}</td>
+      <td class="num" style="text-align:center">${row.weekly}</td>
+      <td><span class="badge" style="background:#fef3c7;color:#92400e">MUSANID</span> <span class="hist">${x(row.name || "—")}</span></td>
+      <td class="hist" style="text-align:center">${row.periods1448 || "—"}</td>
+    </tr>`).join("");
+  const musanidTotal = (t.musanidRows || []).reduce((s, r) => s + (Number(r.weekly) || 0), 0);
+
   const daeraCandidatesHtml = renderDaeraReassignCandidates(t);
 
   panel.innerHTML = `
@@ -1534,6 +1566,7 @@ function renderTeacherDetail(key) {
             ${mushrifStudentCount !== undefined ? `<div class="teacher-student-count">MUSHRIF of: ${x(mushrifStudentCount)} students</div>` : ""}
             <div class="info-badges">
               <span class="ibadge${ov ? " warn" : ""}">${t.total} periods${ov ? " ⚠" : ""}</span>
+              ${musanidTotal > 0 ? `<span class="ibadge">incl. MUSANID: ${musanidTotal}</span>` : ""}
               ${daeraTotal > 0 ? `<span class="ibadge daera" data-subject-color="${x(daeraColorKey)}">Daerat-Periods: ${daeraTotal}</span>` : ""}
             </div>
           </div>
@@ -1567,7 +1600,7 @@ function renderTeacherDetail(key) {
         <th>Sec</th><th>Subject</th><th>Book</th>
         <th style="text-align:center">Wk</th><th>Reassign To</th>
         <th style="text-align:center">${x(historyHeader)}</th>
-      </tr></thead><tbody>${rows}</tbody></table>
+      </tr></thead><tbody>${rows}${musanidRowsHtml}</tbody></table>
     </div>`;
   const reportButton = panel.querySelector("[data-teacher-report-key]");
   if (reportButton) {
@@ -2791,9 +2824,10 @@ function renderMusanid() {
     if (String(row.subject || "").trim() !== subject) continue;
     const book = String(row.bookName || "").trim();
     const classNumber = String(row.class || "").trim();
-    const key = classNumber + "\u0000" + book;
+    const className = reportClassName(row);
+    const key = className + "\u0000" + book;
     if (!groups.has(key)) {
-      groups.set(key, { classNumber, book, bookAr: "", rows: [], weekly: 0, musaids: new Set() });
+      groups.set(key, { classNumber, className, book, bookAr: "", rows: [], weekly: 0, musaids: new Set() });
     }
     const group = groups.get(key);
     if (!group.bookAr && row.bookNameAr) group.bookAr = String(row.bookNameAr).trim();
@@ -2803,7 +2837,7 @@ function renderMusanid() {
   }
   musanidGroups = [...groups.values()].sort((a, b) =>
     (Number(a.classNumber) || 0) - (Number(b.classNumber) || 0) ||
-    a.classNumber.localeCompare(b.classNumber) || a.book.localeCompare(b.book));
+    a.classNumber.localeCompare(b.classNumber) || a.className.localeCompare(b.className) || a.book.localeCompare(b.book));
 
   const teachersList = musanidTeacherOptions();
   const optionsHtml = (selectedName) => '<option value="__none">— Select musanid —</option>' +
@@ -2811,7 +2845,7 @@ function renderMusanid() {
     teachersList.map((t) => `<option value="${x(t.its)}"${t.name === selectedName ? " selected" : ""}>${x(t.its)} · ${x(t.name)}</option>`).join("");
 
   wrap.innerHTML = `<table>
-    <thead><tr><th>Class</th><th>Book</th><th>Sections</th><th>Periods</th><th>Current musanid</th><th>Assign musanid</th><th></th></tr></thead>
+    <thead><tr><th>Book</th><th>Class name</th><th>Weekly periods</th><th>Current musanid</th><th>Assign musanid</th><th></th></tr></thead>
     <tbody>${musanidGroups.map((group, index) => {
       const current = [...group.musaids];
       const named = current.filter(Boolean);
@@ -2819,9 +2853,8 @@ function renderMusanid() {
       const currentText = named.length ? named.join(", ") + (mixed && current.includes("") ? " (+ unassigned)" : "") : "—";
       const selected = !mixed && named.length === 1 ? named[0] : "";
       return `<tr>
-        <td>${x(group.classNumber || "—")}</td>
         <td>${x(group.book || "—")}${group.bookAr ? `<div lang="ar" dir="rtl">${x(group.bookAr)}</div>` : ""}</td>
-        <td>${group.rows.length}</td>
+        <td dir="ltr" style="text-align:left"><b>${x(group.className || "—")}</b></td>
         <td>${group.weekly}</td>
         <td class="mus-current"><b>${x(currentText)}</b></td>
         <td><select class="mus-sel" id="musanid-sel-${index}" aria-label="Musanid for ${x(group.book)}">${optionsHtml(selected)}</select></td>
@@ -2858,6 +2891,7 @@ async function assignMusanid(index) {
     const result = await response.json();
     if (!response.ok || !result.success) throw new Error(result.error || "Musanid could not be saved.");
     group.rows.forEach((row) => { row.musaid = musaid; });
+    outerStale = true;
     renderMusanid();
     toast(musaid ? `Musanid set to ${musaid} for ${group.rows.length} row(s).` : "Musanid cleared.");
   } catch (err) {
@@ -2943,7 +2977,8 @@ function buildTeacherIndex() {
 }
 
 function recalcTotals() {
-  for (const k in teachers) teachers[k].total = sumPeriods(teachers[k].rows);
+  attachMusanid(teachers);
+  for (const k in teachers) teachers[k].total = sumPeriods(teachers[k].rows) + sumPeriods(teachers[k].musanidRows);
 }
 
 function sumPeriods(rows) {
@@ -2998,7 +3033,7 @@ function renderTeacherList() {
     item.innerHTML = `${photoMarkup}
       <div class="cmp-t-info">
         <div class="cmp-t-name${ov ? " cmp-ov" : ""}">${x(t.name || t.its || "Unknown")}</div>
-        <div class="cmp-t-total${ov ? " cmp-ov" : ""}">1449: ${t.total} · 1448: ${total1448}</div>
+        <div class="cmp-t-total${ov ? " cmp-ov" : ""}">1449: ${t.total}${t.musanidRows && t.musanidRows.length ? ` (MUSANID ${sumPeriods(t.musanidRows)})` : ""} · 1448: ${total1448}</div>
       </div>`;
     el.appendChild(item);
   }
