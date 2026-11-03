@@ -636,6 +636,7 @@ table.rt td.cls-cell{direction:ltr;unicode-bidi:isolate;text-align:center}
 table.rt td.old-subject{color:#dc2626;font-weight:800;text-decoration:underline}
 table.rt th,table.rt td{border:1px solid #8b8b8b;padding:2px 4px;text-align:center;vertical-align:middle}
 table.rt thead th{background:#14532d;color:#fff;font-weight:700;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.rep-1448 table.rt thead th{background:#1e3a8a}
 table.rt tfoot th{background:#f8fafc;font-weight:800}
 table.rt.profile{margin-bottom:4px;font-size:14.5px}
 .rep-sec{margin-top:4px}
@@ -1746,7 +1747,7 @@ function teacherReportSectionHtml(title, rows, rowClass, musanidValue, masulClas
       const isMasulClass = masulClassKeys.has(teacherReportClassKey(row));
       const className = row.class !== undefined
         ? reportClassName(row)
-        : String(row.className || "").trim();
+        : spacedClassName(row.className);
       const currentClass = rowClass && (highlightAllRows || isMasulClass) ? rowClass : "";
       return `<tr${currentClass ? ` class="${currentClass}"` : ""}>
         <td>${x(musanidValue(row) || "")}</td>
@@ -1783,6 +1784,15 @@ function teacherReportClassKey(row) {
   return [row.class, row.section, row.gender]
     .map((value) => String(value || "").trim().toLowerCase())
     .join("\u0000");
+}
+
+// Department_Periods class names such as "11AM" are split into "11 A M"
+function spacedClassName(value) {
+  return String(value || "").trim().split(/\s+/).map((token) => {
+    const m = token.match(/^(\d+)?(DARS)?([A-Za-z]{0,3})$/i);
+    if (!m || !(m[1] || m[2]) || token.length < 2) return token;
+    return [m[1], m[2], ...m[3].split("")].filter(Boolean).join(" ");
+  }).join(" ");
 }
 
 function reportClassName(row) {
@@ -3228,7 +3238,7 @@ function sectionHtml(title, rows, o) {
       <td>${x(o.firstCol(row) || "")}</td>
       <td${oldCls}>${x(row.subject || "")}</td>
       <td${oldCls}>${x(row.bookNameAr || row.bookName || "")}</td>
-      <td class="cls-cell">${x(numeralsFirst(row.class !== undefined ? className(row) : String(row.className || "").trim()))}</td>
+      <td class="cls-cell">${x(numeralsFirst(row.class !== undefined ? className(row) : spacedClassName(row.className)))}</td>
       <td>${x(row.weekly === undefined ? "" : row.weekly)}</td>
       ${showEdit ? editCellHtml(row, o, differs) : ""}
     </tr>`;
