@@ -901,7 +901,9 @@ tr.row-diff td{box-shadow:inset 0 -2px 0 #f59e0b}
     <div class="panel">
       <div class="panel-hdr"><h2>Musanid Allocation</h2><span class="sdot hidden" id="musanid-sdot"></span></div>
       <div class="distribution-controls">
-        <label>Subject <select id="musanid-subject" class="filter-select" onchange="renderMusanid()"></select></label>
+        <label>Subject <select id="musanid-subject" class="filter-select" onchange="musanidFilterChanged('subject')"></select></label>
+        <label>Class <select id="musanid-class" class="filter-select" onchange="musanidFilterChanged('class')"><option value="">All classes</option></select></label>
+        <label>Book <select id="musanid-book" class="filter-select" onchange="renderMusanid()"><option value="">All books</option></select></label>
       </div>
       <div class="tbl-wrap" id="musanid-tbl"><div class="empty">Select a subject to see its books.</div></div>
     </div>
@@ -2821,19 +2823,50 @@ function populateMusanidSubjects() {
   if (subjects.includes(previous)) select.value = previous;
 }
 
+// Class and book dropdowns cascade: classes come from the subject, books from the subject and class
+function musanidFilterChanged(level) {
+  if (level === "subject") document.getElementById("musanid-class").value = "";
+  document.getElementById("musanid-book").value = "";
+  renderMusanid();
+}
+
+function fillMusanidFilter(select, values, allLabel) {
+  const previous = select.value;
+  select.innerHTML = `<option value="">${allLabel}</option>` +
+    values.map((v) => `<option value="${x(v)}">${x(v)}</option>`).join("");
+  select.value = values.includes(previous) ? previous : "";
+}
+
 function renderMusanid() {
   const subject = document.getElementById("musanid-subject").value;
   const wrap = document.getElementById("musanid-tbl");
+  const classSelect = document.getElementById("musanid-class");
+  const bookSelect = document.getElementById("musanid-book");
   if (!subject) {
     musanidGroups = [];
+    fillMusanidFilter(classSelect, [], "All classes");
+    fillMusanidFilter(bookSelect, [], "All books");
     wrap.innerHTML = '<div class="empty">Select a subject to see its books.</div>';
     return;
   }
+  const subjectRows = allRows.filter((row) => String(row.subject || "").trim() === subject);
+  const classNumbers = [...new Set(subjectRows.map((row) => String(row.class || "").trim()).filter(Boolean))]
+    .sort((a, b) => (Number(a) || 0) - (Number(b) || 0) || a.localeCompare(b));
+  fillMusanidFilter(classSelect, classNumbers, "All classes");
+  const classFilter = classSelect.value;
+  const books = [...new Set(subjectRows
+    .filter((row) => !classFilter || String(row.class || "").trim() === classFilter)
+    .map((row) => String(row.bookName || "").trim()).filter(Boolean))]
+    .sort((a, b) => a.localeCompare(b));
+  fillMusanidFilter(bookSelect, books, "All books");
+  const bookFilter = bookSelect.value;
+
   const groups = new Map();
-  for (const row of allRows) {
-    if (String(row.subject || "").trim() !== subject) continue;
+  for (const row of subjectRows) {
     const book = String(row.bookName || "").trim();
     const classNumber = String(row.class || "").trim();
+    if (classFilter && classNumber !== classFilter) continue;
+    if (bookFilter && book !== bookFilter) continue;
     const className = reportClassName(row);
     const key = className + "\u0000" + book;
     if (!groups.has(key)) {
