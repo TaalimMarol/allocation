@@ -1755,7 +1755,7 @@ function renderTeacherReport(key) {
       </table>
       <div class="teacher-report-total-wrap"><span class="teacher-report-total">${total}</span></div>
       ${teacherReportSectionHtml("حصـص التدريس", directRows, "teacher-report-masul-row",
-        (row) => row.musaid || "", masulClassKeys)}
+        (row) => musaidLabel(row.musaid), masulClassKeys)}
       ${musanidRows.length
         ? teacherReportSectionHtml("حصـص المساندة", musanidRows, "teacher-report-musanid-row",
           (row) => row.name || "", new Set(), true)
@@ -2841,6 +2841,21 @@ function musanidTeacherOptions() {
   return window.cmp ? window.cmp.teacherOptions() : [];
 }
 
+// Musaid stores the teacher's ITS; reports show the NameAR from Teacher_Profile (older name values pass through unchanged)
+function musaidLabel(value) {
+  const raw = String(value || "").trim();
+  if (!raw) return "";
+  const its = normaliseIts(raw);
+  const profile = teacherProfileRows.find((row) => normaliseIts(row.its) === its);
+  if (profile) {
+    if (profile.name) return profile.name;
+    const row = allRows.find((r) => normaliseIts(r.its) === its && r.name);
+    return row ? row.name : raw;
+  }
+  const row = allRows.find((r) => normaliseIts(r.its) === its && r.name);
+  return row ? row.name : raw;
+}
+
 function populateMusanidSubjects() {
   const select = document.getElementById("musanid-subject");
   const previous = select.value;
@@ -2912,18 +2927,26 @@ function renderMusanid() {
     a.classNumber.localeCompare(b.classNumber) || a.className.localeCompare(b.className) || a.book.localeCompare(b.book));
 
   const teachersList = musanidTeacherOptions();
-  const optionsHtml = (selectedName) => '<option value="__none">— Select musanid —</option>' +
-    '<option value="__clear">— Clear musanid —</option>' +
-    teachersList.map((t) => `<option value="${x(t.its)}"${t.name === selectedName ? " selected" : ""}>${x(t.its)} · ${x(t.name)}</option>`).join("");
+  const optionsHtml = (selectedValue) => {
+    const selectedIts = normaliseIts(selectedValue);
+    const selectedName = normaliseTeacherReportIdentity(selectedValue);
+    return '<option value="__none">— Select musanid —</option>' +
+      '<option value="__clear">— Clear musanid —</option>' +
+      teachersList.map((t) => {
+        const match = selectedValue && (normaliseIts(t.its) === selectedIts ||
+          normaliseTeacherReportIdentity(t.name) === selectedName);
+        return `<option value="${x(t.its)}"${match ? " selected" : ""}>${x(t.its)} · ${x(t.name)}</option>`;
+      }).join("");
+  };
 
   wrap.innerHTML = `<table>
     <thead><tr><th>Book</th><th>Class name</th><th>Teacher (allocated)</th><th>Weekly periods</th><th>Current musanid</th><th>Assign musanid</th><th></th></tr></thead>
     <tbody>${musanidGroups.map((group, index) => {
       const current = [...group.musaids];
-      const named = current.filter(Boolean);
+      const named = current.filter(Boolean).map(musaidLabel);
       const mixed = current.length > 1;
       const currentText = named.length ? named.join(", ") + (mixed && current.includes("") ? " (+ unassigned)" : "") : "—";
-      const selected = !mixed && named.length === 1 ? named[0] : "";
+      const selected = !mixed && current.filter(Boolean).length === 1 ? current.filter(Boolean)[0] : "";
       return `<tr>
         <td>${x(group.book || "—")}${group.bookAr ? `<div lang="ar" dir="rtl">${x(group.bookAr)}</div>` : ""}</td>
         <td dir="ltr" style="text-align:left"><b>${x(group.className || "—")}</b></td>
@@ -2953,7 +2976,7 @@ async function assignMusanid(index) {
       toast("The selected teacher was not found.", true);
       return;
     }
-    musaid = teacher.name;
+    musaid = teacher.its;
   }
   button.disabled = true;
   try {
@@ -2966,7 +2989,7 @@ async function assignMusanid(index) {
     group.rows.forEach((row) => { row.musaid = musaid; });
     refreshOuterViews();
     renderMusanid();
-    toast(musaid ? `Musanid set to ${musaid} for ${group.rows.length} row(s).` : "Musanid cleared.");
+    toast(musaid ? `Musanid set to ${musaidLabel(musaid)} for ${group.rows.length} row(s).` : "Musanid cleared.");
   } catch (err) {
     button.disabled = false;
     toast("Musanid update failed: " + err.message, true);
@@ -3273,7 +3296,7 @@ function reportHtml(side, key, editable, opts) {
       </tr></tbody>
     </table>
     ${direct.length || !musanid.length ? sectionHtml("حصـص التدريس", direct, Object.assign({
-      rowClass: "row-masul", firstCol: (r) => r.musaid || "", masulKeys, highlightAll: false, edit: true, markOld: true
+      rowClass: "row-masul", firstCol: (r) => musaidLabel(r.musaid), masulKeys, highlightAll: false, edit: true, markOld: true
     }, secOpts)) : ""}
     ${musanid.length ? sectionHtml("حصـص المساندة", musanid, Object.assign({
       rowClass: "row-musanid", firstCol: (r) => owner.ownerName(r) || "(لا يوجد معلم)",

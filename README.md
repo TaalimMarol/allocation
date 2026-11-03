@@ -212,8 +212,8 @@ Curriculum Simulator are embedded as static pages.
 2. Each row is one book in one class (for example `1 A M`) with its weekly
    periods and current musanid.
 3. Choose a teacher (from `Teacher_Profile`, sorted by ITS descending) and
-   press **Assign**. The teacher's name is written to the `Musaid` column of
-   `1449Working` through the `musaid-sync` action. **Clear musanid** empties it.
+   press **Assign**.    The teacher's ITS number is written to the `Musaid` column of
+   `1449Working` (names are shown from `Teacher_Profile` `NameAR`; older name values still work) through the `musaid-sync` action. **Clear musanid** empties it.
 
 Musanid periods count toward the teacher's total and show with a MUSANID badge
 in Asateza Masooliyaat and the comparison list. A teacher who exists only in
