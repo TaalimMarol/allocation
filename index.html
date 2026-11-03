@@ -388,6 +388,7 @@ tr[data-subject-color="Jameeiyah Ula"]>td,.hierarchy-subject-title[data-subject-
 .teacher-report-section-title{padding:4px 8px;background:#f1f5f9;font-family:"Kanz-al-lulu",Arial,sans-serif;font-size:14px;font-weight:700;text-align:right;direction:rtl}
 .teacher-report-table{font-size:12px}
 .teacher-report-table tbody tr{border:0}
+.teacher-report-table td.teacher-report-old{color:#dc2626;font-weight:800;text-decoration:underline}
 .teacher-report-table tbody tr.teacher-report-masul-row td{background:#c9e8d5}
 .teacher-report-table tbody tr.teacher-report-musanid-row td{background:#fff0a6}
 .teacher-report-table tfoot th{background:#f8fafc;font-weight:800}
@@ -416,6 +417,7 @@ tr[data-subject-color="Jameeiyah Ula"]>td,.hierarchy-subject-title[data-subject-
   .teacher-report-person,.teacher-report-profile-table,.teacher-report-departments{break-inside:avoid}
   .teacher-report-table thead{display:table-header-group}
   .teacher-report-table tr{break-inside:avoid}
+  .teacher-report-table td.teacher-report-old{color:#dc2626!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
   .teacher-report-table tbody tr.teacher-report-masul-row td{-webkit-print-color-adjust:exact;print-color-adjust:exact}
   .teacher-report-table tbody tr.teacher-report-musanid-row td{-webkit-print-color-adjust:exact;print-color-adjust:exact}
   .teacher-report-total{-webkit-print-color-adjust:exact;print-color-adjust:exact}
@@ -1698,10 +1700,11 @@ function renderTeacherReport(key) {
   const masulClasses = [...new Set(masulRows
     .map((row) => reportClassName(row))
     .filter(Boolean))];
+  const oldKeys = window.cmp ? window.cmp.oldKeysFor(teacher.key) : new Set();
   const directTotal = sumReportPeriods(directRows);
   const musanidTotal = sumReportPeriods(musanidRows);
   const departmentTotal = sumReportPeriods(extraDepartmentRows);
-  const total = directTotal + musanidTotal + departmentTotal;
+  const total = (directRows.length || !musanidRows.length ? directTotal : 0) + musanidTotal + departmentTotal;
   const departments = [...new Set(getTeacherDepartments(teacher.its)
     .map((row) => row.departmentAr || row.department)
     .map((value) => String(value || "").trim())
@@ -1754,11 +1757,13 @@ function renderTeacherReport(key) {
         </tr></tbody>
       </table>
       <div class="teacher-report-total-wrap"><span class="teacher-report-total">${total}</span></div>
-      ${teacherReportSectionHtml("حصـص التدريس", directRows, "teacher-report-masul-row",
-        (row) => musaidLabel(row.musaid), masulClassKeys)}
+      ${directRows.length || !musanidRows.length
+        ? teacherReportSectionHtml("حصـص التدريس", directRows, "teacher-report-masul-row",
+          (row) => musaidLabel(row.musaid), masulClassKeys, false, oldKeys)
+        : ""}
       ${musanidRows.length
         ? teacherReportSectionHtml("حصـص المساندة", musanidRows, "teacher-report-musanid-row",
-          (row) => row.name || "", new Set(), true)
+          (row) => profileNameFor(row.its) || row.name || "", new Set(), true)
         : ""}
       ${teacherReportSectionHtml("حصـص الإدارات", extraDepartmentRows, "",
         () => "", new Set())}
@@ -1770,7 +1775,7 @@ function renderTeacherReport(key) {
 }
 
 function teacherReportSectionHtml(title, rows, rowClass, musanidValue, masulClassKeys,
-  highlightAllRows) {
+  highlightAllRows, oldKeys) {
   const total = sumReportPeriods(rows);
   const body = rows.length
     ? rows.map((row) => {
@@ -1779,10 +1784,11 @@ function teacherReportSectionHtml(title, rows, rowClass, musanidValue, masulClas
         ? reportClassName(row)
         : spacedClassName(row.className);
       const currentClass = rowClass && (highlightAllRows || isMasulClass) ? rowClass : "";
+      const oldCls = oldKeys && oldKeys.has(oldMatchKey(row)) ? ' class="teacher-report-old"' : "";
       return `<tr${currentClass ? ` class="${currentClass}"` : ""}>
         <td>${x(musanidValue(row) || "")}</td>
-        <td>${x(row.subject || "")}</td>
-        <td>${x(row.bookName || "")}</td>
+        <td${oldCls}>${x(row.subject || "")}</td>
+        <td${oldCls}>${x(row.bookName || "")}</td>
         <td>${x(className)}</td>
         <td>${x(row.weekly === undefined ? "" : row.weekly)}</td>
       </tr>`;
@@ -3712,6 +3718,7 @@ window.cmp = {
     if (activeKey && editingDepartmentKey !== activeKey) renderCompare();
   },
   teacherOptions,
+  oldKeysFor(key) { return new Set((hist1448[key] || []).map(oldMatchKey)); },
   renderTeacherList, saveTeacherDaera, revertRow, reassignAllocation, openDepartmentEditor,
   printCurrent, printAll, addDepartmentDraftEntry, saveTeacherDepartments, cancelDepartmentEdit,
   updateDepartmentDraft, syncDepartmentPair, removeDepartmentDraftEntry, revertTeacherTo1448
