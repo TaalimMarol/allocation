@@ -169,6 +169,9 @@ function getTeacherProfileData_() {
     if (!its) throw new Error("Teacher_Profile row " + (r + 1) + " is missing ITS.");
     rows.push({
       its: its,
+      name: String(getCol_(index, row, [
+        "Name", "Teacher Name", "TeacherName", "Ustad Name", "Ustaad Name", "Name_AR", "Name AR"
+      ])).trim(),
       sequenceNo: String(getCol_(index, row, ["SequenceNo", "Sequence No", "Sequence"])).trim(),
       hifzCertificate: String(getCol_(index, row, [
         "HifzCertificate", "Hifz Certificate", "CertificateHifz"

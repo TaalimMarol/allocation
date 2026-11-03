@@ -1665,7 +1665,7 @@ function renderTeacherReport(key) {
       <section class="teacher-report-person">
         ${photoHtml}
         <div class="teacher-report-identity">
-          <div class="teacher-report-name">${x(teacher.name || teacher.its || "—")}</div>
+          <div class="teacher-report-name">${x(profile.name || teacher.name || teacher.its || "—")}</div>
           <div class="teacher-report-its">${x(teacher.its || "—")}</div>
           ${profile.sequenceNo ? `<div class="teacher-report-sequence">(${x(profile.sequenceNo)})</div>` : ""}
         </div>
@@ -3146,7 +3146,7 @@ function reportHtml(side, key, editable, opts) {
     <section class="rep-person">
       ${photoHtml(teacher)}
       <div>
-        <div class="rep-name">${x(teacher.name || teacher.its || "—")} <span class="rep-its">${x(teacher.its || "")}${profile.sequenceNo ? ` (${x(profile.sequenceNo)})` : ""}</span></div>
+        <div class="rep-name">${x(profile.name || teacher.name || teacher.its || "—")} <span class="rep-its">${x(teacher.its || "")}${profile.sequenceNo ? ` (${x(profile.sequenceNo)})` : ""}</span></div>
         <div class="rep-facts">
           ${fact("شهادة الحفظ", profile.hifzCertificate)}
           ${fact("التخصص في", profile.takhassus)}
