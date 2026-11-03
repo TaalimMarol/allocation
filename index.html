@@ -1177,12 +1177,18 @@ function recalcTotals() {
   }
 }
 
+function profileNameFor(its) {
+  const key = normaliseIts(its);
+  const p = key && teacherProfileRows.find((row) => normaliseIts(row.its) === key);
+  return p ? p.name : "";
+}
+
 // Links each row to the teacher named in its Musaid column so musanid periods count as teaching load
 function attachMusanid(map) {
   const byIdentity = new Map();
   for (const t of Object.values(map)) {
     t.musanidRows = [];
-    for (const value of [t.its, t.name]) {
+    for (const value of [t.its, t.name, profileNameFor(t.its)]) {
       const id = normaliseTeacherReportIdentity(value);
       if (id && !byIdentity.has(id)) byIdentity.set(id, t);
     }
@@ -1655,7 +1661,7 @@ function renderTeacherReport(key) {
     .filter((row) => row.class || row.section || row.gender)
     .map(teacherReportClassKey));
   const teacherIdentities = new Set(
-    [teacher.name, teacher.its, ...teacher.rows.map((row) => row.name)]
+    [teacher.name, teacher.its, profileNameFor(teacher.its), ...teacher.rows.map((row) => row.name)]
       .map(normaliseTeacherReportIdentity)
       .filter(Boolean)
   );
@@ -3153,7 +3159,7 @@ function reportData(key) {
     ? teacherProfileRows.find((row) => normaliseIts(row.its) === normaliseIts(teacher.its)) || {}
     : {};
   const identities = new Set([
-    teacher.name, teacher.its,
+    teacher.name, teacher.its, profile.name,
     ...teacher.rows.map((row) => row.name),
     ...(hist1448[key] || []).map((row) => row.h1448.name)
   ].map(normaliseIdentity).filter(Boolean));
@@ -3631,15 +3637,15 @@ window.addEventListener("afterprint", () => {
 
 function teacherOptions() {
   const byIts = new Map();
-  const add = (its, name) => {
-    const key = String(its || "").trim();
-    const label = String(name || "").trim();
-    if (!key || !label || byIts.has(key)) return;
-    byIts.set(key, { its: key, name: label });
-  };
+  const sheetNames = new Map();
   for (const row of allRows) {
-    add(row.its, row.name);
-    if (row.h1448) add(row.h1448.its, row.h1448.name);
+    if (row.its && row.name && !sheetNames.has(String(row.its).trim())) sheetNames.set(String(row.its).trim(), row.name);
+  }
+  // Teachers come from the Teacher_Profile tab; the name falls back to the 1449Working name when the profile has none
+  for (const p of teacherProfileRows) {
+    const key = String(p.its || "").trim();
+    const label = String(p.name || sheetNames.get(key) || "").trim();
+    if (key && label && !byIts.has(key)) byIts.set(key, { its: key, name: label });
   }
   return [...byIts.values()].sort((a, b) =>
     (Number(b.its.replace(/\D/g, "")) || 0) - (Number(a.its.replace(/\D/g, "")) || 0) ||
