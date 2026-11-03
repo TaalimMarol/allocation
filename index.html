@@ -2898,13 +2898,14 @@ function renderMusanid() {
     const className = reportClassName(row);
     const key = className + "\u0000" + book;
     if (!groups.has(key)) {
-      groups.set(key, { classNumber, className, book, bookAr: "", rows: [], weekly: 0, musaids: new Set() });
+      groups.set(key, { classNumber, className, book, bookAr: "", rows: [], weekly: 0, musaids: new Set(), teachers: new Set() });
     }
     const group = groups.get(key);
     if (!group.bookAr && row.bookNameAr) group.bookAr = String(row.bookNameAr).trim();
     group.rows.push(row);
     group.weekly += Number(row.weekly) || 0;
     group.musaids.add(String(row.musaid || "").trim());
+    group.teachers.add(String(profileNameFor(row.its) || row.name || "").trim());
   }
   musanidGroups = [...groups.values()].sort((a, b) =>
     (Number(a.classNumber) || 0) - (Number(b.classNumber) || 0) ||
@@ -2916,7 +2917,7 @@ function renderMusanid() {
     teachersList.map((t) => `<option value="${x(t.its)}"${t.name === selectedName ? " selected" : ""}>${x(t.its)} · ${x(t.name)}</option>`).join("");
 
   wrap.innerHTML = `<table>
-    <thead><tr><th>Book</th><th>Class name</th><th>Weekly periods</th><th>Current musanid</th><th>Assign musanid</th><th></th></tr></thead>
+    <thead><tr><th>Book</th><th>Class name</th><th>Teacher (allocated)</th><th>Weekly periods</th><th>Current musanid</th><th>Assign musanid</th><th></th></tr></thead>
     <tbody>${musanidGroups.map((group, index) => {
       const current = [...group.musaids];
       const named = current.filter(Boolean);
@@ -2926,6 +2927,7 @@ function renderMusanid() {
       return `<tr>
         <td>${x(group.book || "—")}${group.bookAr ? `<div lang="ar" dir="rtl">${x(group.bookAr)}</div>` : ""}</td>
         <td dir="ltr" style="text-align:left"><b>${x(group.className || "—")}</b></td>
+        <td>${x([...group.teachers].filter(Boolean).join(", ") || "— not allocated —")}</td>
         <td>${group.weekly}</td>
         <td class="mus-current"><b>${x(currentText)}</b></td>
         <td><select class="mus-sel" id="musanid-sel-${index}" aria-label="Musanid for ${x(group.book)}">${optionsHtml(selected)}</select></td>
