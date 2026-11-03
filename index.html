@@ -1705,7 +1705,7 @@ function renderTeacherReport(key) {
         </div>
         <div class="teacher-report-facts">
           <div class="teacher-report-fact"><span class="teacher-report-fact-label">شهادة الحفظ:</span><span class="teacher-report-fact-value">${x(profile.hifzCertificate || "")}</span></div>
-          <div class="teacher-report-fact"><span class="teacher-report-fact-label">التخصص في:</span><span class="teacher-report-fact-value">${x(profile.takhassus || "")}</span></div>
+          <div class="teacher-report-fact"><span class="teacher-report-fact-label">التخصـص في:</span><span class="teacher-report-fact-value">${x(profile.takhassus || "")}</span></div>
           ${profile.appointmentYear ? `<div class="teacher-report-fact"><span class="teacher-report-fact-label">سنة التعيين:</span><span class="teacher-report-fact-value">${x(profile.appointmentYear)}</span></div>` : ""}
           <div class="teacher-report-fact"><span class="teacher-report-fact-label">المسؤول عن الدرجة:</span><span class="teacher-report-fact-value">${x(masulClasses.join("، ") || "—")}</span></div>
           <div class="teacher-report-fact"><span class="teacher-report-fact-label">الرغبة في موضوع:</span><span class="teacher-report-fact-value">${x(daeras.join("، "))}</span></div>
@@ -2732,7 +2732,7 @@ function hideDepartmentTooltip(anchor) {
 function applyScriptTypography(root) {
   if (!root || typeof root.nodeType !== "number") return;
   const arabicPattern = /[\u0600-\u06ff\u0750-\u077f\u08a0-\u08ff\ufb50-\ufdff\ufe70-\ufeff]/u;
-  const splitPattern = /([\u0600-\u06ff\u0750-\u077f\u08a0-\u08ff\ufb50-\ufdff\ufe70-\ufeff]+)|([^\u0600-\u06ff\u0750-\u077f\u08a0-\u08ff\ufb50-\ufdff\ufe70-\ufeff]+)/gu;
+  const splitPattern = /([(\[]*[\u0600-\u06ff\u0750-\u077f\u08a0-\u08ff\ufb50-\ufdff\ufe70-\ufeff](?:[\u0600-\u06ff\u0750-\u077f\u08a0-\u08ff\ufb50-\ufdff\ufe70-\ufeff\s()\[\]·،:.\-\u200f]*[\u0600-\u06ff\u0750-\u077f\u08a0-\u08ff\ufb50-\ufdff\ufe70-\ufeff])?[)\]]*)|((?:(?![(\[]*[\u0600-\u06ff\u0750-\u077f\u08a0-\u08ff\ufb50-\ufdff\ufe70-\ufeff])[^\u0600-\u06ff\u0750-\u077f\u08a0-\u08ff\ufb50-\ufdff\ufe70-\ufeff])+)/gu;
   const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
     acceptNode(node) {
       const parent = node.parentElement;
@@ -3194,7 +3194,7 @@ function reportHtml(side, key, editable, opts) {
         <div class="rep-name">${x(profile.name || teacher.name || teacher.its || "—")} <span class="rep-its">${x(teacher.its || "")}${profile.sequenceNo ? ` (${x(profile.sequenceNo)})` : ""}</span></div>
         <div class="rep-facts">
           ${fact("شهادة الحفظ", profile.hifzCertificate)}
-          ${fact("التخصص في", profile.takhassus)}
+          ${fact("التخصـص في", profile.takhassus)}
           ${profile.appointmentYear ? fact("سنة التعيين", profile.appointmentYear) : ""}
           ${fact("المسؤول عن الدرجة", masulClasses.join("، ") || "—")}
           <div class="rep-fact"><b>الرغبة في موضوع:</b>${daeraValue}</div>
