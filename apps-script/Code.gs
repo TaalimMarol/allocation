@@ -170,7 +170,7 @@ function getTeacherProfileData_() {
     rows.push({
       its: its,
       name: String(getCol_(index, row, [
-        "Name", "Teacher Name", "TeacherName", "Ustad Name", "Ustaad Name", "Name_AR", "Name AR"
+        "NameAR", "Name AR", "Name_AR"
       ])).trim(),
       sequenceNo: String(getCol_(index, row, ["SequenceNo", "Sequence No", "Sequence"])).trim(),
       hifzCertificate: String(getCol_(index, row, [

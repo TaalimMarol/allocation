@@ -137,22 +137,27 @@ with system fonts as fallbacks.
 
 ## Distribution dashboards
 
-- **Teacher workload report** opens a print-friendly A4 report for the selected
-  teacher while keeping allocation edits in the existing Teacher Workload
-  dashboard. Direct allocations in the teacher's Al-Masʾūl class/section are
+- **Teacher workload report** (the **Asateza Masooliyaat** tab, formerly
+  "Teacher Workload") opens a print-friendly A4 report for the selected
+  teacher while keeping allocation edits in the dashboard. The whole report is
+  RTL Arabic. Direct allocations in the teacher's Al-Masʾūl class/section are
   highlighted green. Rows whose `Musaid` value matches the selected teacher's
-  name or ITS are shown separately in yellow, with the primary `Name` shown as
-  the main mufawwaz. The total includes direct, Musanid, and department periods.
+  name or ITS are shown separately in yellow as MUSANID. The total includes
+  direct, Musanid, and department periods.
 - **Teacher_Profile** is an optional tab for report metadata, keyed by `ITS`.
-  Suggested columns are `ITS`, `SequenceNo`, `HifzCertificate`, `Takhassus`,
-  `Idara`, `ServiceDuration`, `YearOfCompletion`, `UniversitySanad`,
-  `Category`, and `AppointmentYear`. Until populated, these report fields stay
-  blank.
+  Columns: `ITS`, `NameAR` (the teacher name shown in reports and used in the
+  Musanid dropdown; falls back to the `1449Working` name when empty),
+  `SequenceNo`, `HifzCertificate`, `Takhassus`, `Idara`, `ServiceDuration`,
+  `YearOfCompletion`, `UniversitySanad`, `Category`, and `AppointmentYear`.
+  Until populated, these report fields stay blank.
 - **Department_Periods** is an optional tab for teaching periods outside the
   teacher's class allocations. Add one row per assignment with columns
   `TeacherITS`, `Subject`, `BookName`, `ClassName` (leave blank when not
-  class-based), and `WeeklyPeriods`. The report labels this section
-  `حصص الإدارات`; its periods are included in the top total.
+  class-based), and `WeeklyPeriods`. Class names without spaces such as `11AM`
+  or `3DARSF` are displayed as `11 A M` and `3 DARS F`. The report labels this
+  section `حصـص الإدارات`; its periods are included in the top total. No
+  `1449Working` row is excluded any more, so department periods can live in
+  this tab only.
 - **Daerat Distribution** detects every non-empty `Ustad_Daera` value from the
   configured `1449Working` tab, groups those values into columns, and lists
   every teacher with a Daera assignment using the 1449 weekly period values.
@@ -177,6 +182,55 @@ with system fonts as fallbacks.
   the same inline teacher reassignment control used elsewhere in the dashboard.
 - The sheet-tab lookup is case-insensitive, so `1449Working` and
   `1449working` both resolve to the configured tab.
+
+## Single page, one login
+
+Everything lives in `index.html` under one Google sign-in: 1448 vs 1449
+Comparison, Asateza Masooliyaat, Subject Distribution, Uloom Kauniyah/
+Insaniyah, Class Allocation, Al-Masʾūl, Daerat Distribution, Life Skills
+teaching, Curriculum Simulator and Musanid Allocation. The old
+`Asateza_Masooliyaat.html` page was removed. The Google ID token lasts about an
+hour, after which the page asks you to sign in again. Life Skills and the
+Curriculum Simulator are embedded as static pages.
+
+## 1448 vs 1449 comparison
+
+- Side-by-side printable reports per teacher (1448 Tafweed and 1449), RTL, with
+  dark blue table headers for 1448 and dark green for 1449.
+- Subjects that already existed in 1448 are marked red, bold and underlined.
+  The match uses class number + subject + book only (section and gender are
+  ignored). Books show the Arabic name from `BookName_AR` when present.
+- The class column reads numerals first (`1 A M`). The teacher list collapses
+  after a selection and reopens on hover.
+- Musanid rows appear in their own MUSANID section, and department periods
+  (class names included) appear in the 1449 and 1448 reports.
+
+## Musanid Allocation
+
+1. Pick a **Subject**, then optionally filter by **Class** and **Book** (the
+   dropdowns cascade).
+2. Each row is one book in one class (for example `1 A M`) with its weekly
+   periods and current musanid.
+3. Choose a teacher (from `Teacher_Profile`, sorted by ITS descending) and
+   press **Assign**. The teacher's name is written to the `Musaid` column of
+   `1449Working` through the `musaid-sync` action. **Clear musanid** empties it.
+
+Musanid periods count toward the teacher's total and show with a MUSANID badge
+in Asateza Masooliyaat and the comparison list. A teacher who exists only in
+`Teacher_Profile` joins the teacher lists as soon as they are assigned.
+Changes update every view immediately.
+
+## Backend notes
+
+- `Code.gs` returns every non-empty `1449Working` row, including rows without a
+  teacher; nothing is filtered by subject.
+- Actions: `me`, `data`, `data-compare`, `photos`, `departments`, `sync`,
+  `department-sync` and `musaid-sync` (writes the `Musaid`/`Musanid` column).
+- The sheet should have a `BookName_AR` column for Arabic book names.
+- After any `Code.gs` change, deploy a new Web app version.
+- Arabic typography: `حصـص` and `التخصـص` are written with a tatweel between
+  the two ص so the font renders them correctly. Brackets stay inside the Arabic
+  text run so they display correctly in RTL.
 
 ## Security notes
 
