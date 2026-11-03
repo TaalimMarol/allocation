@@ -1193,6 +1193,28 @@ function attachMusanid(map) {
       if (id && !byIdentity.has(id)) byIdentity.set(id, t);
     }
   }
+  // Teachers who exist only in Teacher_Profile join the list once they are assigned as musanid
+  const profileOnly = new Map();
+  for (const p of teacherProfileRows) {
+    const its = String(p.its || "").trim();
+    if (!its || map[its]) continue;
+    const name = String(p.name || "").trim();
+    for (const value of [its, name]) {
+      const id = normaliseTeacherReportIdentity(value);
+      if (id && !byIdentity.has(id) && !profileOnly.has(id)) profileOnly.set(id, { its, name });
+    }
+  }
+  for (const row of allRows) {
+    const id = normaliseTeacherReportIdentity(row.musaid);
+    if (!id || byIdentity.has(id) || !profileOnly.has(id)) continue;
+    const { its, name } = profileOnly.get(id);
+    const t = { key: its, its, name: name || its, gender: "", total: 0, rows: [], musanidRows: [] };
+    map[its] = t;
+    for (const value of [its, name]) {
+      const k = normaliseTeacherReportIdentity(value);
+      if (k) byIdentity.set(k, t);
+    }
+  }
   for (const row of allRows) {
     const id = normaliseTeacherReportIdentity(row.musaid);
     const t = id && byIdentity.get(id);
@@ -2940,7 +2962,7 @@ async function assignMusanid(index) {
     const result = await response.json();
     if (!response.ok || !result.success) throw new Error(result.error || "Musanid could not be saved.");
     group.rows.forEach((row) => { row.musaid = musaid; });
-    outerStale = true;
+    refreshOuterViews();
     renderMusanid();
     toast(musaid ? `Musanid set to ${musaid} for ${group.rows.length} row(s).` : "Musanid cleared.");
   } catch (err) {
