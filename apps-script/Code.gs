@@ -14,12 +14,6 @@ const CONFIG = {
   ]
 };
 
-const EXCLUDED_SUBJECTS = [
-  "marhalat saqafat aamah", "barāmij ʿilmiyya", "baraamij ilmiyya",
-  "baramij ilmiyya", "khaimat riyadat", "nashat thaqafi",
-  "jameeiyah ula", "jameeiyaah thaniyah"
-];
-
 function doGet(e) {
   return handleRequest_(e && e.parameter ? e.parameter : {}, "GET");
 }
@@ -47,7 +41,7 @@ function handleRequest_(request, method) {
       return json_(getAllData_());
     }
     if (method === "GET" && action === "data-compare") {
-      return json_(getAllData_({ includeUnassigned: true }));
+      return json_(getAllData_());
     }
     if (method === "GET" && action === "photos") {
       return json_(getTeacherPhotos_());
@@ -63,6 +57,9 @@ function handleRequest_(request, method) {
     }
     if (method === "POST" && action === "daera-sync") {
       return json_(syncTeacherDaera_(request.its, request.rowNumbers, request.daera));
+    }
+    if (method === "POST" && action === "musaid-sync") {
+      return json_(syncMusaid_(request.rowNumbers, request.musaid));
     }
     return json_({ error: "Unsupported action." }, 400);
   } catch (err) {
@@ -89,8 +86,7 @@ function authenticate_(token) {
   return { ok: true, email: email };
 }
 
-function getAllData_(options) {
-  const includeUnassigned = Boolean(options && options.includeUnassigned);
+function getAllData_() {
   const sheet = getSheet_();
   const values = sheet.getDataRange().getDisplayValues();
   if (values.length < 2) {
@@ -113,7 +109,6 @@ function getAllData_(options) {
     const row = values[r];
     if (!row.some(function (cell) { return cell !== ""; })) continue;
     const subject = String(getCol_(index, row, ["Subject", "subject"])).trim();
-    if (EXCLUDED_SUBJECTS.indexOf(subject.toLowerCase()) !== -1) continue;
     const cls = String(getCol_(index, row, ["Class", "class"])).trim();
     const section = String(getCol_(index, row, ["Section", "section"])).trim();
     const gender = String(getCol_(index, row, ["Gender", "gender"])).trim();
@@ -122,7 +117,6 @@ function getAllData_(options) {
     const historyAssignment = String(getCol_(index, row, [
       "1448Tafweed", "1448 Tafweed", "1448_Tafweed", "Tafweed1448"
     ])).trim();
-    if (!its && !name && !(includeUnassigned && historyAssignment)) continue;
     const bookName = String(getCol_(index, row, ["BookName", "bookname"])).trim();
     rows.push({
       rowNumber: r + 1, class: cls, section: section, gender: gender,
@@ -415,6 +409,32 @@ function syncTeacherDaera_(its, rowNumbers, daera) {
   });
   uniqueRows.forEach(function (rowNumber) {
     sheet.getRange(rowNumber, daeraCol + 1).setValue(String(daera || "").trim());
+  });
+  return { success: true, updatedRows: uniqueRows.length };
+}
+
+function syncMusaid_(rowNumbers, musaid) {
+  if (!Array.isArray(rowNumbers) || !rowNumbers.length) {
+    throw new Error("At least one sheet row is required.");
+  }
+  const uniqueRows = Array.from(new Set(rowNumbers.map(function (rowNumber) {
+    const number = Number(rowNumber);
+    if (!Number.isInteger(number) || number < 2) throw new Error("Invalid sheet row.");
+    return number;
+  })));
+  const sheet = getSheet_();
+  const lastColumn = sheet.getLastColumn();
+  if (!lastColumn) throw new Error("The workload sheet has no header row.");
+  const headers = sheet.getRange(1, 1, 1, lastColumn).getDisplayValues()[0];
+  const musaidCol = findColumnIndex_(buildColIdx_(headers), ["Musaid", "Musanid"]);
+  if (musaidCol === -1) throw new Error("The workload sheet is missing a Musaid column.");
+  const lastRow = sheet.getLastRow();
+  const value = String(musaid || "").trim();
+  uniqueRows.forEach(function (rowNumber) {
+    if (rowNumber > lastRow) throw new Error("A selected row is outside the workload sheet.");
+  });
+  uniqueRows.forEach(function (rowNumber) {
+    sheet.getRange(rowNumber, musaidCol + 1).setValue(value);
   });
   return { success: true, updatedRows: uniqueRows.length };
 }
