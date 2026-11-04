@@ -695,7 +695,19 @@ tr.row-diff td{box-shadow:inset 0 -2px 0 #f59e0b}
   body.printing-cmp .print-page{break-after:page}
   body.printing-cmp .print-page:last-child{break-after:auto}
   body.printing-cmp .layout{display:block}
+  body.printing-final .cmp-t-list-panel,body.printing-final #compare{display:none!important}
+  body.printing-final .layout{display:block}
+  body.printing-final #print-all{display:block}
+  body.printing-final .print-page{break-after:page}
+  body.printing-final .print-page:last-child{break-after:auto}
+  body.printing-final .final-missing{color:#dc2626!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
 }
+.final-missing{color:#dc2626}
+.final-report .teacher-report-heading-title{font-size:30px}
+.final-report .teacher-report-heading-place{font-size:19px}
+.final-report .teacher-report-heading-year{font-size:19px}
+.final-report .teacher-report-total{min-width:70px;text-align:center}
+.final-report .teacher-report-table tbody td{font-weight:400}
 </style>
 </head>
 <body>
@@ -3408,11 +3420,103 @@ function renderCompare() {
       title="Set every row of this teacher back to its 1448 Tafweed teacher">↶ Revert this teacher to 1448</button>
     <button type="button" class="cb-btn" onclick="cmp.printCurrent()">Print this teacher</button>
     <button type="button" class="cb-btn" onclick="cmp.printAll()">Print all teachers</button>
+    <button type="button" class="cb-btn" onclick="cmp.printFinal(false)" title="Only the final 1449 report in the official format">Print 1449 final (this teacher)</button>
+    <button type="button" class="cb-btn" onclick="cmp.printFinal(true)">Print 1449 final (all)</button>
     <span class="sdot hidden" id="cmp-sdot" title="Saving to 1449Working"></span>`;
   const opts = buildOpts();
   const scroll = window.scrollY;
   pair.innerHTML = reportHtml("1448", activeKey, false) + reportHtml("1449", activeKey, true, opts);
   window.scrollTo(0, scroll);
+}
+
+function finalReportHtml(key) {
+  const ctx = reportData(key);
+  const { teacher, profile, identities, departmentPeriods, departments, daeras } = ctx;
+  const direct = allRows.filter((row) => row.teacherKey === key).sort(compareRows);
+  const musanid = allRows
+    .filter((row) => row.teacherKey !== key && isMusaidOf(row, identities))
+    .sort(compareRows);
+  const masulClasses = [...new Set(direct.filter(isMasulRow).map(className).filter(Boolean))];
+  const total = sumPeriods(direct) + sumPeriods(musanid) + sumPeriods(departmentPeriods);
+  const nameAr = profile.name || profileNameFor(teacher.its) || teacher.name || teacher.its || "—";
+  const photo = getPhoto(teacher.its);
+  const photoBlock = photo
+    ? `<img class="teacher-report-photo" src="${x(photo)}" alt="">`
+    : `<div class="teacher-report-photo-ph" aria-hidden="true">${x(String(nameAr)[0] || "?")}</div>`;
+  const dash = (v) => x(v || "-");
+  const fact = (label, valueHtml) =>
+    `<div class="teacher-report-fact"><span class="teacher-report-fact-label">${label} :</span><span class="teacher-report-fact-value">${valueHtml}</span></div>`;
+  const rowHtml = (row, first, isDept) => `<tr>
+      <td>${x(first)}</td>
+      <td>${x(row.subject || "")}</td>
+      <td>${x(row.bookNameAr || row.bookName || "")}</td>
+      <td>${x(numeralsFirst(isDept ? spacedClassName(row.className) : className(row)))}</td>
+      <td>${x(row.weekly === undefined ? "" : row.weekly)}</td>
+    </tr>`;
+  const body = [
+    ...direct.map((row) => rowHtml(row, "", false)),
+    ...musanid.map((row) => rowHtml(row, `${profileNameFor(row.its) || row.name || ""} (المساعد)`, false)),
+    ...departmentPeriods.map((row) => rowHtml(row, "", true))
+  ].join("") || '<tr><td class="teacher-report-empty" colspan="5">لا توجد حصـص مسجلة</td></tr>';
+  return `<article class="teacher-report final-report" lang="ar" dir="rtl">
+    <header class="teacher-report-heading">
+      <div class="teacher-report-heading-title">جدول حصـص التدريس</div>
+      <div class="teacher-report-heading-place">ممبئي (مرول)</div>
+      <div class="teacher-report-heading-year">١٤٤٨-١٤٤٩</div>
+    </header>
+    <section class="teacher-report-person">
+      ${photoBlock}
+      <div class="teacher-report-identity">
+        <div class="teacher-report-name">${x(nameAr)}</div>
+        <div class="teacher-report-its">${x(teacher.its || "")}</div>
+        ${profile.sequenceNo ? `<div class="teacher-report-sequence">(${x(profile.sequenceNo)})</div>` : ""}
+      </div>
+      <div class="teacher-report-facts">
+        ${fact("شهادة الحفظ", dash(profile.hifzCertificate))}
+        ${fact("التخصـص في", dash(profile.takhassus))}
+        ${fact("المسؤول عن الدرجة", dash(masulClasses.join("، ")))}
+        ${fact("الرغبة في موضوع", daeras.length ? x(daeras.join("، ")) : '<span class="final-missing">Not Submitted</span>')}
+      </div>
+    </section>
+    <table class="teacher-report-profile-table">
+      <thead><tr><th>Idara</th><th>Category</th><th>مدة الخدمة في الجامعة السيفية</th><th>سند الجامعة</th><th>سنة الفراغ</th></tr></thead>
+      <tbody><tr>
+        <td>${x(profile.idara || "")}</td><td>${x(profile.category || "")}</td>
+        <td>${x(profile.serviceDuration || "")}</td><td>${x(profile.universitySanad || "")}</td>
+        <td>${x(profile.yearOfCompletion || "")}</td>
+      </tr></tbody>
+    </table>
+    <div class="teacher-report-total-wrap"><span class="teacher-report-total">${total}</span></div>
+    <table class="teacher-report-table">
+      <thead><tr><th></th><th>الموضوع</th><th>الكتاب</th><th>الدرجة</th><th>الحصـص</th></tr></thead>
+      <tbody>${body}</tbody>
+      <tfoot><tr><th colspan="4">حسب المفوض</th><th>${total}</th></tr></tfoot>
+    </table>
+    <section class="teacher-report-departments">
+      <div class="teacher-report-departments-title">الادارات والدوائر</div>
+      ${departments.length ? `<ul>${departments.map((d) => `<li>${x(d)}</li>`).join("")}</ul>` : ""}
+    </section>
+  </article>`;
+}
+
+function printFinal(all) {
+  let keys;
+  if (all) {
+    keys = sortedTeachers("").map((t) => t.key).filter((k) => {
+      const ctx = reportData(k);
+      return allRows.some((row) => row.teacherKey === k || isMusaidOf(row, ctx.identities));
+    });
+  } else {
+    keys = activeKey && teachers[activeKey] ? [activeKey] : [];
+  }
+  if (!keys.length) {
+    toast(all ? "There are no teachers to print." : "Select a teacher before printing.", true);
+    return;
+  }
+  document.getElementById("print-all").innerHTML = keys.map((k) =>
+    `<section class="print-page">${finalReportHtml(k)}</section>`).join("");
+  document.body.classList.add("printing-final");
+  window.print();
 }
 
 function printCurrent() {
@@ -3698,7 +3802,7 @@ async function saveTeacherDepartments() {
 
 
 window.addEventListener("afterprint", () => {
-  document.body.classList.remove("print-all", "printing-cmp");
+  document.body.classList.remove("print-all", "printing-cmp", "printing-final");
   document.getElementById("print-all").innerHTML = "";
 });
 
@@ -3734,7 +3838,7 @@ window.cmp = {
   teacherOptions,
   oldKeysFor(key) { return new Set((hist1448[key] || []).map(oldMatchKey)); },
   renderTeacherList, saveTeacherDaera, revertRow, reassignAllocation, openDepartmentEditor,
-  printCurrent, printAll, addDepartmentDraftEntry, saveTeacherDepartments, cancelDepartmentEdit,
+  printCurrent, printAll, printFinal, addDepartmentDraftEntry, saveTeacherDepartments, cancelDepartmentEdit,
   updateDepartmentDraft, syncDepartmentPair, removeDepartmentDraftEntry, revertTeacherTo1448
 };
 })();
