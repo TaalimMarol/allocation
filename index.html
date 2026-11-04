@@ -1038,6 +1038,7 @@ async function handleGoogleCredential(response) {
       throw new Error(user.error || "Sign-in was rejected.");
     }
     googleEmail = user.email;
+    resetIdleTimer();
     sessionStorage.setItem("allocation_google_token", googleToken);
     sessionStorage.setItem("allocation_google_email", googleEmail);
     document.getElementById("nav-email").textContent = googleEmail;
@@ -1063,6 +1064,18 @@ function signOut() {
   location.reload();
 }
 
+// Auto sign-out after 10 minutes without any user activity
+const IDLE_LIMIT_MS = 10 * 60 * 1000;
+let idleTimer = null;
+function resetIdleTimer() {
+  clearTimeout(idleTimer);
+  if (!googleToken) return;
+  idleTimer = setTimeout(signOut, IDLE_LIMIT_MS);
+}
+["mousemove", "mousedown", "keydown", "scroll", "touchstart", "click"].forEach((evt) =>
+  window.addEventListener(evt, resetIdleTimer, { passive: true, capture: true }));
+resetIdleTimer();
+
 // ================================================================
 //  BOOT — check session on load
 // ================================================================
@@ -1076,6 +1089,7 @@ function signOut() {
     }
     const { email } = user;
     googleEmail = email;
+    resetIdleTimer();
     sessionStorage.setItem("allocation_google_email", email);
     document.getElementById("nav-email").textContent = email;
     document.getElementById("auth-screen").classList.add("hidden");
