@@ -703,6 +703,9 @@ tr.row-diff td{box-shadow:inset 0 -2px 0 #f59e0b}
   body.printing-final .final-missing{color:#dc2626!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
 }
 .final-missing{color:#dc2626}
+body.measuring-final #print-all{display:block;position:absolute;left:-10000px;top:0;width:194mm}
+body.measuring-final .final-report{padding:0;max-width:none}
+.final-report{break-inside:avoid}
 .final-report .teacher-report-heading-title{font-size:30px}
 .final-report .teacher-report-heading-place{font-size:19px}
 .final-report .teacher-report-heading-year{font-size:19px}
@@ -3502,10 +3505,17 @@ function finalReportHtml(key) {
 function printFinal(all) {
   let keys;
   if (all) {
+    const seqOf = (k) => {
+      const t = teachers[k];
+      const p = teacherProfileRows.find((row) => normaliseIts(row.its) === normaliseIts(t.its)) || {};
+      const n = parseFloat(String(p.sequenceNo || "").replace(/[^\d.]/g, ""));
+      return Number.isFinite(n) ? n : Infinity;
+    };
     keys = sortedTeachers("").map((t) => t.key).filter((k) => {
       const ctx = reportData(k);
       return allRows.some((row) => row.teacherKey === k || isMusaidOf(row, ctx.identities));
-    });
+    }).sort((a, b) => seqOf(a) - seqOf(b) ||
+      String(teachers[a].name || "").localeCompare(String(teachers[b].name || "")));
   } else {
     keys = activeKey && teachers[activeKey] ? [activeKey] : [];
   }
@@ -3513,8 +3523,17 @@ function printFinal(all) {
     toast(all ? "There are no teachers to print." : "Select a teacher before printing.", true);
     return;
   }
-  document.getElementById("print-all").innerHTML = keys.map((k) =>
+  const holder = document.getElementById("print-all");
+  holder.innerHTML = keys.map((k) =>
     `<section class="print-page">${finalReportHtml(k)}</section>`).join("");
+  // Shrink any teacher whose report is taller than one A4 page so each teacher stays on a single page
+  document.body.classList.add("measuring-final");
+  const maxHeight = 1030;
+  holder.querySelectorAll(".print-page").forEach((page) => {
+    const h = page.scrollHeight;
+    if (h > maxHeight) page.style.zoom = String(Math.max(0.4, maxHeight / h));
+  });
+  document.body.classList.remove("measuring-final");
   document.body.classList.add("printing-final");
   window.print();
 }
@@ -3802,7 +3821,7 @@ async function saveTeacherDepartments() {
 
 
 window.addEventListener("afterprint", () => {
-  document.body.classList.remove("print-all", "printing-cmp", "printing-final");
+  document.body.classList.remove("print-all", "printing-cmp", "printing-final", "measuring-final");
   document.getElementById("print-all").innerHTML = "";
 });
 
