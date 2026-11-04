@@ -227,6 +227,9 @@ Changes update every view immediately.
 - Actions: `me`, `data`, `data-compare`, `photos`, `departments`, `sync`,
   `department-sync` and `musaid-sync` (writes the `Musaid`/`Musanid` column).
 - The sheet should have a `BookName_AR` column for Arabic book names.
+- Gender and Daera are read from `Teacher_Profile` (`Gender`, `Daera` columns) and
+  override the same columns in `1449Working` when filled. Saving a Daera
+  (`daera-sync`) writes to the teacher's `Teacher_Profile` row.
 - After any `Code.gs` change, deploy a new Web app version.
 - Arabic typography: `حصـص` and `التخصـص` are written with a tatweel between
   the two ص so the font renders them correctly. Brackets stay inside the Arabic

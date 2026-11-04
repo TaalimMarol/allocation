@@ -1723,9 +1723,8 @@ function renderTeacherReport(key) {
     .sort(compareTeacherReportRows);
   const extraDepartmentRows = departmentPeriodRows
     .filter((row) => normaliseIts(row.its) === normaliseIts(teacher.its));
-  const daeras = [...new Set(teacher.rows
-    .map((row) => String(row.ustadDaera || "").trim())
-    .filter(Boolean))];
+  const daeras = [...new Set([...teacher.rows.map((row) => String(row.ustadDaera || "").trim()),
+    String(profile.daera || "").trim()].filter(Boolean))];
   const masulClasses = [...new Set(masulRows
     .map((row) => reportClassName(row))
     .filter(Boolean))];
@@ -3253,7 +3252,7 @@ function reportData(key) {
       .map((row) => String(row.departmentAr || row.department || "").trim())
       .filter(Boolean))]
     : [];
-  const daeras = [...new Set(teacher.rows.map((row) => String(row.ustadDaera || "").trim()).filter(Boolean))];
+  const daeras = [...new Set([...teacher.rows.map((row) => String(row.ustadDaera || "").trim()), String(profile.daera || "").trim()].filter(Boolean))];
   return { teacher, profile, identities, departmentPeriods, departments, daeras };
 }
 

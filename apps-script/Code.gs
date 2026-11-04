@@ -138,13 +138,27 @@ function getAllData_() {
       ])).trim()
     });
   }
+  const profileRows = getTeacherProfileData_();
   return {
-    rows: rows,
+    rows: applyProfileOverrides_(rows, profileRows),
     headers: headers,
     historyHeader: historyHeader,
-    profileRows: getTeacherProfileData_(),
+    profileRows: profileRows,
     departmentPeriodRows: getDepartmentPeriodData_()
   };
+}
+
+// Gender and Daera come from Teacher_Profile when it has a value; 1449Working values are only a fallback
+function applyProfileOverrides_(rows, profileRows) {
+  const byIts = {};
+  profileRows.forEach(function (p) { byIts[normaliseIts_(p.its)] = p; });
+  rows.forEach(function (row) {
+    const p = byIts[normaliseIts_(row.its)];
+    if (!p) return;
+    if (p.gender) row.teacherGender = p.gender;
+    if (p.daera) row.ustadDaera = p.daera;
+  });
+  return rows;
 }
 
 function getTeacherProfileData_() {
@@ -188,6 +202,12 @@ function getTeacherProfileData_() {
         "UniversitySanad", "University Sanad"
       ])).trim(),
       category: String(getCol_(index, row, ["Category"])).trim(),
+      gender: String(getCol_(index, row, [
+        "Gender", "TeacherGender", "Teacher Gender"
+      ])).trim(),
+      daera: String(getCol_(index, row, [
+        "Daera", "Daerat", "Ustad_Daera", "Ustad Daera", "Daerat_Name", "Daerat Name"
+      ])).trim(),
       appointmentYear: String(getCol_(index, row, [
         "AppointmentYear", "Appointment Year"
       ])).trim()
@@ -377,6 +397,34 @@ function syncTeacherDepartments_(its, assignments) {
 function syncTeacherDaera_(its, rowNumbers, daera) {
   const teacherIts = String(its || "").trim();
   if (!teacherIts) throw new Error("Teacher ITS is required.");
+  const value = String(daera || "").trim();
+
+  // Preferred: save the daera on the teacher's Teacher_Profile row
+  const profileSheet = getOptionalNamedSheet_(CONFIG.teacherProfileSheetName);
+  if (profileSheet) {
+    const pValues = profileSheet.getDataRange().getDisplayValues();
+    if (pValues.length > 1) {
+      const pIndex = buildColIdx_(pValues[0].map(function (h) { return String(h || "").trim(); }));
+      const pItsCol = findColumnIndex_(pIndex, [
+        "ITS", "Teacher ITS", "ITS Number", "ITS No", "ITS_No", "ITS ID", "ITS_ID",
+        "ITSID", "ItsID", "TeacherITS"
+      ]);
+      const pDaeraCol = findColumnIndex_(pIndex, [
+        "Daera", "Daerat", "Ustad_Daera", "Ustad Daera", "Daerat_Name", "Daerat Name"
+      ]);
+      if (pItsCol !== -1 && pDaeraCol !== -1) {
+        const expected = normaliseIts_(teacherIts);
+        for (let r = 1; r < pValues.length; r++) {
+          if (normaliseIts_(pValues[r][pItsCol]) === expected) {
+            profileSheet.getRange(r + 1, pDaeraCol + 1).setValue(value);
+            return { success: true, updatedRows: 1, target: "Teacher_Profile" };
+          }
+        }
+        throw new Error("This teacher is not in Teacher_Profile.");
+      }
+    }
+  }
+
   if (!Array.isArray(rowNumbers) || !rowNumbers.length) {
     throw new Error("At least one teacher row is required.");
   }
