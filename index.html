@@ -724,6 +724,9 @@ body.measuring-final .final-report{padding:0;max-width:none}
 .final-report .teacher-report-heading-year{font-size:19px}
 .final-report .teacher-report-total{min-width:70px;text-align:center}
 .final-report .teacher-report-table tbody td{font-weight:400}
+.final-report .teacher-report-table td.cls-cell{direction:ltr;unicode-bidi:isolate;text-align:center}
+.final-report .teacher-report-table tbody td.teacher-report-old{color:#dc2626;font-weight:800;text-decoration:underline}
+.final-report .teacher-report-section{break-inside:avoid}
 </style>
 </head>
 <body>
@@ -3594,19 +3597,38 @@ function finalReportHtml(key) {
   const dash = (v) => x(v || "-");
   const fact = (label, valueHtml) =>
     `<div class="teacher-report-fact"><span class="teacher-report-fact-label">${label} :</span><span class="teacher-report-fact-value">${valueHtml}</span></div>`;
-  const rowHtml = (row, first, isDept) => `<tr>
+  const masulKeys = new Set(direct.filter(isMasulRow)
+    .filter((r) => r.class || r.section || r.gender).map(classKey));
+  const oldKeys = new Set((hist1448[key] || []).map(oldMatchKey));
+  const rowHtml = (row, first, isDept, rowClass, markOld) => {
+    const old = markOld && oldKeys.has(oldMatchKey(row));
+    const oldCls = old ? ' class="teacher-report-old"' : "";
+    return `<tr${rowClass ? ` class="${rowClass}"` : ""}>
       <td>${x(first)}</td>
-      <td>${x(row.subject || "")}</td>
-      <td>${x(row.bookNameAr || row.bookName || "")}</td>
-      <td>${x(numeralsFirst(isDept ? spacedClassName(row.className) : className(row)))}</td>
+      <td${oldCls}>${x(row.subject || "")}</td>
+      <td${oldCls}>${x(row.bookNameAr || row.bookName || "")}</td>
+      <td class="cls-cell">${x(numeralsFirst(isDept ? spacedClassName(row.className) : className(row)))}</td>
       <td>${x(row.weekly === undefined ? "" : row.weekly)}</td>
     </tr>`;
-  const body = [
-    ...direct.map((row) => rowHtml(row, "", false)),
-    ...musanid.map((row) => rowHtml(row, `${profileNameFor(row.its) || row.name || ""} (المساعد)`, false)),
-    ...departmentPeriods.map((row) => rowHtml(row, "", true))
-  ].join("") || '<tr><td class="teacher-report-empty" colspan="5">لا توجد حصـص مسجلة</td></tr>';
-  return `<article class="teacher-report final-report" lang="ar" dir="rtl">
+  };
+  const sectionHtml = (title, rows, bodyRows) => `<section class="teacher-report-section">
+      <div class="teacher-report-section-title">${x(title)}</div>
+      <table class="teacher-report-table">
+        <thead><tr><th>المساند</th><th>الموضوع</th><th>الكتاب</th><th>الدرجة</th><th>الحصـص</th></tr></thead>
+        <tbody>${bodyRows || '<tr><td class="teacher-report-empty" colspan="5">لا توجد حصـص مسجلة</td></tr>'}</tbody>
+        <tfoot><tr><th colspan="4">المجموع</th><th>${sumPeriods(rows)}</th></tr></tfoot>
+      </table>
+    </section>`;
+  const sections = [
+    direct.length || !musanid.length ? sectionHtml("حصـص التدريس", direct, direct.map((row) =>
+      rowHtml(row, musaidLabel(row.musaid), false,
+        masulKeys.has(classKey(row)) ? "teacher-report-masul-row" : "", true)).join("")) : "",
+    musanid.length ? sectionHtml("حصـص المساندة", musanid, musanid.map((row) =>
+      rowHtml(row, profileNameFor(row.its) || row.name || "(لا يوجد معلم)", false,
+        "teacher-report-musanid-row", false)).join("")) : "",
+    sectionHtml("حصـص الإدارات", departmentPeriods, departmentPeriods.map((row) =>
+      rowHtml(row, "", true, "", false)).join(""))
+  ].join("");  return `<article class="teacher-report final-report" lang="ar" dir="rtl">
     <header class="teacher-report-heading">
       <div class="teacher-report-heading-title">جدول حصـص التدريس</div>
       <div class="teacher-report-heading-place">ممبئي (مرول)</div>
@@ -3622,6 +3644,7 @@ function finalReportHtml(key) {
       <div class="teacher-report-facts">
         ${fact("شهادة الحفظ", dash(profile.hifzCertificate))}
         ${fact("التخصـص في", dash(profile.takhassus))}
+        ${profile.appointmentYear ? fact("سنة التعيين", dash(profile.appointmentYear)) : ""}
         ${fact("المسؤول عن الدرجة", dash(masulClasses.join("، ")))}
         ${fact("الرغبة في موضوع", daeras.length ? x(daeras.join("، ")) : '<span class="final-missing">Not Submitted</span>')}
       </div>
@@ -3635,11 +3658,7 @@ function finalReportHtml(key) {
       </tr></tbody>
     </table>
     <div class="teacher-report-total-wrap"><span class="teacher-report-total">${total}</span></div>
-    <table class="teacher-report-table">
-      <thead><tr><th></th><th>الموضوع</th><th>الكتاب</th><th>الدرجة</th><th>الحصـص</th></tr></thead>
-      <tbody>${body}</tbody>
-      <tfoot><tr><th colspan="4">حسب المفوض</th><th>${total}</th></tr></tfoot>
-    </table>
+    ${sections}
     <section class="teacher-report-departments">
       <div class="teacher-report-departments-title">الادارات والدوائر</div>
       ${departments.length ? `<ul>${departments.map((d) => `<li>${x(d)}</li>`).join("")}</ul>` : ""}
