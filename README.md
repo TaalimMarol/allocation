@@ -188,7 +188,8 @@ with system fonts as fallbacks.
   the same inline teacher reassignment control used elsewhere in the dashboard.
   Each period also shows a check: male Al-Masʾūl teachers must teach Qasaid
   Muntakhabat or Silk Jawhar, and female teachers the Fiqh book with the most
-  weekly periods, in the same class, section and gender.
+  weekly periods, in the same class, section and gender. For classes 8–11 the
+  Al-Masʾūl teacher must instead teach the Adab Fatemi subject there.
   Teachers who do not are highlighted red with what they need.
 - The sheet-tab lookup is case-insensitive, so `1449Working` and
   `1449working` both resolve to the configured tab.

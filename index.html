@@ -1454,6 +1454,13 @@ function masulRequirement(row) {
   const section = normaliseMasulText(row.section);
   const sameClass = allRows.filter((r) => String(r.class || "").trim() === classNumber &&
     normaliseMasulText(r.section) === section && masulIsFemale(r) === masulIsFemale(row));
+  if (Number(classNumber) >= 8) {
+    const adab = sameClass.filter((r) => [r.subject, r.bookName].some((v) =>
+      /adab.*fat[ei]m/.test(normaliseMasulText(v))));
+    const taught = adab.find((r) => r.teacherKey && r.teacherKey === row.teacherKey);
+    if (taught) return { ok: true, text: taught.bookNameAr || taught.bookName || taught.subject };
+    return { ok: false, text: adab.length ? "Needs Adab Fatemi" : "No Adab Fatemi in this class" };
+  }
   if (!masulIsFemale(row)) {
     const books = sameClass.filter(isMasulMaleBook);
     const taught = books.find((r) => r.teacherKey && r.teacherKey === row.teacherKey);
