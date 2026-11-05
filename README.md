@@ -185,6 +185,10 @@ with system fonts as fallbacks.
 - **Al-Masʾūl** lays out the first 55 matching weekly periods in an 11-row by
   5-column grid. Each populated period shows the assigned teacher and provides
   the same inline teacher reassignment control used elsewhere in the dashboard.
+  Each period also shows a check: male Al-Masʾūl teachers must teach Qasaid
+  Muntakhabat or Silk Jawhar in the same class; female teachers must teach the
+  Fiqh book with the most weekly periods in the same class and section.
+  Teachers who do not are highlighted red with what they need.
 - The sheet-tab lookup is case-insensitive, so `1449Working` and
   `1449working` both resolve to the configured tab.
 

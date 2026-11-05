@@ -446,6 +446,10 @@ tr[data-subject-color="Jameeiyah Ula"]>td,.hierarchy-subject-title[data-subject-
 .masul-slot-teacher{grid-column:2;grid-row:1;min-width:0;overflow:visible;white-space:normal;overflow-wrap:anywhere;font-size:11px;font-weight:800;color:var(--navy);cursor:help}
 .masul-slot-meta{display:none}
 .masul-grid .sel{grid-column:2;grid-row:2;width:82%;min-width:0;margin-top:5px;font-size:11px}
+.masul-req{grid-column:1 / -1;margin-top:5px;padding:3px 6px;border-radius:var(--rs);font-size:11px;font-weight:700;text-align:center}
+.masul-req-ok{background:#dcfce7;color:#166534}
+.masul-req-bad{background:#fee2e2;color:#991b1b}
+.masul-assignment.masul-missing{padding:5px;border:2px solid var(--danger);border-radius:var(--r);background:#fef2f2}
 .masul-empty{padding:28px;text-align:center;color:var(--muted)}
 .masul-group{margin-bottom:14px;border:1px solid var(--border);border-radius:var(--r);overflow:hidden;background:var(--surface)}
 .masul-group:last-child{margin-bottom:0}
@@ -801,6 +805,7 @@ body.measuring-final .final-report{padding:0;max-width:none}
     <div class="panel">
       <div class="panel-hdr">
         <h2>Al-Masʾūl · class and gender allocation</h2>
+        <span id="masul-summary" style="font-size:12px;font-weight:600"></span>
         <span class="sdot hidden" id="masul-sdot"></span>
       </div>
       <div class="masul-grid-wrap" id="masul-grid">
@@ -1426,13 +1431,54 @@ function masulPhotoHtml(row) {
   return `<span class="masul-teacher-photo-ph" aria-hidden="true">${x(initial)}</span>`;
 }
 
+function masulIsFemale(row) {
+  const gender = normaliseMasulText(row.gender);
+  return gender === "f" || gender === "female";
+}
+
+function isMasulMaleBook(row) {
+  const text = normaliseMasulText(row.bookName);
+  const arabic = String(row.bookNameAr || row.bookName || "");
+  return (text.includes("qasaid") && text.includes("muntakhab")) ||
+    (text.includes("silk") && /jawhar|jawahar|jawahir/.test(text)) ||
+    (arabic.includes("\u0645\u0646\u062a\u062e\u0628") && arabic.includes("\u0642\u0635\u0627\u0626\u062f")) ||
+    (arabic.includes("\u0633\u0644\u0643") && arabic.includes("\u062c\u0648\u0647\u0631"));
+}
+
+// Male Al-Masʾūl teachers should teach Qasaid Muntakhabat / Silk Jawhar in the
+// same class; female ones should teach the Fiqh book with the most periods in
+// the same class and section.
+function masulRequirement(row) {
+  const classNumber = String(row.class || "").trim();
+  const column = masulColumnForRow(row);
+  const sameClass = allRows.filter((r) => String(r.class || "").trim() === classNumber);
+  if (!masulIsFemale(row)) {
+    const books = sameClass.filter((r) => !masulIsFemale(r) && isMasulMaleBook(r));
+    const taught = books.find((r) => r.teacherKey && r.teacherKey === row.teacherKey);
+    if (taught) return { ok: true, text: taught.bookNameAr || taught.bookName };
+    return { ok: false, text: books.length
+      ? "Needs Qasaid Muntakhabat / Silk Jawhar"
+      : "No Qasaid / Silk Jawhar in this class" };
+  }
+  const fiqh = sameClass.filter((r) => masulIsFemale(r) &&
+    masulColumnForRow(r) === column &&
+    normaliseMasulText(r.subject).includes("fiqh"));
+  if (!fiqh.length) return { ok: false, text: "No Fiqh in this class" };
+  const top = Math.max(...fiqh.map((r) => Number(r.weekly) || 0));
+  const best = fiqh.filter((r) => (Number(r.weekly) || 0) === top);
+  const taught = best.find((r) => r.teacherKey && r.teacherKey === row.teacherKey);
+  if (taught) return { ok: true, text: taught.bookNameAr || taught.bookName };
+  return { ok: false, text: "Needs Fiqh: " + (best[0].bookNameAr || best[0].bookName) + " (" + top + ")" };
+}
+
 function masulCellHtml(rows, classNumber, column, opts) {
   if (!rows.length) {
     return '<td aria-label="Unassigned Al-Masʾūl class and gender period">—</td>';
   }
   let html = '<td class="masul-slot">';
   rows.forEach((row) => {
-    html += `<div class="masul-assignment"><div class="masul-teacher">
+    const req = masulRequirement(row);
+    html += `<div class="masul-assignment${req.ok ? "" : " masul-missing"}"><div class="masul-teacher">
       ${masulPhotoHtml(row)}
       <span class="masul-slot-teacher" title="${x(row.name || row.its || "Unassigned")}">${x(row.name || row.its || "Unassigned")}</span>
     </div>
@@ -1440,7 +1486,8 @@ function masulCellHtml(rows, classNumber, column, opts) {
       data-row="${row.rowNumber}" data-weekly="${row.weekly}"
       data-old-key="${x(row.teacherKey)}" onchange="reassign(this)">
       ${selectOpts(opts, row.teacherKey)}
-    </select></div>`;
+    </select>
+    <div class="masul-req ${req.ok ? "masul-req-ok" : "masul-req-bad"}" lang="ar">${req.ok ? "✓ " : "⚠ "}${x(req.text)}</div></div>`;
   });
   return html + "</td>";
 }
@@ -1457,6 +1504,10 @@ function renderMasulGrid() {
   }
 
   const opts = buildOpts();
+  const missing = allocations.filter((row) => /^(?:[1-9]|10|11)$/.test(String(row.class || "").trim()) &&
+    !masulRequirement(row).ok).length;
+  const summary = document.getElementById("masul-summary");
+  if (summary) summary.textContent = missing ? `⚠ ${missing} without required book` : "✓ All assigned";
   const columns = ["AM", "BM", "AF", "BF", "CF"];
   const byClass = {};
   allocations.forEach((row) => {
