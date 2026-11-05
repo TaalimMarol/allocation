@@ -175,9 +175,10 @@ with system fonts as fallbacks.
   highlighting and Daerat periods are recalculated only for rows where the
   normalized subject matches the Daerat name.
 - **Subject Distribution** shows a cross-campus matrix filtered by subject and
-  optionally by book. Arabic book names are the columns, class/section names
-  (for example, `4AM` and `4BF`) are the rows, and each cell lists the teachers
-  assigned to that book and class.
+  optionally by book. Arabic book names are the rows, class/section names
+  (for example, `4AM` and `4BF`) are the columns, and each cell lists the
+  teachers assigned to that book and class, without the Mulla/Shaikh/Bhai/Bai
+  honorifics.
 - **Al-Masʾūl** lays out the first 55 matching weekly periods in an 11-row by
   5-column grid. Each populated period shows the assigned teacher and provides
   the same inline teacher reassignment control used elsewhere in the dashboard.
