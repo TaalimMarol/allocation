@@ -145,6 +145,16 @@ select{font:inherit}
 /* ── TABLE ───────────────────────────────────────── */
 .tbl-wrap{overflow-x:auto;max-height:calc(100vh - 175px)}
 table{width:100%;border-collapse:collapse;font-size:12px}
+.subject-matrix{min-width:720px}
+.subject-matrix th:first-child,.subject-matrix tbody th{
+  position:sticky;left:0;z-index:1;min-width:100px;text-align:left;background:#f1f5f9;color:var(--navy)
+}
+.subject-matrix thead th:first-child{z-index:3;background:var(--navy);color:#fff}
+.subject-matrix thead th[lang="ar"]{text-align:center;white-space:normal;min-width:140px}
+.subject-matrix tbody td{min-width:140px;vertical-align:top}
+.subject-matrix-teachers{display:flex;flex-direction:column;gap:3px}
+.subject-matrix-teacher{display:flex;flex-direction:column;gap:3px}
+.subject-matrix .sel{width:100%;min-width:0;font-size:11px}
 thead th{
   background:var(--navy);color:#fff;font-weight:600;
   padding:9px 12px;text-align:left;white-space:nowrap;
@@ -842,14 +852,9 @@ body.measuring-final .final-report{padding:0;max-width:none}
       </div>
       <div class="distribution-controls">
         <label>Subject <select id="subject-select" class="filter-select" onchange="refreshSubjectFilters()"></select></label>
-        <label>Class <select id="subject-class-select" class="filter-select" onchange="refreshSubjectFilters()"></select></label>
         <label>Book <select id="subject-book-select" class="filter-select" onchange="renderSubjectDistribution()"></select></label>
-        <label>Allocation <select id="allocation-select" class="filter-select" onchange="renderSubjectDistribution()">
-          <option value="weekly">1449 Weekly</option>
-          <option value="history">1448 Tafweed</option>
-        </select></label>
       </div>
-      <div class="tbl-wrap" id="subject-tbl"><div class="empty">Select a subject to view its allocations.</div></div>
+      <div class="tbl-wrap" id="subject-tbl"><div class="empty">Select a subject to view its class and teacher distribution.</div></div>
     </div>
   </div>
 
@@ -949,7 +954,6 @@ let editingDaeraKey = null;
 let daeraDraft = "";
 let activeDaeraContext = "";
 let activeSubject  = "";
-let activeSubjectClass = "";
 let activeSubjectBook = "all";
 let historyHeader = "1448 Tafweed";
 let pendingSync    = 0;
@@ -2446,66 +2450,86 @@ function daeraSortOrder(value) {
 
 function populateSubjectFilters() {
   const subjectEl = document.getElementById("subject-select");
-  const classEl = document.getElementById("subject-class-select");
   const bookEl = document.getElementById("subject-book-select");
-  if (!subjectEl || !classEl || !bookEl) return;
+  if (!subjectEl || !bookEl) return;
   const subjects = [...new Set(allRows.map((r) => r.subject).filter(Boolean))].sort((a, b) => a.localeCompare(b));
-  const classes = [...new Set(allRows.map((r) => r.class).filter(Boolean))]
-    .sort((a, b) => Number(a) - Number(b) || a.localeCompare(b));
   if (!activeSubject || subjects.indexOf(activeSubject) === -1) activeSubject = subjects[0] || "";
-  if (!activeSubjectClass || classes.indexOf(activeSubjectClass) === -1) activeSubjectClass = "all";
-  const books = [...new Set(allRows.filter((r) =>
-    r.subject === activeSubject &&
-    (activeSubjectClass === "all" || r.class === activeSubjectClass)
-  ).map((r) => r.bookName).filter(Boolean))].sort((a, b) => a.localeCompare(b));
-  if (!books.includes(activeSubjectBook)) activeSubjectBook = "all";
+  const books = [...new Map(allRows.filter((r) => r.subject === activeSubject && r.bookName)
+    .map((r) => [r.bookName, {
+      name: r.bookName,
+      label: subjectBookLabel(r)
+    }])).values()].sort((a, b) => a.label.localeCompare(b.label) || a.name.localeCompare(b.name));
+  if (!books.some((book) => book.name === activeSubjectBook)) activeSubjectBook = "all";
   subjectEl.innerHTML = subjects.map((s) => `<option value="${x(s)}"${s === activeSubject ? " selected" : ""}>${x(s)}</option>`).join("");
-  classEl.innerHTML = '<option value="all">All classes</option>' +
-    classes.map((c) => `<option value="${x(c)}"${c === activeSubjectClass ? " selected" : ""}>Class ${x(c)}</option>`).join("");
   bookEl.innerHTML = '<option value="all">All books</option>' +
-    books.map((b) => `<option value="${x(b)}"${b === activeSubjectBook ? " selected" : ""}>${x(b)}</option>`).join("");
+    books.map((book) => `<option value="${x(book.name)}"${book.name === activeSubjectBook ? " selected" : ""}>${x(book.label)}</option>`).join("");
+}
+
+function subjectBookLabel(row) {
+  return String(row.bookNameAr || "").trim() || String(row.bookName || "").trim() || "Unspecified book";
 }
 
 function refreshSubjectFilters() {
   const subjectEl = document.getElementById("subject-select");
-  const classEl = document.getElementById("subject-class-select");
-  if (!subjectEl || !classEl) return;
+  const bookEl = document.getElementById("subject-book-select");
+  if (!subjectEl || !bookEl) return;
   activeSubject = subjectEl.value;
-  activeSubjectClass = classEl.value;
+  activeSubjectBook = bookEl.value;
   populateSubjectFilters();
   renderSubjectDistribution();
 }
 
 function renderSubjectDistribution() {
   const subjectEl = document.getElementById("subject-select");
-  const classEl = document.getElementById("subject-class-select");
   const bookEl = document.getElementById("subject-book-select");
-  if (!subjectEl || !classEl || !bookEl) return;
+  if (!subjectEl || !bookEl) return;
   activeSubject = subjectEl.value;
-  activeSubjectClass = classEl.value;
   activeSubjectBook = bookEl.value;
-  const mode = document.getElementById("allocation-select").value;
   const rows = allRows.filter((r) => r.subject === activeSubject &&
-    (activeSubjectClass === "all" || r.class === activeSubjectClass) &&
     (activeSubjectBook === "all" || r.bookName === activeSubjectBook))
-    .sort((a, b) => Number(a.class) - Number(b.class) || a.shorthand.localeCompare(b.shorthand));
+    .sort((a, b) => Number(a.class) - Number(b.class) ||
+      String(a.shorthand || "").localeCompare(String(b.shorthand || "")));
   const wrap = document.getElementById("subject-tbl");
   if (!rows.length) {
     wrap.innerHTML = '<div class="empty">No allocations match these selections.</div>';
     return;
   }
-  const opts = buildOpts();
-  let html = `<table><thead><tr><th>Teacher</th><th>Class</th><th>Book</th>
-    <th style="text-align:center">${mode === "history" ? x(historyHeader) : "1449 Weekly"}</th>
-    <th>Reassign To</th></tr></thead><tbody>`;
+  const books = [...new Map(rows.map((row) => {
+    const name = subjectBookLabel(row);
+    return [name, name];
+  })).values()].sort((a, b) => a.localeCompare(b));
+  const classes = [...new Map(rows.map((row) => {
+    const name = String(row.shorthand || row.class || "").trim() || "Unspecified class";
+    return [name, { name, number: Number(row.class) || 0 }];
+  })).values()].sort((a, b) => a.number - b.number || a.name.localeCompare(b.name));
+  const teachersByClassAndBook = new Map();
   rows.forEach((row) => {
-    const periods = row[mode === "history" ? "periods1448" : "weekly"];
-    html += `<tr data-subject-color="${x(subjectColorKey(row.subject))}"><td>${x(row.name || row.its || "Unassigned")}</td>
-      <td><span class="badge">${x(row.class + " · " + row.shorthand)}</span></td>
-      <td>${x(row.bookName)}</td>
-      <td class="num" style="text-align:center">${periods || "—"}</td>
-      <td><select class="sel" data-row="${row.rowNumber}" data-weekly="${row.weekly}"
-        data-old-key="${x(row.teacherKey)}" onchange="reassign(this)">${selectOpts(opts, row.teacherKey)}</select></td></tr>`;
+    const className = String(row.shorthand || row.class || "").trim() || "Unspecified class";
+    const bookName = subjectBookLabel(row);
+    const key = `${className}\u0000${bookName}`;
+    if (!teachersByClassAndBook.has(key)) teachersByClassAndBook.set(key, new Map());
+    const teacherName = String(row.name || "").trim() || String(row.its || "").trim() || "Unassigned";
+    const teachers = teachersByClassAndBook.get(key);
+    if (!teachers.has(teacherName)) teachers.set(teacherName, []);
+    teachers.get(teacherName).push(row);
+  });
+  const opts = buildOpts();
+  let html = '<table class="subject-matrix"><thead><tr><th scope="col">Class</th>';
+  html += books.map((book) => `<th scope="col" lang="ar">${x(book)}</th>`).join("");
+  html += "</tr></thead><tbody>";
+  classes.forEach((classItem) => {
+    html += `<tr><th scope="row">${x(classItem.name)}</th>`;
+    books.forEach((book) => {
+      const teachersForCell = [...(teachersByClassAndBook.get(`${classItem.name}\u0000${book}`) || new Map())]
+        .sort(([a], [b]) => a.localeCompare(b));
+      html += `<td><div class="subject-matrix-teachers">${teachersForCell.map(([teacher, assignments]) => `
+        <div class="subject-matrix-teacher"><span>${x(teacher)}</span>
+          ${assignments.map((row) => `<select class="sel" aria-label="Reassign ${x(teacher)} in ${x(classItem.name)}"
+            data-row="${row.rowNumber}" data-weekly="${row.weekly}" data-old-key="${x(row.teacherKey)}"
+            onchange="reassign(this)">${selectOpts(opts, row.teacherKey)}</select>`).join("")}
+        </div>`).join("")}</div></td>`;
+    });
+    html += "</tr>";
   });
   wrap.innerHTML = html + "</tbody></table>";
 }

@@ -174,9 +174,10 @@ with system fonts as fallbacks.
   change applies to that teacher's allocation rows in `1449Working`; workload
   highlighting and Daerat periods are recalculated only for rows where the
   normalized subject matches the Daerat name.
-- **Subject Distribution** can be filtered by subject, class, and optionally
-  book name. It lists teacher, class/section, book, and either 1449 weekly or
-  the detected `1448Tafweed` history value.
+- **Subject Distribution** shows a cross-campus matrix filtered by subject and
+  optionally by book. Arabic book names are the columns, class/section names
+  (for example, `4AM` and `4BF`) are the rows, and each cell lists the teachers
+  assigned to that book and class.
 - **Al-Masʾūl** lays out the first 55 matching weekly periods in an 11-row by
   5-column grid. Each populated period shows the assigned teacher and provides
   the same inline teacher reassignment control used elsewhere in the dashboard.
