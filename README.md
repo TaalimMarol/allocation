@@ -175,8 +175,9 @@ with system fonts as fallbacks.
   highlighting and Daerat periods are recalculated only for rows where the
   normalized subject matches the Daerat name.
 - **Subject Distribution** shows a cross-campus matrix filtered by subject and
-  optionally by book. Arabic book names are the rows, class/section names
-  (for example, `4AM` and `4BF`) are the columns, and each cell lists the
+  optionally by book.   Arabic book names are fixed-width, wrapped columns and class/section names
+    (for example, `4AM` and `4BF`) are the rows, split into the four Al-Masʾūl
+    groups (Cultural Generale a/b, Collegiate one/two). Each cell lists the
   teachers assigned to that book and class (with their photos), shown as first
   and last name without the Mulla/Shaikh/Bhai/Bai honorifics or father's name.
 - **Photos** are served as small Drive thumbnails, cached server-side for six

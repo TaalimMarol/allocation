@@ -146,9 +146,10 @@ select{font:inherit}
 .tbl-wrap{overflow-x:auto;max-height:calc(100vh - 175px)}
 table{width:100%;border-collapse:collapse;font-size:12px}
 .subject-matrix{table-layout:fixed;min-width:0;font-size:10px}
-.subject-matrix thead th{padding:5px 2px;text-align:center;white-space:normal;font-size:10px}
-.subject-matrix thead th:first-child{width:150px}
-.subject-matrix tbody th{width:150px;padding:4px 6px;text-align:right;background:#f1f5f9;color:var(--navy);font-size:12px;border:1px solid #e2e8f0}
+.subject-matrix-wrap{padding:12px}
+.subject-matrix-class-col{width:64px}
+.subject-matrix thead th{position:static;padding:5px 3px;text-align:center;white-space:normal;overflow-wrap:anywhere;line-height:1.3;font-size:11px}
+.subject-matrix tbody th{padding:4px 6px;text-align:center;background:#f1f5f9;color:var(--navy);font-size:12px;border:1px solid #e2e8f0}
 .subject-matrix tbody td{padding:2px 3px;vertical-align:top;text-align:center;border:1px solid #e2e8f0;overflow-wrap:anywhere}
 .subject-matrix-teacher{display:flex;flex-direction:column;align-items:center;gap:1px;margin-bottom:3px;line-height:1.2}
 .subject-matrix-photo{width:30px;height:30px;border-radius:50%;object-fit:cover;background:var(--badge-bg)}
@@ -2602,28 +2603,44 @@ function renderSubjectDistribution() {
     const teachers = teachersByClassAndBook.get(key);
     if (!teachers.has(teacherName)) teachers.set(teacherName, row);
   });
-  let html = '<table class="subject-matrix"><thead><tr><th scope="col" lang="ar">Book</th>';
-  html += classes.map((c) => `<th scope="col">${x(c.name)}</th>`).join("");
-  html += "</tr></thead><tbody>";
-  books.forEach((book) => {
-    html += `<tr><th scope="row" lang="ar">${x(book)}</th>`;
-    classes.forEach((classItem) => {
-      const teachersForCell = [...(teachersByClassAndBook.get(`${classItem.name}\u0000${book}`) || new Map())]
-        .map(([name, row]) => ({ short: shortTeacherName(name), row }))
-        .sort((a, b) => a.short.localeCompare(b.short));
-      html += `<td>${teachersForCell.map((t) => {
-        const photo = getPhoto(t.row.its);
-        const avatar = photo
-          ? `<img class="subject-matrix-photo" loading="lazy" src="${x(photo)}" alt="">`
-          : `<span class="subject-matrix-photo subject-matrix-initial" aria-hidden="true">${x(t.short.charAt(0).toUpperCase())}</span>`;
-        return `<span class="subject-matrix-teacher">${avatar}<span>${x(t.short)}</span></span>`;
-      }).join("")}</td>`;
+  const groups = [
+    { name: "Cultural Generale a", classes: [1, 2] },
+    { name: "Cultural Generale b", classes: [3, 4] },
+    { name: "Collegiate one", classes: [5, 6, 7] },
+    { name: "Collegiate two", classes: [8, 9, 10, 11] }
+  ];
+  const known = new Set(groups.flatMap((g) => g.classes));
+  const other = classes.filter((c) => !known.has(c.number));
+  if (other.length) groups.push({ name: "Other", classes: [], extra: other });
+  const colgroup = `<colgroup><col class="subject-matrix-class-col">${books.map(() => "<col>").join("")}</colgroup>`;
+  const head = `<thead><tr><th scope="col">Class</th>${books.map((book) =>
+    `<th scope="col" lang="ar">${x(book)}</th>`).join("")}</tr></thead>`;
+  const cellHtml = (key) => {
+    const teachersForCell = [...(teachersByClassAndBook.get(key) || new Map())]
+      .map(([name, row]) => ({ short: shortTeacherName(name), row }))
+      .sort((a, b) => a.short.localeCompare(b.short));
+    return `<td>${teachersForCell.map((t) => {
+      const photo = getPhoto(t.row.its);
+      const avatar = photo
+        ? `<img class="subject-matrix-photo" loading="lazy" src="${x(photo)}" alt="">`
+        : `<span class="subject-matrix-photo subject-matrix-initial" aria-hidden="true">${x(t.short.charAt(0).toUpperCase())}</span>`;
+      return `<span class="subject-matrix-teacher">${avatar}<span>${x(t.short)}</span></span>`;
+    }).join("")}</td>`;
+  };
+  let html = '<div class="subject-matrix-wrap">';
+  groups.forEach((group) => {
+    const groupClasses = group.extra || classes.filter((c) => group.classes.includes(c.number));
+    if (!groupClasses.length) return;
+    html += `<section class="masul-group"><div class="masul-group-title">${x(group.name)}</div>
+      <table class="subject-matrix">${colgroup}${head}<tbody>`;
+    groupClasses.forEach((classItem) => {
+      html += `<tr><th scope="row">${x(classItem.name)}</th>${books.map((book) =>
+        cellHtml(`${classItem.name}\u0000${book}`)).join("")}</tr>`;
     });
-    html += "</tr>";
+    html += "</tbody></table></section>";
   });
-  wrap.innerHTML = html + "</tbody></table>";
+  wrap.innerHTML = html + "</div>";
 }
-
 function shortTeacherName(name) {
   const parts = String(name).split(/\s+/)
     .filter((part) => part && !/^(mulla|shaikh|bhai|bai)$/i.test(part));
