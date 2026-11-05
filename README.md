@@ -252,3 +252,7 @@ Changes update every view immediately.
 - Keep the Apps Script deployment restricted to the intended Google accounts
   through `allowedEmails`.
 - Redeploy the Apps Script after changing `Code.gs`.
+
+### AI Insights
+
+The **?? AI Insights** tab runs a rule-based analysis over the live data (1448 vs 1449 teachers): headline continuity numbers, workload gainers/losers and overload changes, subject churn, Al-Masul compliance, teacher fragmentation, and the effect of reassignments made in the current session, with plain-language comments. It runs entirely in the browser; report can be downloaded or printed. Click **Run analysis** again after changing allocations.

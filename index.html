@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
@@ -727,6 +727,10 @@ body.measuring-final .final-report{padding:0;max-width:none}
 .final-report .teacher-report-table td.cls-cell{direction:ltr;unicode-bidi:isolate;text-align:center}
 .final-report .teacher-report-table tbody td.teacher-report-old{color:#dc2626;font-weight:800;text-decoration:underline}
 .final-report .teacher-report-section{break-inside:avoid}
+.ai-report h3 { margin: 16px 0 6px; }
+.ai-report li { margin: 3px 0; }
+.ai-comment { color: #1a4f8b; font-style: italic; list-style: none; }
+.ai-note { color: #777; font-size: 12px; margin-top: 14px; }
 </style>
 </head>
 <body>
@@ -779,6 +783,7 @@ body.measuring-final .final-report{padding:0;max-width:none}
     <button class="nav-tab"       id="tab-daera" onclick="switchView('daera')">DAWAIR Distribution</button>
     <button class="nav-tab"       id="tab-life-skills" onclick="switchView('life-skills')">Life Skills teaching</button>
     <button class="nav-tab"       id="tab-curriculum" onclick="switchView('curriculum')">Curriculum Simulator</button>
+    <button class="nav-tab"       id="tab-ai" onclick="switchView('ai')">🤖 AI Insights</button>
     <button class="nav-tab"       id="tab-musanid" onclick="switchView('musanid')">Musanid Allocation</button>
   </div>
   <div class="nav-right">
@@ -923,6 +928,19 @@ body.measuring-final .final-report{padding:0;max-width:none}
     </section>
   </div>
   <div id="print-all"></div>
+  </div>
+
+  <!-- AI INSIGHTS VIEW -->
+  <div class="view" id="view-ai">
+    <div class="panel">
+      <div class="panel-hdr"><h2>🤖 AI Insights</h2></div>
+      <div class="distribution-controls">
+        <button class="cb-btn" onclick="runAiAnalysis()">Run analysis</button>
+        <button class="cb-btn" onclick="downloadAiReport()">Download</button>
+        <button class="cb-btn" onclick="printAiReport()">Print</button>
+      </div>
+      <div id="ai-report" class="ai-report"></div>
+    </div>
   </div>
 
   <!-- MUSANID ALLOCATION VIEW -->
@@ -1151,6 +1169,7 @@ async function loadData() {
     departmentPeriodRows = data.departmentPeriodRows || [];
     historyHeader = data.historyHeader || "1448 Tafweed";
     buildTeacherIndex();
+    aiBaseline = new Map(allRows.map((r) => [r.rowNumber, r.teacherKey || ""]));
     setPhotos(await cachedPhotosPromise);
 
     hideLoading();
@@ -1323,6 +1342,166 @@ function switchView(v) {
   if (v === "masul") renderMasulGrid();
   if (v === "subject") renderSubjectDistribution();
   if (v === "analytics") renderAnalytics();
+  if (v === "ai" && !document.getElementById("ai-report").innerHTML.trim()) runAiAnalysis();
+}
+
+// ================================================================
+//  AI INSIGHTS (rule-based analysis of live data; runs in the browser)
+// ================================================================
+let aiBaseline = new Map();
+let aiLastText = "";
+
+function aiAnalyse() {
+  const nameOf = {};
+  const ownerPeriods = (rows, keyOf) => {
+    const m = {};
+    rows.forEach((r) => { const k = keyOf(r); if (k) m[k] = (m[k] || 0) + (Number(r.weekly) || 0); });
+    return m;
+  };
+  allRows.forEach((r) => {
+    if (r.teacherKey && r.name) nameOf[r.teacherKey] = r.name;
+    if (r.h1448 && r.h1448.key && r.h1448.name && !nameOf[r.h1448.key]) nameOf[r.h1448.key] = r.h1448.name;
+  });
+  const nm = (k) => shortTeacherName(nameOf[k] || k);
+  const p48 = ownerPeriods(allRows, (r) => r.h1448 && r.h1448.key);
+  const p49 = ownerPeriods(allRows, (r) => r.teacherKey);
+  const keys = [...new Set([...Object.keys(p48), ...Object.keys(p49)])];
+  const deltas = keys.map((k) => ({ k, a: p48[k] || 0, b: p49[k] || 0, d: (p49[k] || 0) - (p48[k] || 0) }));
+
+  const withHist = allRows.filter((r) => r.h1448 && r.h1448.key);
+  const unassigned = allRows.filter((r) => !r.teacherKey);
+  const changed = withHist.filter((r) => r.teacherKey && r.teacherKey !== r.h1448.key);
+  const retained = withHist.filter((r) => r.teacherKey && r.teacherKey === r.h1448.key);
+  const pct = (a, b) => (b ? Math.round((a / b) * 100) : 0);
+
+  const bySubject = {};
+  withHist.forEach((r) => {
+    const s = r.subject || "—";
+    const o = bySubject[s] || (bySubject[s] = { n: 0, ch: 0 });
+    o.n++;
+    if (r.teacherKey && r.teacherKey !== r.h1448.key) o.ch++;
+  });
+  const churn = Object.entries(bySubject).filter(([, o]) => o.n >= 3)
+    .map(([s, o]) => ({ s, n: o.n, ch: o.ch, p: pct(o.ch, o.n) })).sort((a, b) => b.p - a.p || b.n - a.n);
+
+  const classTeachers = {};
+  allRows.forEach((r) => {
+    if (!r.teacherKey) return;
+    const o = classTeachers[r.teacherKey] || (classTeachers[r.teacherKey] = new Set());
+    o.add(String(r.class || "") + "|" + String(r.subject || ""));
+  });
+  const fragmented = Object.entries(classTeachers).map(([k, s]) => ({ k, n: s.size, p: p49[k] || 0 }))
+    .filter((o) => o.n >= 6).sort((a, b) => b.n - a.n);
+
+  const masulRows = allRows.filter((r) => isMasulRow(r));
+  const masulBad = masulRows.filter((r) => !masulRequirement(r).ok);
+
+  const moves = allRows.filter((r) => aiBaseline.has(r.rowNumber) && aiBaseline.get(r.rowNumber) !== (r.teacherKey || ""))
+    .map((r) => ({ r, from: aiBaseline.get(r.rowNumber), to: r.teacherKey || "" }));
+  const base = {};
+  aiBaseline.forEach((k, rn) => { if (k) base[k] = 0; });
+  allRows.forEach((r) => { const k = aiBaseline.get(r.rowNumber); if (k) base[k] = (base[k] || 0) + (Number(r.weekly) || 0); });
+  const nowOver = Object.keys(p49).filter((k) => p49[k] > 30);
+  const baseOver = Object.keys(base).filter((k) => base[k] > 30);
+  const over48 = Object.keys(p48).filter((k) => p48[k] > 30);
+
+  return { nm, p48, p49, base, deltas, withHist, unassigned, changed, retained, pct, churn, fragmented,
+    masulRows, masulBad, moves, nowOver, baseOver, over48 };
+}
+
+function aiBuildReport() {
+  const a = aiAnalyse();
+  const { nm, pct } = a;
+  const L = [];
+  const sec = (t) => L.push({ h: t });
+  const li = (t) => L.push({ li: t });
+  const ai = (t) => L.push({ ai: t });
+  const gain = a.deltas.filter((d) => d.d > 0).sort((p, q) => q.d - p.d).slice(0, 5);
+  const lose = a.deltas.filter((d) => d.d < 0).sort((p, q) => p.d - q.d).slice(0, 5);
+  const zero = a.deltas.filter((d) => d.a > 0 && d.b === 0);
+  const totalRows = allRows.length;
+  const keepPct = pct(a.retained.length, a.withHist.length);
+
+  sec("1. Headline numbers (1448 vs 1449)");
+  li(`${totalRows} allocation rows; ${a.withHist.length} have a 1448 teacher on record.`);
+  li(`Same teacher kept: ${a.retained.length} (${keepPct}%). Teacher changed: ${a.changed.length} (${pct(a.changed.length, a.withHist.length)}%).`);
+  li(`Rows with no 1449 teacher yet: ${a.unassigned.length}.`);
+  li(`Teachers over 30 periods: ${a.over48.length} in 1448 → ${a.nowOver.length} in 1449.`);
+  ai(keepPct >= 70
+    ? `Continuity is strong: about ${keepPct}% of books stay with their 1448 teacher, so students see few new faces.`
+    : `Continuity is low: only ${keepPct}% of books stay with their 1448 teacher. Check that each change is deliberate, as it affects teaching continuity.`);
+  if (a.unassigned.length) ai(`${a.unassigned.length} rows are still unassigned. These should be filled before the final report is printed.`);
+
+  sec("2. Workload shifts");
+  gain.forEach((d) => li(`▲ ${nm(d.k)}: ${d.a} → ${d.b} periods (+${d.d})`));
+  lose.forEach((d) => li(`▼ ${nm(d.k)}: ${d.a} → ${d.b} periods (${d.d})`));
+  if (zero.length) li(`Teachers with periods in 1448 and none in 1449: ${zero.map((d) => nm(d.k)).join("، ")}`);
+  const newOver = a.nowOver.filter((k) => !a.over48.includes(k));
+  if (newOver.length) ai(`${newOver.length} teacher(s) are newly overloaded (above 30): ${newOver.map((k) => `${nm(k)} (${a.p49[k]})`).join("، ")}. Consider moving a book to a teacher who is below the limit.`);
+  else ai("No teacher has newly crossed the 30-period limit.");
+  if (zero.length) ai(`${zero.length} teacher(s) lost all their teaching periods. Please confirm this is intended and not a missed allocation.`);
+
+  sec("3. Subject churn");
+  a.churn.slice(0, 5).forEach((c) => li(`${c.s}: ${c.ch} of ${c.n} rows changed teacher (${c.p}%)`));
+  if (a.churn.length && a.churn[0].p >= 50) ai(`${a.churn[0].s} has the most turnover (${a.churn[0].p}%). It is worth confirming that the new teachers are qualified for it.`);
+
+  sec("4. Al-Masʾūl compliance");
+  li(`Al-Masʾūl rows: ${a.masulRows.length}; not meeting the required book: ${a.masulBad.length}.`);
+  a.masulBad.slice(0, 8).forEach((r) => li(`${nm(r.teacherKey)} — class ${r.class}${r.section || ""} (${masulRequirement(r).text})`));
+  ai(a.masulBad.length ? `${a.masulBad.length} Al-Masʾūl allocation(s) need attention. Fix them in the Comparison or Workload modules, then re-run this analysis.` : "All Al-Masʾūl teachers meet their required book.");
+
+  sec("5. Teacher fragmentation");
+  a.fragmented.slice(0, 5).forEach((f) => li(`${nm(f.k)} teaches ${f.n} different class/subject combinations (${f.p} periods)`));
+  if (a.fragmented.length) ai("Teachers who split across many classes and subjects carry more preparation work. Consolidating them can balance the load.");
+  else ai("No teacher is spread across an unusually large number of class and subject combinations.");
+
+  sec("6. Changes made in this session");
+  if (!a.moves.length) li("No reassignments yet since the data was loaded.");
+  else {
+    li(`${a.moves.length} reassignment(s) made.`);
+    a.moves.slice(0, 15).forEach((m) => li(`Class ${m.r.class}${m.r.section || ""} ${m.r.subject || ""}: ${a.nm(m.from)} → ${a.nm(m.to)}`));
+    const rel = a.baseOver.filter((k) => !a.nowOver.includes(k));
+    const added = a.nowOver.filter((k) => !a.baseOver.includes(k));
+    li(`Overloaded teachers: ${a.baseOver.length} before → ${a.nowOver.length} after.`);
+    ai(rel.length || added.length
+      ? `Your changes relieved ${rel.length} overloaded teacher(s) and created ${added.length} new one(s).`
+      : "Your changes did not alter who is overloaded.");
+  }
+  return L;
+}
+
+function runAiAnalysis() {
+  if (!allRows.length) { toast("Load data first.", true); return; }
+  const items = aiBuildReport();
+  const txt = [];
+  let html = "";
+  let open = false;
+  items.forEach((i) => {
+    if (i.h) { if (open) html += "</ul>"; html += `<h3>${x(i.h)}</h3><ul>`; open = true; txt.push("", i.h); }
+    else if (i.li) { html += `<li>${x(i.li)}</li>`; txt.push("  - " + i.li); }
+    else { html += `<li class="ai-comment">🤖 ${x(i.ai)}</li>`; txt.push("  [AI] " + i.ai); }
+  });
+  if (open) html += "</ul>";
+  html += `<p class="ai-note">Generated ${x(new Date().toLocaleString())} from live data. This is a rule-based analysis computed in your browser; no data leaves it.</p>`;
+  document.getElementById("ai-report").innerHTML = html;
+  aiLastText = "Allocation AI Insights\n" + txt.join("\n");
+}
+
+function downloadAiReport() {
+  if (!aiLastText) runAiAnalysis();
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([aiLastText], { type: "text/plain;charset=utf-8" }));
+  a.download = "allocation-ai-insights.txt";
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+
+function printAiReport() {
+  const w = window.open("", "_blank");
+  if (!w) { toast("Allow pop-ups to print.", true); return; }
+  w.document.write(`<html><head><meta charset="utf-8"><title>AI Insights</title><style>body{font-family:sans-serif;padding:20px}.ai-comment{color:#1a4f8b;font-style:italic}</style></head><body><h2>Allocation AI Insights</h2>${document.getElementById("ai-report").innerHTML}</body></html>`);
+  w.document.close();
+  w.print();
 }
 
 // ================================================================
