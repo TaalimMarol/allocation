@@ -2525,9 +2525,10 @@ function renderSubjectDistribution() {
 }
 
 function shortTeacherName(name) {
-  const short = String(name).split(/\s+/)
-    .filter((part) => !/^(mulla|shaikh|bhai|bai)$/i.test(part)).join(" ");
-  return short || String(name);
+  const parts = String(name).split(/\s+/)
+    .filter((part) => part && !/^(mulla|shaikh|bhai|bai)$/i.test(part));
+  if (!parts.length) return String(name);
+  return parts.length > 2 ? `${parts[0]} ${parts[parts.length - 1]}` : parts.join(" ");
 }
 
 // ================================================================

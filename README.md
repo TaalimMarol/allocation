@@ -177,8 +177,8 @@ with system fonts as fallbacks.
 - **Subject Distribution** shows a cross-campus matrix filtered by subject and
   optionally by book. Arabic book names are the rows, class/section names
   (for example, `4AM` and `4BF`) are the columns, and each cell lists the
-  teachers assigned to that book and class, without the Mulla/Shaikh/Bhai/Bai
-  honorifics.
+  teachers assigned to that book and class, shown as first and last name
+  without the Mulla/Shaikh/Bhai/Bai honorifics or father's name.
 - **Al-Masʾūl** lays out the first 55 matching weekly periods in an 11-row by
   5-column grid. Each populated period shows the assigned teacher and provides
   the same inline teacher reassignment control used elsewhere in the dashboard.
