@@ -150,7 +150,9 @@ table{width:100%;border-collapse:collapse;font-size:12px}
 .subject-matrix thead th:first-child{width:150px}
 .subject-matrix tbody th{width:150px;padding:4px 6px;text-align:right;background:#f1f5f9;color:var(--navy);font-size:12px;border:1px solid #e2e8f0}
 .subject-matrix tbody td{padding:2px 3px;vertical-align:top;text-align:center;border:1px solid #e2e8f0;overflow-wrap:anywhere}
-.subject-matrix-teacher{display:block;line-height:1.25}
+.subject-matrix-teacher{display:flex;flex-direction:column;align-items:center;gap:1px;margin-bottom:3px;line-height:1.2}
+.subject-matrix-photo{width:30px;height:30px;border-radius:50%;object-fit:cover;background:var(--badge-bg)}
+.subject-matrix-initial{display:inline-flex;align-items:center;justify-content:center;color:var(--badge-txt);font-size:12px;font-weight:700}
 thead th{
   background:var(--navy);color:#fff;font-weight:600;
   padding:9px 12px;text-align:left;white-space:nowrap;
@@ -1119,6 +1121,7 @@ resetIdleTimer();
 // ================================================================
 async function loadData() {
   showLoading("Loading sheet data…");
+  const cachedPhotosPromise = loadCachedPhotos();
   try {
     const [dataResponse, departmentResponse] = await Promise.all([
       apiFetch("data"),
@@ -1139,6 +1142,7 @@ async function loadData() {
     departmentPeriodRows = data.departmentPeriodRows || [];
     historyHeader = data.historyHeader || "1448 Tafweed";
     buildTeacherIndex();
+    setPhotos(await cachedPhotosPromise);
 
     hideLoading();
     show("nav"); show("main");
@@ -1162,20 +1166,60 @@ async function loadData() {
   }
 }
 
+// Photos are kept in IndexedDB so repeat visits show them instantly,
+// while a background fetch refreshes them.
+const PHOTO_DB = "allocation-photos";
+function photoDb() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(PHOTO_DB, 1);
+    req.onupgradeneeded = () => req.result.createObjectStore("kv");
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+async function loadCachedPhotos() {
+  try {
+    const db = await photoDb();
+    return await new Promise((resolve) => {
+      const req = db.transaction("kv").objectStore("kv").get("photos");
+      req.onsuccess = () => resolve(req.result || {});
+      req.onerror = () => resolve({});
+    });
+  } catch (_) { return {}; }
+}
+async function saveCachedPhotos(data) {
+  try {
+    const db = await photoDb();
+    db.transaction("kv", "readwrite").objectStore("kv").put(data, "photos");
+  } catch (_) { /* cache is best effort */ }
+}
+function setPhotos(data) {
+  photos = data || {};
+  photoIndex = null;
+}
+function refreshPhotoViews() {
+  document.querySelectorAll("[data-photo-its]").forEach((el) => {
+    const its = el.dataset.photoIts;
+    if (getPhoto(its)) swapPhoto(el, its);
+  });
+  renderMasulGrid();
+  window.cmp.refresh();
+  if (activeReportKey) renderTeacherReport(activeReportKey);
+  if (document.getElementById("view-subject").classList.contains("active")) renderSubjectDistribution();
+}
+
 async function fetchPhotos() {
   try {
     const r = await apiFetch("photos");
     if (!r.ok) return;
-    photos = await r.json();
-    if (photos.error) return;
-    // Patch any already-rendered placeholders
-    document.querySelectorAll("[data-photo-its]").forEach((el) => {
-      const its = el.dataset.photoIts;
-      if (photos[its]) swapPhoto(el, its);
-    });
-    renderMasulGrid();
-    window.cmp.refresh();
-    if (activeReportKey) renderTeacherReport(activeReportKey);
+    const fresh = await r.json();
+    if (fresh.error) return;
+    const changed = JSON.stringify(Object.keys(fresh).sort()) !== JSON.stringify(Object.keys(photos).sort()) ||
+      Object.keys(fresh).some((k) => fresh[k] !== photos[k]);
+    saveCachedPhotos(fresh);
+    if (!changed) return;
+    setPhotos(fresh);
+    refreshPhotoViews();
   } catch (_) { /* silent */ }
 }
 
@@ -2506,8 +2550,7 @@ function renderSubjectDistribution() {
     if (!teachersByClassAndBook.has(key)) teachersByClassAndBook.set(key, new Map());
     const teacherName = String(row.name || "").trim() || String(row.its || "").trim() || "Unassigned";
     const teachers = teachersByClassAndBook.get(key);
-    if (!teachers.has(teacherName)) teachers.set(teacherName, []);
-    teachers.get(teacherName).push(row);
+    if (!teachers.has(teacherName)) teachers.set(teacherName, row);
   });
   let html = '<table class="subject-matrix"><thead><tr><th scope="col" lang="ar">Book</th>';
   html += classes.map((c) => `<th scope="col">${x(c.name)}</th>`).join("");
@@ -2515,9 +2558,16 @@ function renderSubjectDistribution() {
   books.forEach((book) => {
     html += `<tr><th scope="row" lang="ar">${x(book)}</th>`;
     classes.forEach((classItem) => {
-      const teachersForCell = [...(teachersByClassAndBook.get(`${classItem.name}\u0000${book}`) || new Map()).keys()]
-        .map(shortTeacherName).sort((a, b) => a.localeCompare(b));
-      html += `<td>${teachersForCell.map((t) => `<span class="subject-matrix-teacher">${x(t)}</span>`).join("")}</td>`;
+      const teachersForCell = [...(teachersByClassAndBook.get(`${classItem.name}\u0000${book}`) || new Map())]
+        .map(([name, row]) => ({ short: shortTeacherName(name), row }))
+        .sort((a, b) => a.short.localeCompare(b.short));
+      html += `<td>${teachersForCell.map((t) => {
+        const photo = getPhoto(t.row.its);
+        const avatar = photo
+          ? `<img class="subject-matrix-photo" loading="lazy" src="${x(photo)}" alt="">`
+          : `<span class="subject-matrix-photo subject-matrix-initial" aria-hidden="true">${x(t.short.charAt(0).toUpperCase())}</span>`;
+        return `<span class="subject-matrix-teacher">${avatar}<span>${x(t.short)}</span></span>`;
+      }).join("")}</td>`;
     });
     html += "</tr>";
   });
@@ -2756,16 +2806,17 @@ function swapPhoto(el, its) {
   el.replaceWith(img);
 }
 
+let photoIndex = null;
 function getPhoto(its) {
-  const requested = String(its || "").replace(/\D/g, "");
+  const requested = String(its || "").replace(/\D/g, "").replace(/^0+/, "");
   if (!requested) return "";
-  const requestedWithoutZeros = requested.replace(/^0+/, "");
-  const photoKey = Object.keys(photos).find((key) => {
-    const keyDigits = String(key).replace(/\D/g, "");
-    return keyDigits === requested ||
-      keyDigits.replace(/^0+/, "") === requestedWithoutZeros;
-  });
-  return photoKey ? photos[photoKey] : "";
+  if (!photoIndex) {
+    photoIndex = new Map();
+    Object.keys(photos).forEach((key) => {
+      photoIndex.set(String(key).replace(/\D/g, "").replace(/^0+/, ""), photos[key]);
+    });
+  }
+  return photoIndex.get(requested) || "";
 }
 
 // ================================================================

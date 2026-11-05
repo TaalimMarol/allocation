@@ -547,23 +547,51 @@ function syncRow_(rowNumber, newIts, newName) {
 
 function getTeacherPhotos_() {
   if (!CONFIG.photoFolderId || CONFIG.photoFolderId.indexOf("PASTE_") === 0) return {};
+  const entries = [];
+  collectPhotoEntries_(DriveApp.getFolderById(CONFIG.photoFolderId), entries);
+
+  // Each photo is cached under its file id + modified time, so edits invalidate it.
+  const cache = CacheService.getScriptCache();
+  const cached = cache.getAll(entries.map(function (e) { return e.cacheKey; }));
   const result = {};
-  collectTeacherPhotos_(DriveApp.getFolderById(CONFIG.photoFolderId), result);
+  const toStore = {};
+  entries.forEach(function (entry) {
+    let photo = cached[entry.cacheKey];
+    if (!photo) {
+      photo = photoDataUri_(entry.file);
+      if (photo.length < 95000) toStore[entry.cacheKey] = photo;
+    }
+    result[entry.its] = photo;
+  });
+  if (Object.keys(toStore).length) {
+    try { cache.putAll(toStore, 21600); } catch (err) { /* cache is best effort */ }
+  }
   return result;
 }
 
-function collectTeacherPhotos_(folder, result) {
+// Small thumbnails keep the payload light; fall back to the original image.
+function photoDataUri_(file) {
+  let blob = null;
+  try { blob = file.getThumbnail(); } catch (err) { blob = null; }
+  if (!blob) blob = file.getBlob();
+  return "data:" + blob.getContentType() + ";base64," + Utilities.base64Encode(blob.getBytes());
+}
+
+function collectPhotoEntries_(folder, entries) {
   const files = folder.getFiles();
   while (files.hasNext()) {
     const file = files.next();
     if (String(file.getMimeType()).toLowerCase().indexOf("image/") !== 0) continue;
     const match = file.getName().trim().match(/(?:^|[^0-9])(\d{8})(?:[^0-9]|$)/);
     if (!match) continue;
-    result[match[1]] = "data:" + file.getMimeType() + ";base64," +
-      Utilities.base64Encode(file.getBlob().getBytes());
+    entries.push({
+      its: match[1],
+      file: file,
+      cacheKey: "photo:" + file.getId() + ":" + file.getLastUpdated().getTime()
+    });
   }
   const folders = folder.getFolders();
-  while (folders.hasNext()) collectTeacherPhotos_(folders.next(), result);
+  while (folders.hasNext()) collectPhotoEntries_(folders.next(), entries);
 }
 
 function getSheet_() {

@@ -177,8 +177,11 @@ with system fonts as fallbacks.
 - **Subject Distribution** shows a cross-campus matrix filtered by subject and
   optionally by book. Arabic book names are the rows, class/section names
   (for example, `4AM` and `4BF`) are the columns, and each cell lists the
-  teachers assigned to that book and class, shown as first and last name
-  without the Mulla/Shaikh/Bhai/Bai honorifics or father's name.
+  teachers assigned to that book and class (with their photos), shown as first
+  and last name without the Mulla/Shaikh/Bhai/Bai honorifics or father's name.
+- **Photos** are served as small Drive thumbnails, cached server-side for six
+  hours and in the browser (IndexedDB), so repeat visits show them instantly
+  while a background refresh updates them. Redeploy `Code.gs` after changing it.
 - **Al-Masʾūl** lays out the first 55 matching weekly periods in an 11-row by
   5-column grid. Each populated period shows the assigned teacher and provides
   the same inline teacher reassignment control used elsewhere in the dashboard.
