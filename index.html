@@ -1445,24 +1445,23 @@ function isMasulMaleBook(row) {
     (arabic.includes("\u0633\u0644\u0643") && arabic.includes("\u062c\u0648\u0647\u0631"));
 }
 
-// Male Al-Masʾūl teachers should teach Qasaid Muntakhabat / Silk Jawhar in the
-// same class; female ones should teach the Fiqh book with the most periods in
-// the same class and section.
+// Within the same class, section and gender, male Al-Masʾūl teachers should
+// teach Qasaid Muntakhabat / Silk Jawhar; female ones should teach the Fiqh
+// book with the most periods.
 function masulRequirement(row) {
   const classNumber = String(row.class || "").trim();
-  const column = masulColumnForRow(row);
-  const sameClass = allRows.filter((r) => String(r.class || "").trim() === classNumber);
+  const section = normaliseMasulText(row.section);
+  const sameClass = allRows.filter((r) => String(r.class || "").trim() === classNumber &&
+    normaliseMasulText(r.section) === section && masulIsFemale(r) === masulIsFemale(row));
   if (!masulIsFemale(row)) {
-    const books = sameClass.filter((r) => !masulIsFemale(r) && isMasulMaleBook(r));
+    const books = sameClass.filter(isMasulMaleBook);
     const taught = books.find((r) => r.teacherKey && r.teacherKey === row.teacherKey);
     if (taught) return { ok: true, text: taught.bookNameAr || taught.bookName };
     return { ok: false, text: books.length
       ? "Needs Qasaid Muntakhabat / Silk Jawhar"
       : "No Qasaid / Silk Jawhar in this class" };
   }
-  const fiqh = sameClass.filter((r) => masulIsFemale(r) &&
-    masulColumnForRow(r) === column &&
-    normaliseMasulText(r.subject).includes("fiqh"));
+  const fiqh = sameClass.filter((r) => normaliseMasulText(r.subject).includes("fiqh"));
   if (!fiqh.length) return { ok: false, text: "No Fiqh in this class" };
   const top = Math.max(...fiqh.map((r) => Number(r.weekly) || 0));
   const best = fiqh.filter((r) => (Number(r.weekly) || 0) === top);
